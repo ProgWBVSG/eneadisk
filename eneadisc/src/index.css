@@ -1,0 +1,18 @@
+
+@import "tailwindcss";
+
+@theme {
+  --color-gold: #D4AF37;
+  --color-gold-light: #F4E4C1;
+  --color-deep-blue: #1A3A52;
+  --color-emerald: #2C7873;
+
+  --font-sans: 'Poppins', ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+}
+
+/* Base Styles */
+@layer base {
+  html {
+    font-family: var(--font-sans);
+  }
+}

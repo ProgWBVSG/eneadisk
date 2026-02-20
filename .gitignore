@@ -1,0 +1,17 @@
+# Envs & Temp
+.env
+.tmp/
+__pycache__/
+.vscode/
+*.log
+.DS_Store
+
+# Web App Dependencies & Builds
+eneadisc/node_modules/
+eneadisc/dist/
+eneadisc/dist-ssr/
+eneadisc/build.log
+eneadisc/build_error.log
+
+# Other
+*.local
