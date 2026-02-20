@@ -1,4 +1,4 @@
-import Anthropic from '@anthropic-ai/sdk';
+export const config = { runtime: 'edge' };
 
 interface ChatRequest {
     message: string;
@@ -16,32 +16,39 @@ CONTEXTO DEL PRODUCTO:
 - Los usuarios son gerentes/líderes de empresa que necesitan tomar decisiones basadas en datos
 
 INSTRUCCIONES DE RESPUESTA:
-1. Basate SIEMPRE en los datos reales del dashboard que se te proporcionan en cada mensaje
+1. Basate SIEMPRE en los datos reales del dashboard que se te proporcionan
 2. Usa emojis estratégicamente para mejorar la legibilidad
 3. Sé específico: menciona nombres de equipos, porcentajes concretos, números reales
-4. Proporciona recomendaciones accionables (qué hacer, cuándo, cómo)
-5. Si los datos muestran algo preocupante, sé directo pero constructivo
-6. Limita tus respuestas a 300-400 palabras máximo, priorizando claridad sobre extensión
-7. Usa formato Markdown con headers (##) y bullets (•) para estructurar bien la respuesta
-8. Cierra siempre con una pregunta o sugerencia para continuar el análisis
+4. Proporciona recomendaciones accionables
+5. Limita tus respuestas a 250-350 palabras máximo
+6. Usa formato Markdown con headers (##) y bullets (•)
+7. Cierra con una pregunta para continuar el análisis
 
-TONO: Profesional pero accesible. Orientado a la acción. Empático con los líderes de equipo.`;
+TONO: Profesional pero accesible. Orientado a la acción.`;
+
+const CORS_HEADERS = {
+    'Content-Type': 'application/json',
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Methods': 'POST, OPTIONS',
+    'Access-Control-Allow-Headers': 'Content-Type',
+};
 
 export default async function handler(req: Request): Promise<Response> {
-    // Only allow POST
+    // Handle CORS preflight
+    if (req.method === 'OPTIONS') {
+        return new Response(null, { status: 204, headers: CORS_HEADERS });
+    }
+
     if (req.method !== 'POST') {
         return new Response(JSON.stringify({ error: 'Method not allowed' }), {
-            status: 405,
-            headers: { 'Content-Type': 'application/json' }
+            status: 405, headers: CORS_HEADERS
         });
     }
 
-    // Check API key
     const apiKey = process.env.ANTHROPIC_API_KEY;
     if (!apiKey) {
         return new Response(JSON.stringify({ error: 'ANTHROPIC_API_KEY not configured' }), {
-            status: 500,
-            headers: { 'Content-Type': 'application/json' }
+            status: 500, headers: CORS_HEADERS
         });
     }
 
@@ -51,59 +58,67 @@ export default async function handler(req: Request): Promise<Response> {
 
         if (!message) {
             return new Response(JSON.stringify({ error: 'Message is required' }), {
-                status: 400,
-                headers: { 'Content-Type': 'application/json' }
+                status: 400, headers: CORS_HEADERS
             });
         }
 
-        const client = new Anthropic({ apiKey });
-
-        // Build messages array with conversation history
-        const messages: Anthropic.MessageParam[] = [
-            // Inject dashboard context as first user turn
+        // Build messages for Claude
+        const messages = [
             {
                 role: 'user',
-                content: `Aquí están los datos actuales del dashboard de tu empresa:\n\n${context}\n\nTen en cuenta estos datos para todas las respuestas de esta conversación.`
+                content: `Datos actuales del dashboard:\n\n${context}`
             },
             {
                 role: 'assistant',
-                content: 'Entendido. He procesado los datos del dashboard. Estoy listo para analizar y responder con información específica basada en estas métricas reales.'
+                content: 'Datos del dashboard procesados. Listo para analizar.'
             },
-            // Add conversation history (last 6 turns max)
-            ...conversationHistory.slice(-6).map(msg => ({
-                role: msg.role as 'user' | 'assistant',
-                content: msg.content
-            })),
-            // Current user message
+            ...conversationHistory.slice(-4),
             { role: 'user', content: message }
         ];
 
-        const response = await client.messages.create({
-            model: 'claude-3-5-haiku-20241022', // Fast and cost-effective
-            max_tokens: 1024,
-            system: SYSTEM_PROMPT,
-            messages
+        // Call Anthropic API directly via fetch (Edge-compatible, no SDK needed)
+        const anthropicResponse = await fetch('https://api.anthropic.com/v1/messages', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'x-api-key': apiKey,
+                'anthropic-version': '2023-06-01',
+            },
+            body: JSON.stringify({
+                model: 'claude-3-haiku-20240307', // Fastest model, lowest latency
+                max_tokens: 700,
+                system: SYSTEM_PROMPT,
+                messages
+            })
         });
 
-        const answer = response.content[0].type === 'text' ? response.content[0].text : '';
+        if (!anthropicResponse.ok) {
+            const errText = await anthropicResponse.text();
+            console.error('Anthropic API error:', anthropicResponse.status, errText);
+            return new Response(JSON.stringify({ error: `Anthropic error: ${anthropicResponse.status}` }), {
+                status: 502, headers: CORS_HEADERS
+            });
+        }
+
+        const data = await anthropicResponse.json() as {
+            content: Array<{ type: string; text: string }>;
+        };
+
+        const answer = data.content?.[0]?.type === 'text' ? data.content[0].text : 'Sin respuesta';
 
         return new Response(JSON.stringify({
             answer,
-            recommendations: [], // Claude's answer already contains recommendations inline
+            recommendations: [],
             confidence: 95,
             sources: ['Dashboard Analytics', 'Team Check-ins', 'Task Data'],
             processingTime: 0
-        }), {
-            status: 200,
-            headers: { 'Content-Type': 'application/json' }
-        });
+        }), { status: 200, headers: CORS_HEADERS });
 
     } catch (error: unknown) {
-        console.error('Claude API error:', error);
-        const message = error instanceof Error ? error.message : 'Unknown error';
-        return new Response(JSON.stringify({ error: `AI service error: ${message}` }), {
-            status: 500,
-            headers: { 'Content-Type': 'application/json' }
+        console.error('Chat handler error:', error);
+        const msg = error instanceof Error ? error.message : 'Unknown error';
+        return new Response(JSON.stringify({ error: msg }), {
+            status: 500, headers: CORS_HEADERS
         });
     }
 }

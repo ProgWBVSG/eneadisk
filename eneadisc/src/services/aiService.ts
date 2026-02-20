@@ -12,10 +12,15 @@ export async function sendToAI(request: AIRequest): Promise<AIResponse> {
         return mockAIResponse(request);
     }
 
+    // Abort after 15 seconds to avoid infinite loading
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 15000);
+
     try {
         const response = await fetch('/api/chat', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
+            signal: controller.signal,
             body: JSON.stringify({
                 message: request.message,
                 context: request.context,
@@ -25,6 +30,8 @@ export async function sendToAI(request: AIRequest): Promise<AIResponse> {
             })
         });
 
+        clearTimeout(timeoutId);
+
         if (!response.ok) {
             const errorData = await response.json().catch(() => ({}));
             console.warn('Claude API error, falling back to mock:', errorData);
@@ -33,10 +40,13 @@ export async function sendToAI(request: AIRequest): Promise<AIResponse> {
 
         return await response.json();
     } catch (error) {
-        console.warn('Could not reach /api/chat, falling back to mock:', error);
+        clearTimeout(timeoutId);
+        const isTimeout = error instanceof Error && error.name === 'AbortError';
+        console.warn(isTimeout ? 'Claude API timed out, falling back to mock' : 'Could not reach /api/chat, falling back to mock:', error);
         return mockAIResponse(request);
     }
 }
+
 
 /**
  * MOCK AI Response Generator
