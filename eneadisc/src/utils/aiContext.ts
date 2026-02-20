@@ -1,46 +1,55 @@
 import type { CompanyWideAnalytics, TeamAnalytics } from './analytics';
 
 /**
- * Generate structured context from analytics data for AI processing
+ * Generate rich structured context from analytics data for Claude AI
  */
 export function generateAnalyticsContext(analytics: CompanyWideAnalytics): string {
+    const fecha = new Date().toLocaleDateString('es-AR', { day: 'numeric', month: 'long', year: 'numeric' });
+
     const generalMetrics = `
-MÉTRICAS GENERALES (Período actual):
+FECHA DEL REPORTE: ${fecha}
+
+MÉTRICAS GENERALES DE LA EMPRESA:
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 📊 Completación promedio: ${analytics.overallCompletionRate.toFixed(1)}%
 😊 Mood promedio: ${analytics.overallMoodScore.toFixed(1)}/5
 ✅ Tareas completadas: ${analytics.totalTasksCompleted}
 📝 Check-ins realizados: ${analytics.totalCheckIns}
 👥 Equipos activos: ${analytics.teams.length}
+🏆 Mejor equipo: ${analytics.topPerformingTeam?.teamName || 'N/A'} (${analytics.topPerformingTeam?.completionRate.toFixed(1) || 0}%)
+⚠️ Equipo que necesita atención: ${analytics.teamNeedingAttention?.teamName || 'N/A'}
 `;
 
     const teamsAnalysis = analytics.teams.map((team: TeamAnalytics) => `
-${team.teamName}:
+📋 ${team.teamName} (${team.memberCount} miembros):
   • Completación: ${team.completionRate.toFixed(1)}% ${team.completionRate >= 80 ? '🟢' : team.completionRate >= 60 ? '🟡' : '🔴'}
-  • Mood: ${team.avgMoodScore.toFixed(1)}/5 ${team.avgMoodScore >= 4 ? '😊' : team.avgMoodScore >= 3 ? '😐' : '😕'}
+  • Mood: ${team.avgMoodScore.toFixed(1)}/5 ${team.avgMoodScore >= 4 ? '🟢' : team.avgMoodScore >= 3 ? '🟡' : '🔴'}
+  • Energía promedio: ${team.avgEnergyLevel.toFixed(1)}/5
   • Velocidad: ${team.velocityPerWeek.toFixed(1)} tareas/semana
-  • Nivel de estrés: ${team.stressIndex ? (team.stressIndex * 100).toFixed(0) : '0'}%
-  • Tareas atrasadas: ${team.tasksOverdue || 0} ${(team.tasksOverdue || 0) > 0 ? '⚠️' : '✅'}
+  • Nivel de estrés: ${team.stressIndex.toFixed(1)}% ${team.stressIndex > 40 ? '🔴 ALTO' : team.stressIndex > 20 ? '🟡' : '🟢'}
+  • Tareas: ${team.tasksAssigned} asignadas | ${team.tasksCompleted} completadas | ${team.tasksInProgress} en progreso | ${team.tasksOverdue} atrasadas ${team.tasksOverdue > 0 ? '⚠️' : ''}
+  • Tiempo promedio resolución: ${team.avgCompletionTime.toFixed(1)} días
+  • Prioridades completadas: Alta=${team.highPriorityCompleted}, Media=${team.mediumPriorityCompleted}, Baja=${team.lowPriorityCompleted}
+  • Correlación bienestar↔productividad: ${(team.wellnessProductivityCorr * 100).toFixed(0)}%
+  • Check-ins registrados: ${team.checkInCount}
 `).join('\n');
 
     const insightsSection = analytics.insights.length > 0
         ? `
-INSIGHTS DETECTADOS:
+ALERTAS E INSIGHTS AUTOMÁTICOS:
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-${analytics.insights.map(insight =>
+${analytics.insights.slice(0, 8).map(insight =>
             `[${insight.priority.toUpperCase()}] ${insight.title}
    ${insight.description}
-   ${insight.suggestedAction ? `💡 Acción: ${insight.suggestedAction}` : ''}`
+   ${insight.suggestedAction ? `💡 Acción sugerida: ${insight.suggestedAction}` : ''}`
         ).join('\n\n')}`
-        : '';
+        : 'No hay alertas activas.';
 
     return `${generalMetrics}
-ANÁLISIS POR EQUIPO:
+ANÁLISIS DETALLADO POR EQUIPO:
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ${teamsAnalysis}
 ${insightsSection}
-
-NOTA: Usa estos datos para responder de forma específica, accionable y con emojis para mejor claridad.
 `.trim();
 }
 
