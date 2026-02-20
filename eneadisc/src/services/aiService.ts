@@ -1,48 +1,41 @@
 import type { AIRequest, AIResponse, Recommendation } from '../types/ai';
 
-// MOCK SERVICE - Replace with real N8N webhook when available
-const USE_MOCK = true; // Set to false when N8N is configured
+// Set to true to force mock mode (e.g. for local dev without API key)
+const FORCE_MOCK = false;
 
 /**
- * Send message to AI assistant
- * MOCK MODE: Simulates AI responses for development
- * PRODUCTION MODE: Sends to N8N webhook
+ * Send message to Claude AI via Vercel Serverless Function
+ * Falls back to mock if the endpoint is unavailable
  */
 export async function sendToAI(request: AIRequest): Promise<AIResponse> {
-    if (USE_MOCK) {
+    if (FORCE_MOCK) {
         return mockAIResponse(request);
     }
 
-    // Real N8N integration (uncomment when ready)
-    throw new Error('N8N integration not configured. Set USE_MOCK=false and configure VITE_N8N_WEBHOOK_URL');
-    /*
-    const N8N_WEBHOOK_URL = import.meta.env.VITE_N8N_WEBHOOK_URL;
-    const API_KEY = import.meta.env.VITE_N8N_API_KEY;
-
-    if (!N8N_WEBHOOK_URL) {
-        throw new Error('N8N_WEBHOOK_URL no configurado en .env');
-    }
-
     try {
-        const response = await fetch(N8N_WEBHOOK_URL, {
+        const response = await fetch('/api/chat', {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${API_KEY}`
-            },
-            body: JSON.stringify(request)
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                message: request.message,
+                context: request.context,
+                conversationHistory: (request.conversationHistory || [])
+                    .filter(m => m.role === 'user' || m.role === 'assistant')
+                    .map(m => ({ role: m.role as 'user' | 'assistant', content: m.content }))
+            })
         });
 
         if (!response.ok) {
-            throw new Error(`Error del servidor: ${response.status}`);
+            const errorData = await response.json().catch(() => ({}));
+            console.warn('Claude API error, falling back to mock:', errorData);
+            return mockAIResponse(request);
         }
 
         return await response.json();
     } catch (error) {
-        console.error('Error comunicándose con N8N:', error);
-        throw new Error('No se pudo conectar con el asistente de IA');
+        console.warn('Could not reach /api/chat, falling back to mock:', error);
+        return mockAIResponse(request);
     }
-    */
 }
 
 /**
