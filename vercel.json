@@ -1,0 +1,10 @@
+{
+    "buildCommand": "cd eneadisc && npm install && npm run build",
+    "outputDirectory": "eneadisc/dist",
+    "rewrites": [
+        {
+            "source": "/(.*)",
+            "destination": "/index.html"
+        }
+    ]
+}
