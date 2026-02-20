@@ -139,9 +139,23 @@ export default async function handler(req: Request): Promise<Response> {
         if (!anthropicRes.ok) {
             const errBody = await anthropicRes.text();
             console.error('Anthropic API error:', anthropicRes.status, errBody);
+
+            // Specific error messages for common issues
+            let userError = '';
+            if (anthropicRes.status === 401) {
+                userError = 'API key inválida. Verificá que la clave en Vercel empiece con sk-ant-api03-...';
+            } else if (anthropicRes.status === 404) {
+                userError = 'La API key no tiene acceso al modelo. Verificá en console.anthropic.com que tu cuenta tenga créditos cargados y el plan activo.';
+            } else if (anthropicRes.status === 429) {
+                userError = 'Demasiadas solicitudes. Esperá unos segundos e intentá de nuevo.';
+            } else if (anthropicRes.status === 400) {
+                userError = 'Error en la solicitud a Claude. Intentá con un mensaje más corto.';
+            } else {
+                userError = `Error de Claude (${anthropicRes.status}). Detalles: ${errBody.substring(0, 200)}`;
+            }
+
             return new Response(JSON.stringify({
-                error: `Claude API error: ${anthropicRes.status}`,
-                details: errBody,
+                error: userError,
                 fallback: true
             }), { status: 502, headers: CORS_HEADERS });
         }
