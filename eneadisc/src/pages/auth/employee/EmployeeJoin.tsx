@@ -7,8 +7,7 @@ import { useNavigate } from 'react-router-dom';
 import { Button } from '../../../components/ui/Button';
 import { Input } from '../../../components/ui/Input';
 import { Users } from 'lucide-react';
-import { useAuth } from '../../../context/AuthContext';
-
+// import { useAuth } from '../../../context/AuthContext';
 const joinSchema = z.object({
     code: z.string().length(6, "El código debe tener 6 caracteres"), // Adjusted validation for demo
 });
@@ -17,7 +16,7 @@ type JoinData = z.infer<typeof joinSchema>;
 
 export const EmployeeJoin: React.FC = () => {
     const navigate = useNavigate();
-    const { login } = useAuth();
+    // const { login } = useAuth(); // unused
     const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm<JoinData>({
         resolver: zodResolver(joinSchema)
     });
@@ -31,13 +30,8 @@ export const EmployeeJoin: React.FC = () => {
         // Here we just accept mostly anything for demo, or could check localStorage if needed
         // But for "Entry Flow" demo, let's just succeed.
 
-        const newUser = {
-            id: 'emp-' + Math.random().toString(36).substring(7),
-            role: 'employee' as const,
-            companyId: 'mock-company-id'
-        };
-
-        login(newUser);
+        // const newUser = ...
+        // login removed due to Supabase migration
         navigate('/questionnaire');
     };
 

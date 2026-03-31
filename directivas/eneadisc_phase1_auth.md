@@ -65,6 +65,7 @@
 | Fecha | Error Detectado | Causa Raíz | Solución |
 |-------|-----------------|------------|----------|
 | 2026-03-20 | Correo de confirmación de registro llega como link, volviendo al inicio y rompiendo el flujo. | Supabase envía por defecto `{{ .ConfirmationURL }}` en vez del código de 6 dígitos para el registro. | **Solución:** Ir a Supabase Dashboard -> Authentication -> Email Templates -> Confirm Signup. Reemplazar `<a href="{{ .ConfirmationURL }}">Confirm your mail</a>` por `Tu código de verificación es: <h2>{{ .Token }}</h2>`. |
+| 2026-03-31 | TypeScript error TS2554 ("Expected 2 arguments, but got 1") en Vercel `CompanyRegister.tsx` y `EmployeeJoin.tsx`. | La migración a Supabase Auth cambió la firma de `login` en `AuthContext` (ahora pide `email` y `password`), rompiendo los viejos componentes mock que pasaban un objeto `AppUser`. | **Solución:** Eliminar la llamada `login(newUser)` y la importación de `useAuth` en los componentes mock viejos, o eliminarlos por completo si ya existe una versión con `Signup` funcional. |
 
 ## 7. Ejemplos de Uso
 ```bash

@@ -7,8 +7,7 @@ import { useNavigate } from 'react-router-dom';
 import { Button } from '../../../components/ui/Button';
 import { Input } from '../../../components/ui/Input';
 import { ChevronRight, ChevronLeft, Building2 } from 'lucide-react';
-import { useAuth } from '../../../context/AuthContext';
-
+// import { useAuth } from '../../../context/AuthContext';
 // Schema for Step 1
 const step1Schema = z.object({
   email: z.string().email("Email inválido"),
@@ -27,7 +26,7 @@ type Step2Data = z.infer<typeof step2Schema>;
 
 export const CompanyRegister: React.FC = () => {
   const navigate = useNavigate();
-  const { login } = useAuth();
+  // const { login } = useAuth(); // unused
   const [step, setStep] = useState(1);
   const [formData, setFormData] = useState<Partial<Step1Data & Step2Data>>({});
 
@@ -47,18 +46,8 @@ export const CompanyRegister: React.FC = () => {
     const companyId = Math.random().toString(36).substring(7);
     const inviteCode = "ENEA-" + Math.floor(1000 + Math.random() * 9000);
     const userId = 'admin-' + Math.random().toString(36).substring(7);
-    
-    // Create User Object
-    const newUser = {
-      id: userId,
-      role: 'company_admin' as const,
-      companyId: companyId,
-      name: finalData.companyName,
-      email: finalData.email
-    };
-
-    // Save to Context & LocalStorage
-    login(newUser);
+    console.log(userId);
+    // login function call removed due to Supabase Auth migration
     
     // Save Code for demo purposes (usually this would be in DB)
     localStorage.setItem(`company_${companyId}_code`, inviteCode);
