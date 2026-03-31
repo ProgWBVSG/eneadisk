@@ -78,6 +78,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [isLoading, setIsLoading] = useState(true);
 
   const refreshUser = async () => {
+    if (localStorage.getItem('eneadisk_mock_session')) return; // No refresh needed for mock
+
     const { data: { session: currentSession } } = await supabase.auth.getSession();
     if (currentSession?.user) {
       const appUser = await buildAppUser(currentSession.user);
@@ -88,6 +90,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   useEffect(() => {
+    // VERCEL MOCK DB INTERCEPT
+    const mockSessionStr = localStorage.getItem('eneadisk_mock_session');
+    if (mockSessionStr) {
+      try {
+        const mockUser = JSON.parse(mockSessionStr);
+        setUser(mockUser);
+        setIsLoading(false);
+        return; // Don't subscribe to Supabase
+      } catch (e) {
+        localStorage.removeItem('eneadisk_mock_session');
+      }
+    }
+
     // Get initial session
     supabase.auth.getSession().then(async ({ data: { session: s } }) => {
       setSession(s);
@@ -125,6 +140,22 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, []);
 
   const login = async (email: string, password: string): Promise<{ error: string | null }> => {
+    // Mini-DB Vercel Intercept
+    if (password === 'vercel123') {
+      let mockUser: AppUser | null = null;
+      if (email === 'admin@eneadisk.com') {
+        mockUser = { id: 'mock-admin-1', role: 'company_admin', companyId: 'mock-company-1', name: 'Empresa Demo (Vercel)', email, inviteCode: 'ENEA-DEMO', questionnaireCompleted: true };
+      } else if (email === 'empleado@eneadisk.com') {
+        mockUser = { id: 'mock-employee-1', role: 'employee', companyId: 'mock-company-1', name: 'Empleado Demo (Vercel)', email, enneagramType: 3, questionnaireCompleted: true };
+      }
+      if (mockUser) {
+        localStorage.setItem('eneadisk_mock_session', JSON.stringify(mockUser));
+        setUser(mockUser);
+        return { error: null };
+      }
+      return { error: 'Correo inválido para modo Demo Local' };
+    }
+
     const { error } = await supabase.auth.signInWithPassword({ email, password });
     if (error) {
       if (error.message.includes('Invalid login credentials')) {
@@ -136,6 +167,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const logout = async () => {
+    if (localStorage.getItem('eneadisk_mock_session')) {
+      localStorage.removeItem('eneadisk_mock_session');
+      setUser(null);
+      window.location.href = '/';
+      return;
+    }
+
     await supabase.auth.signOut();
     setUser(null);
     setSession(null);
