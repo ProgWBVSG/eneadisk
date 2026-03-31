@@ -63,7 +63,7 @@ export const Sidebar: React.FC = () => {
                 </div>
 
                 {/* Navigation */}
-                <nav className="flex-1 p-4 overflow-y-auto">
+                <nav id="tour-sidebar" className="flex-1 p-4 overflow-y-auto">
                     <ul className="space-y-2">
                         {menuItems.map((item) => {
                             const Icon = item.icon;

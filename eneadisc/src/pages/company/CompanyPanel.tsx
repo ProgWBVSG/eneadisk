@@ -1,14 +1,16 @@
 import React, { useState, useEffect } from 'react';
-import { Users, Mail, CheckCircle, Copy } from 'lucide-react';
+import { Users, Mail, CheckCircle, Copy, HelpCircle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { Button } from '../../components/ui/Button';
+import { AdminTutorial } from '../../components/tutorial/AdminTutorial';
 
 export const CompanyPanel: React.FC = () => {
     const navigate = useNavigate();
     const { user } = useAuth();
     const [employeeCount, setEmployeeCount] = useState(0);
     const [copied, setCopied] = useState(false);
+    const [runTutorial, setRunTutorial] = useState(false);
     const inviteCode = localStorage.getItem('company_invite_code') || 'ENEA-1234';
 
     // Calculate employee count
@@ -49,14 +51,25 @@ export const CompanyPanel: React.FC = () => {
 
     return (
         <div className="p-4 md:p-8 max-w-6xl mx-auto">
+            <AdminTutorial forceRun={runTutorial} onResetComplete={() => setRunTutorial(false)} />
+
             {/* Welcome Header */}
-            <div className="bg-gradient-to-r from-blue-600 to-purple-600 rounded-2xl p-8 text-white mb-8 shadow-xl">
-                <h1 className="text-3xl md:text-4xl font-bold mb-2">Panel de Administración</h1>
-                <p className="text-lg opacity-90">Gestiona tu equipo, visualiza métricas y toma decisiones informadas basadas en el Eneagrama</p>
+            <div className="bg-gradient-to-r from-blue-600 to-purple-600 rounded-2xl p-8 text-white mb-8 shadow-xl flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                <div>
+                    <h1 className="text-3xl md:text-4xl font-bold mb-2">Panel de Administración</h1>
+                    <p className="text-lg opacity-90">Gestiona tu equipo, visualiza métricas y toma decisiones informadas basadas en el Eneagrama</p>
+                </div>
+                <button 
+                  onClick={() => setRunTutorial(true)}
+                  className="flex items-center gap-2 whitespace-nowrap bg-white/20 hover:bg-white/30 px-4 py-2 rounded-lg text-sm font-medium transition-colors border border-white/30"
+                >
+                    <HelpCircle size={18} />
+                    Repetir Tutorial
+                </button>
             </div>
 
             {/* Quick Stats */}
-            <div className="grid md:grid-cols-3 gap-6 mb-8">
+            <div id="tour-stats" className="grid md:grid-cols-3 gap-6 mb-8">
                 <div className="bg-white rounded-xl p-6 shadow-md">
                     <div className="flex items-center justify-between mb-2">
                         <h3 className="text-slate-500 text-sm font-medium">Total Empleados</h3>
@@ -95,6 +108,7 @@ export const CompanyPanel: React.FC = () => {
                     <h3 className="text-xl font-bold text-slate-900 mb-3">Comienza Ahora</h3>
                     <p className="text-slate-600 mb-4">Invita a tu equipo para descubrir sus eneatipos y mejorar la dinámica laboral.</p>
                     <Button
+                        id="tour-invite-btn"
                         onClick={handleInvite}
                         className="w-full bg-blue-600 hover:bg-blue-700"
                     >
@@ -114,6 +128,7 @@ export const CompanyPanel: React.FC = () => {
                     <h3 className="text-xl font-bold text-slate-900 mb-3">Explora la Biblioteca</h3>
                     <p className="text-slate-600 mb-4">Aprende sobre los 9 eneatipos y cómo aplicarlos en tu organización.</p>
                     <Button
+                        id="tour-library-btn"
                         onClick={handleGoToLibrary}
                         variant="outline"
                         className="w-full"
