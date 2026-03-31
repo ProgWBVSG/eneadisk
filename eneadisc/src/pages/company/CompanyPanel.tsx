@@ -125,7 +125,7 @@ export const CompanyPanel: React.FC = () => {
 
             {/* Info Section */}
             <div className="bg-gradient-to-br from-purple-50 to-blue-50 rounded-xl p-8 border border-purple-200">
-                <h3 className="text-2xl font-bold text-slate-900 mb-4">¿Cómo funciona ENEADISC?</h3>
+                <h3 className="text-2xl font-bold text-slate-900 mb-4">¿Cómo funciona ENEATEAMS?</h3>
                 <div className="grid md:grid-cols-3 gap-6">
                     <div>
                         <div className="w-12 h-12 bg-purple-600 rounded-lg flex items-center justify-center text-white font-bold text-xl mb-3">1</div>

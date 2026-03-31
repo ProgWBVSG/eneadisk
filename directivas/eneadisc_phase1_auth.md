@@ -59,11 +59,12 @@
 ## 5. Restricciones y Casos Borde
 - **Responsive:** Verificar que el Wizard se vea bien en mobile.
 - **Validación:** El código de empresa debe tener formato específico (ej: ENEA-XXXX).
+- **CRÍTICO - Supabase Email Templates:** Para flujos de registro multipaso donde la cuenta se verifica *antes* de insertar datos relacionales (preventivo de errores), **NO se deben usar Magic Links** (`{{ .ConfirmationURL }}`). **OBLIGATORIO:** Cambiar el template de correo de Supabase en `Authentication -> Email Templates -> Confirm signup` para enviar el código OTP (`{{ .Token }}`). De lo contrario, el link redireccionará cortando el estado de React.
 
 ## 6. Protocolo de Errores
 | Fecha | Error Detectado | Causa Raíz | Solución |
 |-------|-----------------|------------|----------|
-| N/A | N/A | N/A | N/A |
+| 2026-03-20 | Correo de confirmación de registro llega como link, volviendo al inicio y rompiendo el flujo. | Supabase envía por defecto `{{ .ConfirmationURL }}` en vez del código de 6 dígitos para el registro. | **Solución:** Ir a Supabase Dashboard -> Authentication -> Email Templates -> Confirm Signup. Reemplazar `<a href="{{ .ConfirmationURL }}">Confirm your mail</a>` por `Tu código de verificación es: <h2>{{ .Token }}</h2>`. |
 
 ## 7. Ejemplos de Uso
 ```bash

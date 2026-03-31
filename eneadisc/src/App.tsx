@@ -23,7 +23,7 @@ const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) =
   return <>{children}</>;
 };
 
-// Placeholder components for other pages
+// Placeholder components for upcoming pages
 const EmployeeProgress = () => <div className="p-8"><h1 className="text-2xl font-bold">Mi Progreso</h1><p className="text-slate-600 mt-2">Próximamente - Estadísticas de tu progreso</p></div>;
 const EmployeeAssistant = () => <div className="p-8"><h1 className="text-2xl font-bold">Mi Asistente Personal</h1><p className="text-slate-600 mt-2">Próximamente - Chat con recomendaciones</p></div>;
 const EmployeeCheckins = () => <div className="p-8"><h1 className="text-2xl font-bold">Check-ins</h1><p className="text-slate-600 mt-2">Próximamente - Registro emocional</p></div>;

@@ -12,7 +12,7 @@ export const Sidebar: React.FC = () => {
     const isEmployee = user?.role === 'employee';
 
     const employeeItems = [
-        { icon: Home, label: 'Mi Perfil ENEADISC', path: '/dashboard/employee' },
+        { icon: Home, label: 'Mi Perfil EneaTeams', path: '/dashboard/employee' },
         { icon: TrendingUp, label: 'Mi Progreso', path: '/dashboard/employee/progreso' },
         { icon: Bot, label: 'Mi Asistente Personal', path: '/dashboard/employee/asistente' },
         { icon: CheckSquare, label: 'Mis Tareas', path: '/dashboard/employee/tareas' },
@@ -56,7 +56,7 @@ export const Sidebar: React.FC = () => {
             >
                 {/* Logo */}
                 <div className="p-6 border-b border-slate-200">
-                    <h1 className="text-2xl font-bold text-purple-600">ENEADISC</h1>
+                    <h1 className="text-2xl font-bold text-purple-600">ENEATEAMS</h1>
                     <p className="text-xs text-slate-500 mt-1">
                         {isEmployee ? 'Panel del Colaborador' : 'Panel de Administrador'}
                     </p>
