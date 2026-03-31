@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Send, Bot, Sparkles, AlertCircle } from 'lucide-react';
+import { Send, Bot, Sparkles, AlertCircle, HelpCircle } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { getTeams } from '../../utils/teams';
 import { calculateCompanyAnalytics, getDateRange } from '../../utils/analytics';
@@ -7,6 +7,7 @@ import { generateAnalyticsContext } from '../../utils/aiContext';
 import { sendToAI } from '../../services/aiService';
 import { MessageBubble } from '../../components/ai/MessageBubble';
 import { SuggestedPrompts } from '../../components/ai/SuggestedPrompts';
+import { AITutorial } from '../../components/tutorial/AITutorial';
 import type { Message } from '../../types/ai';
 import { SUGGESTED_PROMPTS } from '../../types/ai';
 
@@ -17,6 +18,7 @@ export const AIAssistant: React.FC = () => {
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [showSuggestions, setShowSuggestions] = useState(true);
+    const [runTutorial, setRunTutorial] = useState(false);
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const inputRef = useRef<HTMLTextAreaElement>(null);
 
@@ -156,19 +158,27 @@ Puedo ayudarte con:
 
     return (
         <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 p-4 md:p-8">
+            <AITutorial forceRun={runTutorial} onResetComplete={() => setRunTutorial(false)} />
             <div className="max-w-5xl mx-auto">
                 {/* Header */}
-                <div className="bg-white rounded-xl shadow-lg p-6 mb-6">
+                <div id="tour-ai-header" className="bg-white rounded-xl shadow-lg p-6 mb-6">
                     <div className="flex items-center gap-4">
                         <div className="p-3 bg-gradient-to-br from-purple-500 to-pink-500 rounded-xl">
                             <Bot className="w-8 h-8 text-white" />
                         </div>
                         <div className="flex-1">
-                            <div className="flex items-center gap-2">
+                            <div className="flex items-center gap-3">
                                 <h1 className="text-2xl font-bold text-slate-900">Asistente de IA</h1>
                                 <span className="px-3 py-1 bg-purple-100 text-purple-700 text-xs font-medium rounded-full">
                                     Beta
                                 </span>
+                                <button 
+                                    onClick={() => setRunTutorial(true)}
+                                    className="p-1.5 text-slate-400 hover:text-purple-600 hover:bg-purple-50 rounded-full transition-colors"
+                                    title="Repetir Tutorial"
+                                >
+                                    <HelpCircle size={20} />
+                                </button>
                             </div>
                             <p className="text-slate-600 mt-1">
                                 Análisis inteligente powered by AI
@@ -187,7 +197,7 @@ Puedo ayudarte con:
                 <div className="bg-white rounded-xl shadow-lg overflow-hidden flex flex-col relative" style={{ height: 'calc(100vh - 220px)', minHeight: '400px' }}>
                     {/* Suggested Prompts - Collapsible */}
                     {showSuggestions && (
-                        <div className="p-4 border-b border-slate-200 bg-slate-50">
+                        <div id="tour-ai-prompts" className="p-4 border-b border-slate-200 bg-slate-50">
                             <div className="flex items-center justify-between mb-3">
                                 <div className="flex items-center gap-2">
                                     <Sparkles className="w-4 h-4 text-purple-600" />
@@ -225,7 +235,7 @@ Puedo ayudarte con:
                     )}
 
                     {/* Messages */}
-                    <div className="flex-1 overflow-y-auto p-4 md:p-6 space-y-4 relative">
+                    <div id="tour-ai-chat" className="flex-1 overflow-y-auto p-4 md:p-6 space-y-4 relative">
                         {messages.map(message => (
                             <MessageBubble key={message.id} message={message} />
                         ))}
@@ -247,7 +257,7 @@ Puedo ayudarte con:
                     )}
 
                     {/* Input Section */}
-                    <div className="border-t border-slate-200 p-4 bg-white">
+                    <div id="tour-ai-input" className="border-t border-slate-200 p-4 bg-white">
                         <form onSubmit={handleSubmit} className="flex gap-3">
                             <textarea
                                 ref={inputRef}

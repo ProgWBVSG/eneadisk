@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
 import { getAllEnneagramTypes } from '../../data/enneagramData';
-import { ChevronDown, ChevronUp } from 'lucide-react';
+import { ChevronDown, ChevronUp, HelpCircle } from 'lucide-react';
+import { LibraryTutorial } from '../../components/tutorial/LibraryTutorial';
 
 export const EnneagramLibrary: React.FC = () => {
     const [expandedType, setExpandedType] = useState<number | null>(null);
+    const [runTutorial, setRunTutorial] = useState(false);
     const types = getAllEnneagramTypes();
 
     const toggleType = (typeId: number) => {
@@ -12,15 +14,28 @@ export const EnneagramLibrary: React.FC = () => {
 
     return (
         <div className="p-4 md:p-8 max-w-6xl mx-auto">
-            <div className="mb-8">
-                <h1 className="text-3xl md:text-4xl font-bold text-slate-900 mb-2">Biblioteca de Eneatipos</h1>
-                <p className="text-slate-600">Conoce los 9 tipos de personalidad del Eneagrama</p>
+            <LibraryTutorial forceRun={runTutorial} onResetComplete={() => setRunTutorial(false)} />
+            <div id="tour-lib-header" className="mb-8 flex items-center justify-between">
+                <div>
+                    <div className="flex items-center gap-3 mb-2">
+                        <h1 className="text-3xl md:text-4xl font-bold text-slate-900">Biblioteca de Eneatipos</h1>
+                        <button 
+                            onClick={() => setRunTutorial(true)}
+                            className="p-1.5 text-slate-400 hover:text-purple-600 hover:bg-purple-50 rounded-full transition-colors"
+                            title="Repetir Tutorial"
+                        >
+                            <HelpCircle size={24} />
+                        </button>
+                    </div>
+                    <p className="text-slate-600">Conoce los 9 tipos de personalidad del Eneagrama</p>
+                </div>
             </div>
 
             <div className="space-y-4">
-                {types.map((type) => (
+                {types.map((type, index) => (
                     <div
                         key={type.id}
+                        id={`tour-lib-card-${index}`}
                         className="bg-white rounded-xl shadow-md overflow-hidden border-2 border-transparent hover:border-purple-200 transition-all"
                     >
                         {/* Header */}

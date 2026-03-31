@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { Users, Plus, Edit, Trash2, Eye } from 'lucide-react';
+import { Users, Plus, Edit, Trash2, Eye, HelpCircle } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { getTeams, deleteTeam, type Team } from '../../utils/teams';
 import { Button } from '../../components/ui/Button';
 import { TeamModal } from '../../components/TeamModal';
+import { TeamsTutorial } from '../../components/tutorial/TeamsTutorial';
 import { TeamDetailView } from '../../components/TeamDetailView';
 
 export const TeamManagement: React.FC = () => {
@@ -13,6 +14,7 @@ export const TeamManagement: React.FC = () => {
     const [showCreateModal, setShowCreateModal] = useState(false);
     const [editingTeam, setEditingTeam] = useState<Team | null>(null);
     const [showDetailView, setShowDetailView] = useState(false);
+    const [runTutorial, setRunTutorial] = useState(false);
 
     // Load teams
     useEffect(() => {
@@ -82,15 +84,27 @@ export const TeamManagement: React.FC = () => {
 
     return (
         <div className="p-8">
+            <TeamsTutorial forceRun={runTutorial} onResetComplete={() => setRunTutorial(false)} />
+
             {/* Header */}
-            <div className="flex items-center justify-between mb-8">
+            <div id="tour-teams-header" className="flex items-center justify-between mb-8 flex-wrap gap-4">
                 <div>
-                    <h1 className="text-3xl font-bold text-slate-900">Gestión de Equipos</h1>
+                    <div className="flex items-center gap-3">
+                        <h1 className="text-3xl font-bold text-slate-900">Gestión de Equipos</h1>
+                        <button 
+                            onClick={() => setRunTutorial(true)}
+                            className="p-1.5 text-slate-400 hover:text-purple-600 hover:bg-purple-50 rounded-full transition-colors"
+                            title="Repetir Tutorial"
+                        >
+                            <HelpCircle size={20} />
+                        </button>
+                    </div>
                     <p className="text-slate-600 mt-2">
                         Administra tus equipos y visualiza las características del eneagrama
                     </p>
                 </div>
                 <Button
+                    id="tour-create-team"
                     onClick={() => setShowCreateModal(true)}
                     className="flex items-center gap-2"
                 >
@@ -110,8 +124,9 @@ export const TeamManagement: React.FC = () => {
             </div>
 
             {/* Teams Grid */}
-            {teams.length === 0 ? (
-                <div className="text-center py-16 bg-slate-50 rounded-lg border-2 border-dashed border-slate-300">
+            <div id="tour-teams-list">
+                {teams.length === 0 ? (
+                    <div className="text-center py-16 bg-slate-50 rounded-lg border-2 border-dashed border-slate-300">
                     <Users className="w-16 h-16 text-slate-400 mx-auto mb-4" />
                     <h3 className="text-xl font-semibold text-slate-700 mb-2">
                         No hay equipos creados
@@ -140,6 +155,7 @@ export const TeamManagement: React.FC = () => {
                     ))}
                 </div>
             )}
+            </div>
 
             {/* Create/Edit Modal */}
             {showCreateModal && (
