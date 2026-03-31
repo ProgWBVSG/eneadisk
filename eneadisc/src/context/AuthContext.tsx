@@ -92,9 +92,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     supabase.auth.getSession().then(async ({ data: { session: s } }) => {
       setSession(s);
       if (s?.user) {
-        const appUser = await buildAppUser(s.user);
-        setUser(appUser);
+        try {
+          const appUser = await buildAppUser(s.user);
+          setUser(appUser);
+        } catch (e) {
+          console.error("Error building app user", e);
+        }
       }
+      setIsLoading(false);
+    }).catch((err) => {
+      console.error("Error fetching session, Supabase might be paused:", err);
       setIsLoading(false);
     });
 
