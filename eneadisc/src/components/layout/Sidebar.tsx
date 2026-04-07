@@ -1,14 +1,14 @@
 import React, { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import { Home, TrendingUp, Bot, CheckSquare, Users, ClipboardCheck, BarChart3, BookOpen, CreditCard, LogOut, Menu, X } from 'lucide-react';
-
+import { Home, TrendingUp, Bot, CheckSquare, Users, ClipboardCheck, BarChart3, BookOpen, CreditCard, LogOut, Menu, X, Settings } from 'lucide-react';
+import { UserSettingsModal } from '../settings/UserSettingsModal';
 export const Sidebar: React.FC = () => {
     const navigate = useNavigate();
     const location = useLocation();
     const { user, logout } = useAuth();
     const [isMobileOpen, setIsMobileOpen] = useState(false);
-
+    const [isSettingsOpen, setIsSettingsOpen] = useState(false);
     const isEmployee = user?.role === 'employee';
 
     const employeeItems = [
@@ -92,17 +92,21 @@ export const Sidebar: React.FC = () => {
 
                 {/* User Section */}
                 <div className="p-4 border-t border-slate-200">
-                    <div className="flex items-center gap-3 mb-3">
-                        <div className="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center">
+                    <button 
+                        onClick={() => setIsSettingsOpen(true)}
+                        className="w-full flex items-center gap-3 mb-3 p-2 rounded-lg hover:bg-slate-50 transition-colors text-left group"
+                    >
+                        <div className="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center shrink-0">
                             <span className="text-purple-600 font-bold text-lg">
                                 {user?.name?.charAt(0).toUpperCase() || 'U'}
                             </span>
                         </div>
                         <div className="flex-1 min-w-0">
-                            <p className="text-sm font-medium text-slate-900 truncate">{user?.name || 'Usuario'}</p>
+                            <p className="text-sm font-medium text-slate-900 truncate group-hover:text-purple-600 transition-colors">{user?.name || 'Usuario'}</p>
                             <p className="text-xs text-slate-500 truncate">{isEmployee ? 'Colaborador' : 'Administrador'}</p>
                         </div>
-                    </div>
+                        <Settings size={16} className="text-slate-400 group-hover:text-purple-600 opacity-0 group-hover:opacity-100 transition-all" />
+                    </button>
                     <button
                         onClick={handleLogout}
                         className="w-full flex items-center gap-2 px-4 py-2 text-sm text-red-600 hover:bg-red-50 rounded-lg transition-colors"
@@ -120,6 +124,12 @@ export const Sidebar: React.FC = () => {
                     className="md:hidden fixed inset-0 bg-black/50 z-30"
                 />
             )}
+
+            {/* Settings Modal */}
+            <UserSettingsModal 
+                isOpen={isSettingsOpen} 
+                onClose={() => setIsSettingsOpen(false)} 
+            />
         </>
     );
 };
