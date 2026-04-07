@@ -11,16 +11,27 @@ export interface EnneagramResult {
 }
 
 export const calculateEnneagram = (responses: QuestionnaireResponse[]): EnneagramResult => {
-    // Inicializar puntajes para cada tipo (1-9)
+    // Inicializar puntajes para cada tipo (1-9) con una estructura de pesos ponderados
     const scores: Record<number, number> = {
         1: 0, 2: 0, 3: 0, 4: 0, 5: 0,
         6: 0, 7: 0, 8: 0, 9: 0
     };
 
-    // Contar respuestas por tipo
+    // Asignar ponderación a cada pregunta para "deducir" mejor nuestro resultado.
+    // Pregunta 3 (motivación) es central en el Eneagrama, por eso mayor peso.
+    const questionWeights: Record<number, number> = {
+        1: 1.0, // Estilo de trabajo general
+        2: 1.2, // Resolución de desafíos
+        3: 1.5, // Motivaciones centrales (Core del Eneagrama)
+        4: 1.3, // Comportamiento en conflicto
+        5: 1.1  // Valoración del ambiente
+    };
+
+    // Contar puntajes ponderados
     responses.forEach(response => {
         if (response.selectedType >= 1 && response.selectedType <= 9) {
-            scores[response.selectedType]++;
+            const weight = questionWeights[response.questionId] || 1.0;
+            scores[response.selectedType] += weight;
         }
     });
 
@@ -29,9 +40,21 @@ export const calculateEnneagram = (responses: QuestionnaireResponse[]): Enneagra
     let maxScore = scores[1];
 
     for (let type = 2; type <= 9; type++) {
-        if (scores[type] > maxScore) {
+        // En caso de empate muy cercano, nos podemos quedar con el que ya tenemos o cambiar
+        // Hacemos el redondeo fino para evitar problemas de flotantes y si es un empate exacto,
+        // la probabilidad le da más "naturalidad" a la deducción psicológica en casos ambiguos.
+        const currentDiff = scores[type] - maxScore;
+        if (currentDiff > 0.001) {
             maxScore = scores[type];
             primaryType = type;
+        } else if (Math.abs(currentDiff) <= 0.001) {
+            // Empate: introducimos un pequeño factor de desempate aleatorio "inteligente" (50/50 chance)
+            // Esto evita que "la primera opción que elegiste" o "la matemática" controle siempre
+            // cuando respondes de varios tipos distintos en igual proporción de peso.
+            if (Math.random() > 0.5) {
+                maxScore = scores[type];
+                primaryType = type;
+            }
         }
     }
 

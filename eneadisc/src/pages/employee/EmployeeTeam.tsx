@@ -63,8 +63,8 @@ export const EmployeeTeam: React.FC = () => {
         return <div className="p-8">Cargando...</div>;
     }
 
-    // For demo, use hardcoded data
-    const teammates = user.id === 'demo-employee-001' ? DEMO_TEAMMATES : [];
+    // For demo, use hardcoded data for any employee
+    const teammates = DEMO_TEAMMATES;
     const teamName = 'Equipo Marketing';
     const userEnneagramType = 7; // Juan Pérez is type 7
 
