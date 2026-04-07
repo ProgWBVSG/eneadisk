@@ -14,6 +14,9 @@ import { EnneagramLibrary } from './pages/company/EnneagramLibrary';
 import { TeamManagement } from './pages/company/TeamManagement';
 import { EmployeeTeam } from './pages/employee/EmployeeTeam';
 import { EmployeeTasks } from './pages/employee/EmployeeTasks';
+import { EmployeeProgress } from './pages/employee/EmployeeProgress';
+import { EmployeeAssistant } from './pages/employee/EmployeeAssistant';
+import { EmployeeCheckins } from './pages/employee/EmployeeCheckins';
 import { CompanyAnalytics } from './pages/company/CompanyAnalytics';
 import { AIAssistant } from './pages/company/AIAssistant';
 
@@ -23,10 +26,7 @@ const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) =
   return <>{children}</>;
 };
 
-// Placeholder components for upcoming pages
-const EmployeeProgress = () => <div className="p-8"><h1 className="text-2xl font-bold">Mi Progreso</h1><p className="text-slate-600 mt-2">Próximamente - Estadísticas de tu progreso</p></div>;
-const EmployeeAssistant = () => <div className="p-8"><h1 className="text-2xl font-bold">Mi Asistente Personal</h1><p className="text-slate-600 mt-2">Próximamente - Chat con recomendaciones</p></div>;
-const EmployeeCheckins = () => <div className="p-8"><h1 className="text-2xl font-bold">Check-ins</h1><p className="text-slate-600 mt-2">Próximamente - Registro emocional</p></div>;
+// Placeholder components for upcoming company pages
 const Tracking = () => <div className="p-8"><h1 className="text-2xl font-bold">Seguimiento</h1><p className="text-slate-600 mt-2">Próximamente - Evolución del equipo</p></div>;
 const Subscription = () => <div className="p-8"><h1 className="text-2xl font-bold">Suscripción</h1><p className="text-slate-600 mt-2">Próximamente - Gestión de planes</p></div>;
 
