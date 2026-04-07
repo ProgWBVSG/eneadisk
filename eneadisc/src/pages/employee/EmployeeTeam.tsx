@@ -1,10 +1,11 @@
-﻿import React, { useState, useEffect } from 'react';
-import { Users, Heart, TrendingUp, Lightbulb, ListTodo, ArrowRight } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Users, Heart, TrendingUp, Lightbulb, ListTodo, ArrowRight, HelpCircle } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { getEnneagramBadge } from '../../utils/enneagramColors';
 import { getCompatibilityScore, getCompatibilityInsights, getTeamDynamics } from '../../utils/compatibility';
 import type { Task } from '../../utils/tasks';
 import { getTeamTasks } from '../../utils/tasks';
+import { EmployeeTeamTutorial } from '../../components/tutorial/EmployeeTeamTutorial';
 
 interface Teammate {
     id: string;
@@ -47,6 +48,7 @@ const DEMO_TEAMMATES: Teammate[] = [
 export const EmployeeTeam: React.FC = () => {
     const { user } = useAuth();
     const [teamTasks, setTeamTasks] = useState<Task[]>([]);
+    const [forceRunTutorial, setForceRunTutorial] = useState(false);
 
     // For demo, hardcoded team ID
     const teamId = 'demo-team-marketing';
@@ -90,9 +92,21 @@ export const EmployeeTeam: React.FC = () => {
 
     return (
         <div className="p-4 md:p-8 max-w-7xl mx-auto">
+            {/* Tutorial Onboarding */}
+            <EmployeeTeamTutorial forceRun={forceRunTutorial} onResetComplete={() => setForceRunTutorial(false)} />
+
             {/* Header */}
             <div className="mb-8">
-                <h1 className="text-3xl font-bold text-slate-900 mb-2">Mi Equipo</h1>
+                <div className="flex items-center justify-between">
+                    <h1 className="text-3xl font-bold text-slate-900 mb-2">Mi Equipo</h1>
+                    <button
+                        onClick={() => setForceRunTutorial(true)}
+                        className="flex items-center gap-1 text-xs text-slate-400 hover:text-purple-600 transition-colors"
+                    >
+                        <HelpCircle size={14} />
+                        Ver tutorial
+                    </button>
+                </div>
                 <div className="flex items-center gap-2 text-slate-600">
                     <Users className="w-5 h-5" />
                     <span className="font-medium">{teamName}</span>
@@ -114,7 +128,7 @@ export const EmployeeTeam: React.FC = () => {
             ) : (
                 <>
                     {/* Teammates Grid */}
-                    <div className="mb-8">
+                    <div id="tour-emp-team-list" className="mb-8">
                         <h2 className="text-xl font-semibold text-slate-900 mb-4">Compañeros de Equipo</h2>
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                             {teammates.map(teammate => {
@@ -197,7 +211,7 @@ export const EmployeeTeam: React.FC = () => {
                     {/* Team Analysis */}
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
                         {/* Team Dynamics */}
-                        <div className="bg-gradient-to-br from-purple-50 to-blue-50 border border-purple-200 rounded-xl p-6">
+                        <div id="tour-emp-team-dynamics" className="bg-gradient-to-br from-purple-50 to-blue-50 border border-purple-200 rounded-xl p-6">
                             <h3 className="text-xl font-semibold text-slate-900 mb-4 flex items-center gap-2">
                                 <TrendingUp className="w-5 h-5 text-purple-600" />
                                 Dinámica del Equipo
@@ -250,7 +264,7 @@ export const EmployeeTeam: React.FC = () => {
                         </div>
 
                         {/* Compatibility Summary */}
-                        <div className="bg-white border border-slate-200 rounded-xl p-6">
+                        <div id="tour-emp-team-compatibility" className="bg-white border border-slate-200 rounded-xl p-6">
                             <h3 className="text-xl font-semibold text-slate-900 mb-4 flex items-center gap-2">
                                 <Heart className="w-5 h-5 text-pink-600" />
                                 Tu Compatibilidad
@@ -353,7 +367,7 @@ export const EmployeeTeam: React.FC = () => {
 
             {/* Team Tasks Section */}
             {teammates.length > 0 && (
-                <div className="mt-8">
+                <div id="tour-emp-team-tasks" className="mt-8">
                     <div className="flex items-center justify-between mb-4">
                         <h2 className="text-xl font-semibold text-slate-900 flex items-center gap-2">
                             <ListTodo className="w-6 h-6" />

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, CheckCircle2, Circle, Clock, Building2, User, X, Calendar, Flag } from 'lucide-react';
+import { Plus, CheckCircle2, Circle, Clock, Building2, User, X, Calendar, Flag, HelpCircle } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import type { Task } from '../../utils/tasks';
 import {
@@ -12,6 +12,7 @@ import {
     PRIORITY_CONFIG,
     CATEGORY_CONFIG
 } from '../../utils/tasks';
+import { EmployeeTasksTutorial } from '../../components/tutorial/EmployeeTasksTutorial';
 
 type FilterType = 'all' | 'personal' | 'team';
 type StatusFilter = 'all' | 'pending' | 'in_progress' | 'completed';
@@ -23,6 +24,7 @@ export const EmployeeTasks: React.FC = () => {
     const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
     const [showModal, setShowModal] = useState(false);
     const [editingTask, setEditingTask] = useState<Task | null>(null);
+    const [forceRunTutorial, setForceRunTutorial] = useState(false);
 
     // Demo team ID - in production this would come from user data
     const teamId = 'demo-team-marketing';
@@ -111,21 +113,34 @@ export const EmployeeTasks: React.FC = () => {
 
     return (
         <div className="p-4 md:p-8 max-w-7xl mx-auto">
+            {/* Tutorial Onboarding */}
+            <EmployeeTasksTutorial forceRun={forceRunTutorial} onResetComplete={() => setForceRunTutorial(false)} />
+
             {/* Header with Stats */}
             <div className="mb-8">
                 <div className="flex items-center justify-between mb-4">
                     <h1 className="text-3xl font-bold text-slate-900">Mis Tareas</h1>
-                    <button
-                        onClick={handleCreateTask}
-                        className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-                    >
-                        <Plus className="w-5 h-5" />
-                        Nueva Tarea
-                    </button>
+                    <div className="flex items-center gap-3">
+                        <button
+                            onClick={() => setForceRunTutorial(true)}
+                            className="flex items-center gap-1 text-xs text-slate-400 hover:text-purple-600 transition-colors"
+                        >
+                            <HelpCircle size={14} />
+                            Ver tutorial
+                        </button>
+                        <button
+                            id="tour-emp-tasks-new-btn"
+                            onClick={handleCreateTask}
+                            className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                        >
+                            <Plus className="w-5 h-5" />
+                            Nueva Tarea
+                        </button>
+                    </div>
                 </div>
 
                 {/* Stats Cards */}
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div id="tour-emp-tasks-stats" className="grid grid-cols-2 md:grid-cols-4 gap-4">
                     <div className="bg-white border border-slate-200 rounded-lg p-4">
                         <div className="text-sm text-slate-600 mb-1">Total</div>
                         <div className="text-2xl font-bold text-slate-900">{stats.total}</div>
@@ -146,7 +161,7 @@ export const EmployeeTasks: React.FC = () => {
             </div>
 
             {/* Filters */}
-            <div className="mb-6 space-y-4">
+            <div id="tour-emp-tasks-filters" className="mb-6 space-y-4">
                 {/* Type Filters */}
                 <div className="flex gap-2">
                     <button
@@ -202,7 +217,7 @@ export const EmployeeTasks: React.FC = () => {
             </div>
 
             {/* Tasks List */}
-            <div className="space-y-3">
+            <div id="tour-emp-tasks-list" className="space-y-3">
                 {filteredTasks.length === 0 ? (
                     <div className="text-center py-16 bg-slate-50 rounded-lg border-2 border-dashed border-slate-300">
                         <Circle className="w-16 h-16 text-slate-400 mx-auto mb-4" />

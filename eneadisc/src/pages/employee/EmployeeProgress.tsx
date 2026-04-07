@@ -1,14 +1,16 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { getEnneagramResult, hasCompletedQuestionnaire } from '../../utils/calculateEnneagram';
 import { ENNEAGRAM_TYPES, getAllEnneagramTypes } from '../../data/enneagramData';
 import { getCheckIns, getCheckInsFromLastDays, getAverageMoodScore, MOOD_CONFIG } from '../../utils/checkIns';
 import { getTaskStats } from '../../utils/tasks';
 import { getTeamStats } from '../../utils/teamCollaboration';
-import { Lock, TrendingUp, Target, Zap, CheckCircle2, Heart, Users, BarChart3, Plus } from 'lucide-react';
+import { Lock, TrendingUp, Target, Zap, CheckCircle2, Heart, Users, BarChart3, Plus, HelpCircle } from 'lucide-react';
 import { Button } from '../../components/ui/Button';
+import { EmployeeProgressTutorial } from '../../components/tutorial/EmployeeProgressTutorial';
 
 export const EmployeeProgress: React.FC = () => {
+    const [forceRunTutorial, setForceRunTutorial] = useState(false);
     const { user } = useAuth();
     const hasCompleted = user ? hasCompletedQuestionnaire(user.id) : false;
     const result = user ? getEnneagramResult(user.id) : null;
@@ -94,6 +96,9 @@ export const EmployeeProgress: React.FC = () => {
 
     return (
         <div className="p-4 md:p-8 max-w-7xl mx-auto bg-slate-50 min-h-screen">
+            {/* Tutorial Onboarding */}
+            <EmployeeProgressTutorial forceRun={forceRunTutorial} onResetComplete={() => setForceRunTutorial(false)} />
+
             {/* Header con botón de acción rápida */}
             <div className="mb-8 flex items-center justify-between">
                 <div>
@@ -103,16 +108,26 @@ export const EmployeeProgress: React.FC = () => {
                     </h1>
                     <p className="text-slate-600">Tu evolución impulsada por check-ins, tareas y colaboración</p>
                 </div>
-                <Button
-                    onClick={() => window.location.href = '/dashboard/employee/checkins'}
-                    className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700"
-                >
-                    <Plus className="mr-2 h-4 w-4" /> Nuevo Check-in
-                </Button>
+                <div className="flex items-center gap-3">
+                    <button
+                        onClick={() => setForceRunTutorial(true)}
+                        className="flex items-center gap-1 text-xs text-slate-400 hover:text-purple-600 transition-colors"
+                    >
+                        <HelpCircle size={14} />
+                        Ver tutorial
+                    </button>
+                    <Button
+                        id="tour-emp-progress-checkin-btn"
+                        onClick={() => window.location.href = '/dashboard/employee/checkins'}
+                        className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700"
+                    >
+                        <Plus className="mr-2 h-4 w-4" /> Nuevo Check-in
+                    </Button>
+                </div>
             </div>
 
             {/* Stats Cards - Métricas Principales */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+            <div id="tour-emp-progress-stats" className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
                 <div className="bg-white rounded-xl p-4 md:p-6 shadow-md hover:shadow-lg transition-shadow">
                     <div className="flex items-center justify-between mb-2">
                         <Heart className="text-pink-500" size={24} />
@@ -166,7 +181,7 @@ export const EmployeeProgress: React.FC = () => {
 
             <div className="grid lg:grid-cols-2 gap-8 mb-8">
                 {/* Estado Emocional */}
-                <div className="bg-white rounded-xl p-6 md:p-8 shadow-lg">
+                <div id="tour-emp-progress-mood" className="bg-white rounded-xl p-6 md:p-8 shadow-lg">
                     <div className="flex items-center justify-between mb-6">
                         <div>
                             <h2 className="text-xl font-bold text-slate-900">Estado Emocional</h2>
@@ -253,7 +268,7 @@ export const EmployeeProgress: React.FC = () => {
                 </div>
 
                 {/* Productividad - Tareas */}
-                <div className="bg-white rounded-xl p-6 md:p-8 shadow-lg">
+                <div id="tour-emp-progress-tasks" className="bg-white rounded-xl p-6 md:p-8 shadow-lg">
                     <div className="flex items-center justify-between mb-6">
                         <div>
                             <h2 className="text-xl font-bold text-slate-900">Productividad</h2>
@@ -352,7 +367,7 @@ export const EmployeeProgress: React.FC = () => {
             {/* Radar Chart & Team Collaboration */}
             <div className="grid lg:grid-cols-2 gap-8 mb-8">
                 {/* Radar Chart */}
-                <div className="bg-white rounded-xl p-6 md:p-8 shadow-lg">
+                <div id="tour-emp-progress-radar" className="bg-white rounded-xl p-6 md:p-8 shadow-lg">
                     <h2 className="text-xl font-bold text-slate-900 mb-2">Distribución de Eneatipos</h2>
                     <p className="text-sm text-slate-500 mb-6">Tu perfil a través de los 9 tipos</p>
 

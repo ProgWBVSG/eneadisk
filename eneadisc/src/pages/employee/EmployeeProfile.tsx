@@ -1,10 +1,12 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { getEnneagramResult, hasCompletedQuestionnaire } from '../../utils/calculateEnneagram';
 import { ENNEAGRAM_TYPES } from '../../data/enneagramData';
-import { Heart, AlertTriangle, TrendingUp, Target, Users, Lock } from 'lucide-react';
+import { Heart, AlertTriangle, TrendingUp, Target, Users, Lock, HelpCircle } from 'lucide-react';
+import { EmployeeTutorial } from '../../components/tutorial/EmployeeTutorial';
 
 export const EmployeeProfile: React.FC = () => {
+    const [forceRunTutorial, setForceRunTutorial] = useState(false);
     const { user } = useAuth();
     const hasCompleted = user ? hasCompletedQuestionnaire(user.id) : false;
     const result = user ? getEnneagramResult(user.id) : null;
@@ -33,8 +35,22 @@ export const EmployeeProfile: React.FC = () => {
 
     return (
         <div className="p-4 md:p-8 max-w-6xl mx-auto" style={{ backgroundColor: '#f8fafc' }}>
+            {/* Tutorial Onboarding */}
+            <EmployeeTutorial forceRun={forceRunTutorial} onResetComplete={() => setForceRunTutorial(false)} />
+
+            {/* Botón para repetir tutorial */}
+            <div className="flex justify-end mb-2">
+                <button
+                    onClick={() => setForceRunTutorial(true)}
+                    className="flex items-center gap-1 text-xs text-slate-400 hover:text-purple-600 transition-colors"
+                >
+                    <HelpCircle size={14} />
+                    Ver tutorial
+                </button>
+            </div>
             {/* Header Card - Eneatipo Principal */}
             <div
+                id="tour-emp-profile-header"
                 className="rounded-2xl p-8 mb-6 text-white shadow-xl"
                 style={{ background: `linear-gradient(135deg, ${enneagramType.color} 0%, ${enneagramType.color}dd 100%)` }}
             >
@@ -50,7 +66,7 @@ export const EmployeeProfile: React.FC = () => {
             </div>
 
             {/* Motivación y Miedo */}
-            <div className="grid md:grid-cols-2 gap-6 mb-6">
+            <div id="tour-emp-profile-motivation" className="grid md:grid-cols-2 gap-6 mb-6">
                 <div className="bg-white rounded-xl p-6 shadow-md border-l-4 border-green-500">
                     <div className="flex items-center gap-3 mb-3">
                         <div className="p-2 bg-green-100 rounded-lg">
@@ -73,7 +89,7 @@ export const EmployeeProfile: React.FC = () => {
             </div>
 
             {/* Fortalezas */}
-            <div className="bg-white rounded-xl p-6 shadow-md mb-6">
+            <div id="tour-emp-profile-strengths" className="bg-white rounded-xl p-6 shadow-md mb-6">
                 <div className="flex items-center gap-3 mb-4">
                     <TrendingUp className="text-blue-600" size={24} />
                     <h3 className="text-xl font-bold text-slate-900">Tus Fortalezas</h3>
@@ -109,7 +125,7 @@ export const EmployeeProfile: React.FC = () => {
             </div>
 
             {/* Trabajas Mejor Con */}
-            <div className="bg-white rounded-xl p-6 shadow-md mb-6">
+            <div id="tour-emp-profile-compatibility" className="bg-white rounded-xl p-6 shadow-md mb-6">
                 <div className="flex items-center gap-3 mb-4">
                     <Users className="text-purple-600" size={24} />
                     <h3 className="text-xl font-bold text-slate-900">Trabajas Mejor Con</h3>
