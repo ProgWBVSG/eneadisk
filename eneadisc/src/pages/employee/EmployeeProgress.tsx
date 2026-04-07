@@ -8,7 +8,7 @@ import { getTeamStats } from '../../utils/teamCollaboration';
 import { Lock, TrendingUp, Target, Zap, CheckCircle2, Heart, Users, BarChart3, Plus, HelpCircle } from 'lucide-react';
 import { Button } from '../../components/ui/Button';
 import { EmployeeProgressTutorial } from '../../components/tutorial/EmployeeProgressTutorial';
-
+import { Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Tooltip as RechartsTooltip, ResponsiveContainer } from 'recharts';
 export const EmployeeProgress: React.FC = () => {
     const [forceRunTutorial, setForceRunTutorial] = useState(false);
     const { user } = useAuth();
@@ -67,29 +67,7 @@ export const EmployeeProgress: React.FC = () => {
         );
     }
 
-    const maxScore = Math.max(...chartData.map(d => d.score));
-    const centerX = 200;
-    const centerY = 200;
-    const maxRadius = 150;
-
-    const radarPoints = chartData.map((data, index) => {
-        const angle = (index * 2 * Math.PI) / 9 - Math.PI / 2;
-        const radius = (data.score / maxScore) * maxRadius;
-        const x = centerX + radius * Math.cos(angle);
-        const y = centerY + radius * Math.sin(angle);
-        return { x, y, ...data };
-    });
-
-    const radarPolygon = radarPoints.map(p => `${p.x},${p.y}`).join(' ');
-    const gridCircles = [0.25, 0.5, 0.75, 1].map(ratio => ratio * maxRadius);
-
-    const labels = chartData.map((data, index) => {
-        const angle = (index * 2 * Math.PI) / 9 - Math.PI / 2;
-        const labelRadius = maxRadius + 30;
-        const x = centerX + labelRadius * Math.cos(angle);
-        const y = centerY + labelRadius * Math.sin(angle);
-        return { x, y, type: data.type, name: data.name.replace('El ', '') };
-    });
+    const maxScore = Math.max(...chartData.map(d => d.score)) || 1;
 
     // Mood timeline chart (last 7 check-ins)
     const moodTimeline = recentCheckIns.slice(-7).reverse();
@@ -371,28 +349,56 @@ export const EmployeeProgress: React.FC = () => {
                     <h2 className="text-xl font-bold text-slate-900 mb-2">Distribución de Eneatipos</h2>
                     <p className="text-sm text-slate-500 mb-6">Tu perfil a través de los 9 tipos</p>
 
-                    <div className="flex justify-center">
-                        <svg viewBox="0 0 400 400" className="w-full max-w-md">
-                            {gridCircles.map((radius, i) => (
-                                <circle key={i} cx={centerX} cy={centerY} r={radius} fill="none" stroke="#e2e8f0" strokeWidth="1" />
-                            ))}
-                            {chartData.map((_, index) => {
-                                const angle = (index * 2 * Math.PI) / 9 - Math.PI / 2;
-                                const endX = centerX + maxRadius * Math.cos(angle);
-                                const endY = centerY + maxRadius * Math.sin(angle);
-                                return <line key={index} x1={centerX} y1={centerY} x2={endX} y2={endY} stroke="#e2e8f0" strokeWidth="1" />;
-                            })}
-                            <polygon points={radarPolygon} fill={primaryType.color} fillOpacity="0.3" stroke={primaryType.color} strokeWidth="3" />
-                            {radarPoints.map((point, index) => (
-                                <circle key={index} cx={point.x} cy={point.y} r="6" fill={point.type === result.primaryType ? primaryType.color : '#94a3b8'} stroke="white" strokeWidth="2" />
-                            ))}
-                            {labels.map((label, index) => (
-                                <g key={index}>
-                                    <circle cx={label.x} cy={label.y} r="18" fill={chartData[index].color} opacity="0.9" />
-                                    <text x={label.x} y={label.y} textAnchor="middle" dominantBaseline="middle" fill="white" fontSize="14" fontWeight="bold">{label.type}</text>
-                                </g>
-                            ))}
-                        </svg>
+                    <div className="h-[350px] w-full flex justify-center -mt-6">
+                        <ResponsiveContainer width="100%" height="100%">
+                            <RadarChart cx="50%" cy="50%" outerRadius="70%" data={chartData}>
+                                <PolarGrid stroke="#e2e8f0" />
+                                <PolarAngleAxis 
+                                    dataKey="type" 
+                                    tick={(props: any) => {
+                                        const { payload, x, y } = props;
+                                        const data = chartData.find(d => d.type === payload.value);
+                                        return (
+                                            <g>
+                                                <circle cx={x} cy={y} r="14" fill={data?.color || "#94a3b8"} opacity="0.9" />
+                                                <text x={x} y={y} textAnchor="middle" dominantBaseline="middle" fill="white" fontSize="12" fontWeight="bold">
+                                                    {payload.value}
+                                                </text>
+                                            </g>
+                                        );
+                                    }} 
+                                />
+                                <PolarRadiusAxis angle={90} domain={[0, maxScore]} tick={false} axisLine={false} />
+                                <Radar 
+                                    name="Puntaje" 
+                                    dataKey="score" 
+                                    stroke={primaryType?.color || "#9333ea"} 
+                                    strokeWidth={2}
+                                    fill={primaryType?.color || "#9333ea"} 
+                                    fillOpacity={0.4} 
+                                    dot={{ r: 4, fill: "white", strokeWidth: 2, stroke: primaryType?.color || "#9333ea" }}
+                                    activeDot={{ r: 6, fill: primaryType?.color || "#9333ea", strokeWidth: 0 }}
+                                />
+                                <RechartsTooltip 
+                                    content={({ active, payload }) => {
+                                        if (active && payload && payload.length) {
+                                            const data = payload[0].payload;
+                                            return (
+                                                <div className="bg-white p-3 border border-slate-200 shadow-xl rounded-lg z-50 relative outline-none ring-0">
+                                                    <div className="flex items-center gap-2 mb-1">
+                                                        <div className="w-3 h-3 rounded-full" style={{ backgroundColor: data.color }}></div>
+                                                        <span className="font-bold text-slate-800">Tipo {data.type}: {data.name}</span>
+                                                    </div>
+                                                    <p className="text-slate-600 text-sm">Puntaje ponderado: <span className="font-semibold text-slate-900">{Number(data.score).toFixed(1)}</span></p>
+                                                    <p className="text-slate-500 text-xs mt-0.5">Compatibilidad con tu estilo: {Number(data.percentage).toFixed(1)}%</p>
+                                                </div>
+                                            );
+                                        }
+                                        return null;
+                                    }}
+                                />
+                            </RadarChart>
+                        </ResponsiveContainer>
                     </div>
                 </div>
 
