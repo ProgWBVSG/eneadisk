@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Send, Bot, Sparkles, AlertCircle, Calendar } from 'lucide-react';
+import { Send, Bot, Sparkles, AlertCircle } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { getCheckInsFromLastDays } from '../../utils/checkIns';
 import { getTaskStats } from '../../utils/tasks';
@@ -12,22 +12,22 @@ import type { Message, SuggestedPrompt } from '../../types/ai';
 
 const EMPLOYEE_PROMPTS: SuggestedPrompt[] = [
     {
-        title: "Analizar mi Eneatipo",
-        description: "¿Cómo mi personalidad afecta mi forma de trabajar?",
-        prompt: "Dime cómo mi Eneatipo principal influye en mi productividad y cuáles áreas debería cuidar.",
-        category: "growth"
+        id: '1',
+        text: "Dime cómo mi Eneatipo influye en mi productividad.",
+        icon: "🎯",
+        category: "analysis"
     },
     {
-        title: "Manejar estrés laboral",
-        description: "Consejos para descompresión emocional",
-        prompt: "Siento estrés últimamente por la carga de tareas. Dame tácticas específicas para mi eneatipo para evitar el burnout.",
-        category: "team"
+        id: '2',
+        text: "Siento estrés últimamente. Dame tácticas para evitar el burnout.",
+        icon: "🧘‍♀️",
+        category: "help"
     },
     {
-        title: "Mejorar comunicación",
-        description: "Aprende a comunicarte mejor con tu equipo",
-        prompt: "¿Cómo puedo comunicar mejor mis ideas en el equipo y evitar malentendidos?",
-        category: "management"
+        id: '3',
+        text: "¿Cómo puedo comunicar mejor mis ideas en el equipo?",
+        icon: "🤝",
+        category: "help"
     }
 ];
 
