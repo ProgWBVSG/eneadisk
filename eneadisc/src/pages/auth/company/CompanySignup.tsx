@@ -86,9 +86,9 @@ export const CompanySignup: React.FC = () => {
   };
 
   // ── Step 2: collect company details → signUp → show OTP ──
-  const onStep2 = async (data: Step2Data) => {
+  const onStep2 = async (dataForm2: Step2Data) => {
     setServerError(null);
-    const all = { ...formData, ...data };
+    const all = { ...formData, ...dataForm2 };
     setFormData(all);
 
     const { error } = await supabase.auth.signUp({

@@ -60,14 +60,14 @@ export const EmployeeSignup: React.FC = () => {
   const formOtp = useForm<OtpData>({ resolver: zodResolver(otpSchema) });
 
   // ── Step 1: validate invite code + signUp → show OTP ──
-  const onStep1 = async (data: Step1Data) => {
+  const onStep1 = async (dataForm1: Step1Data) => {
     setServerError(null);
 
     // Validate invite code
     const { data: company, error: companyError } = await supabase
       .from('companies')
       .select('id, name')
-      .eq('invite_code', data.inviteCode.toUpperCase())
+      .eq('invite_code', dataForm1.inviteCode.toUpperCase())
       .single();
 
     if (companyError || !company) {
@@ -77,12 +77,12 @@ export const EmployeeSignup: React.FC = () => {
 
     // Create auth user
     const { error: signupError } = await supabase.auth.signUp({
-      email: data.email,
-      password: data.password,
+      email: dataForm1.email,
+      password: dataForm1.password,
       options: {
         data: {
           role: 'employee',
-          full_name: data.name,
+          full_name: dataForm1.name,
           company_id: company.id,
         },
       },
@@ -97,7 +97,7 @@ export const EmployeeSignup: React.FC = () => {
       return;
     }
 
-    setFormData({ ...data, companyId: company.id });
+    setFormData({ ...dataForm1, companyId: company.id });
     setStep(2);
   };
 
