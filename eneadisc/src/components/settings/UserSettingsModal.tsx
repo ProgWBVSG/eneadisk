@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { X, User, Settings, Shield, MessageSquare, HelpCircle, FileText, Moon, Sun, Camera, Lock } from 'lucide-react';
 import { Button } from '../ui/Button';
@@ -13,7 +13,43 @@ type TabType = 'account' | 'preferences' | 'help' | 'legal';
 export const UserSettingsModal: React.FC<UserSettingsModalProps> = ({ isOpen, onClose }) => {
     const { user } = useAuth();
     const [activeTab, setActiveTab] = useState<TabType>('account');
-    const [theme, setTheme] = useState<'light' | 'dark'>('light');
+    const [theme, setTheme] = useState<'light' | 'dark'>(
+        () => (localStorage.getItem('app-theme') as 'light' | 'dark') || 'light'
+    );
+    const [avatarUrl, setAvatarUrl] = useState<string | null>(localStorage.getItem('userAvatar'));
+    const fileInputRef = useRef<HTMLInputElement>(null);
+
+    useEffect(() => {
+        const handleAvatarChange = () => {
+            setAvatarUrl(localStorage.getItem('userAvatar'));
+        };
+        window.addEventListener('avatarChanged', handleAvatarChange);
+        return () => window.removeEventListener('avatarChanged', handleAvatarChange);
+    }, []);
+
+    const handleThemeChange = (newTheme: 'light' | 'dark') => {
+        setTheme(newTheme);
+        localStorage.setItem('app-theme', newTheme);
+        if (newTheme === 'dark') {
+            document.documentElement.classList.add('dark');
+        } else {
+            document.documentElement.classList.remove('dark');
+        }
+    };
+
+    const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onloadend = () => {
+                const base64String = reader.result as string;
+                localStorage.setItem('userAvatar', base64String);
+                setAvatarUrl(base64String);
+                window.dispatchEvent(new Event('avatarChanged'));
+            };
+            reader.readAsDataURL(file);
+        }
+    };
 
     if (!isOpen) return null;
 
@@ -95,14 +131,21 @@ export const UserSettingsModal: React.FC<UserSettingsModalProps> = ({ isOpen, on
                                 </div>
                                 
                                 <div className="flex items-center gap-6 p-4 border border-slate-200 rounded-xl bg-slate-50/50">
-                                    <div className="relative group">
-                                        <div className="w-24 h-24 bg-purple-100 rounded-full flex items-center justify-center text-3xl font-bold text-purple-600 overflow-hidden">
-                                            {user?.name?.charAt(0).toUpperCase() || 'U'}
+                                    <div className="relative group cursor-pointer" onClick={() => fileInputRef.current?.click()}>
+                                        <div className="w-24 h-24 bg-purple-100 rounded-full flex items-center justify-center text-3xl font-bold text-purple-600 overflow-hidden bg-cover bg-center" style={{ backgroundImage: avatarUrl ? `url(${avatarUrl})` : 'none' }}>
+                                            {!avatarUrl && (user?.name?.charAt(0).toUpperCase() || 'U')}
                                         </div>
-                                        <button className="absolute inset-0 bg-black/40 rounded-full flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity z-10 cursor-pointer">
+                                        <div className="absolute inset-0 bg-black/40 rounded-full flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity z-10">
                                             <Camera className="text-white mb-1" size={20} />
                                             <span className="text-white text-xs font-medium">Cambiar</span>
-                                        </button>
+                                        </div>
+                                        <input 
+                                            type="file" 
+                                            accept="image/*" 
+                                            className="hidden" 
+                                            ref={fileInputRef} 
+                                            onChange={handlePhotoUpload} 
+                                        />
                                     </div>
                                     <div className="flex-1">
                                         <label className="block text-sm font-medium text-slate-700 mb-1">Nombre Completo</label>
@@ -152,13 +195,13 @@ export const UserSettingsModal: React.FC<UserSettingsModalProps> = ({ isOpen, on
                                         </div>
                                         <div className="flex items-center gap-2 bg-slate-100 p-1 rounded-lg">
                                             <button 
-                                                onClick={() => setTheme('light')}
+                                                onClick={() => handleThemeChange('light')}
                                                 className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition-all ${theme === 'light' ? 'bg-white shadow-sm text-slate-900' : 'text-slate-500 hover:text-slate-700'}`}
                                             >
                                                 <Sun size={16} /> Claro
                                             </button>
                                             <button 
-                                                onClick={() => setTheme('dark')}
+                                                onClick={() => handleThemeChange('dark')}
                                                 className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition-all ${theme === 'dark' ? 'bg-white shadow-sm text-slate-900' : 'text-slate-500 hover:text-slate-700'}`}
                                             >
                                                 <Moon size={16} /> Oscuro

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { Home, TrendingUp, Bot, CheckSquare, Users, ClipboardCheck, BarChart3, BookOpen, CreditCard, LogOut, Menu, X, Settings } from 'lucide-react';
@@ -9,6 +9,15 @@ export const Sidebar: React.FC = () => {
     const { user, logout } = useAuth();
     const [isMobileOpen, setIsMobileOpen] = useState(false);
     const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+    const [avatarUrl, setAvatarUrl] = useState<string | null>(localStorage.getItem('userAvatar'));
+
+    useEffect(() => {
+        const handleAvatarChange = () => {
+            setAvatarUrl(localStorage.getItem('userAvatar'));
+        };
+        window.addEventListener('avatarChanged', handleAvatarChange);
+        return () => window.removeEventListener('avatarChanged', handleAvatarChange);
+    }, []);
     const isEmployee = user?.role === 'employee';
 
     const employeeItems = [
@@ -96,10 +105,12 @@ export const Sidebar: React.FC = () => {
                         onClick={() => setIsSettingsOpen(true)}
                         className="w-full flex items-center gap-3 mb-3 p-2 rounded-lg hover:bg-slate-50 transition-colors text-left group"
                     >
-                        <div className="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center shrink-0">
-                            <span className="text-purple-600 font-bold text-lg">
-                                {user?.name?.charAt(0).toUpperCase() || 'U'}
-                            </span>
+                        <div className="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center shrink-0 bg-cover bg-center" style={{ backgroundImage: avatarUrl ? `url(${avatarUrl})` : 'none' }}>
+                            {!avatarUrl && (
+                                <span className="text-purple-600 font-bold text-lg">
+                                    {user?.name?.charAt(0).toUpperCase() || 'U'}
+                                </span>
+                            )}
                         </div>
                         <div className="flex-1 min-w-0">
                             <p className="text-sm font-medium text-slate-900 truncate group-hover:text-purple-600 transition-colors">{user?.name || 'Usuario'}</p>
