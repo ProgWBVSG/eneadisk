@@ -27,7 +27,7 @@ const step2Schema = z.object({
 });
 
 const otpSchema = z.object({
-  token: z.string().length(6, 'El código tiene 6 dígitos'),
+  token: z.string().min(6, 'El código debe tener al menos 6 caracteres'),
 });
 
 type Step1Data = z.infer<typeof step1Schema>;
@@ -241,7 +241,7 @@ export const CompanySignup: React.FC = () => {
               <div>
                 <p className="text-sm font-medium text-blue-900">Revisá tu email</p>
                 <p className="text-xs text-blue-700 mt-0.5">
-                  Enviamos un código de 6 dígitos a <strong>{formData.email}</strong>. Puede tardar unos segundos.
+                  Enviamos un código de verificación a <strong>{formData.email}</strong>. Puede tardar unos segundos.
                 </p>
               </div>
             </div>
@@ -249,9 +249,8 @@ export const CompanySignup: React.FC = () => {
               <Input
                 label="Código de verificación"
                 {...formOtp.register('token')}
-                placeholder="123456"
-                className="text-center text-2xl tracking-widest font-mono"
-                maxLength={6}
+                placeholder="Ej: 123456"
+                className="text-center text-xl tracking-widest font-mono"
                 error={formOtp.formState.errors.token?.message}
               />
               {serverError && <p className="text-sm text-red-500 text-center">{serverError}</p>}
