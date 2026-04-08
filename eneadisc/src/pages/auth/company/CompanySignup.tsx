@@ -1,11 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '../../../components/ui/Button';
 import { Input } from '../../../components/ui/Input';
-import { Building2, ChevronLeft, CheckCircle, Copy } from 'lucide-react';
+import { Building2, ChevronLeft, CheckCircle, Copy, Mail } from 'lucide-react';
 import { supabase } from '../../../lib/supabase';
 import { useAuth } from '../../../context/AuthContext';
 
@@ -26,8 +26,13 @@ const step2Schema = z.object({
   country: z.string().min(2, 'País requerido'),
 });
 
+const otpSchema = z.object({
+  token: z.string().min(6, 'Ingresá el código que te enviamos'),
+});
+
 type Step1Data = z.infer<typeof step1Schema>;
 type Step2Data = z.infer<typeof step2Schema>;
+type OtpData = z.infer<typeof otpSchema>;
 
 function generateInviteCode(): string {
   const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
@@ -40,28 +45,39 @@ function generateInviteCode(): string {
 export const CompanySignup: React.FC = () => {
   const navigate = useNavigate();
   const { refreshUser } = useAuth();
+
+  // step 1 = datos personales, step 2 = datos empresa, step 3 = OTP, step 4 = éxito
   const [step, setStep] = useState(1);
   const [formData, setFormData] = useState<Partial<Step1Data & Step2Data>>({});
   const [serverError, setServerError] = useState<string | null>(null);
   const [inviteCode, setInviteCode] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
+  const [resendTimer, setResendTimer] = useState(0);
+  const [isResending, setIsResending] = useState(false);
 
   const form1 = useForm<Step1Data>({ resolver: zodResolver(step1Schema) });
   const form2 = useForm<Step2Data>({ resolver: zodResolver(step2Schema) });
+  const formOtp = useForm<OtpData>({ resolver: zodResolver(otpSchema) });
 
-  // ── Step 1: collect base info ────────────────────
+  // Countdown para reenviar OTP
+  useEffect(() => {
+    if (step !== 3 || resendTimer === 0) return;
+    const t = setInterval(() => setResendTimer((p) => p - 1), 1000);
+    return () => clearInterval(t);
+  }, [step, resendTimer]);
+
+  // ── Step 1: datos básicos ────────────────────────
   const onStep1 = (data: Step1Data) => {
     setFormData((p) => ({ ...p, ...data }));
     setStep(2);
   };
 
-  // ── Step 2: signUp → immediate session (no OTP) ──
+  // ── Step 2: datos empresa → signUp → envía OTP ──
   const onStep2 = async (dataForm2: Step2Data) => {
     setServerError(null);
     const all = { ...formData, ...dataForm2 };
     setFormData(all);
 
-    // 1. Sign up (email confirmation disabled in Supabase dashboard)
     const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
       email: all.email!,
       password: all.password!,
@@ -71,32 +87,54 @@ export const CompanySignup: React.FC = () => {
     });
 
     if (signUpError) {
-      if (signUpError.message.toLowerCase().includes('already registered') ||
-          signUpError.message.toLowerCase().includes('user already exists')) {
-        setServerError('Este email ya está registrado. Por favor iniciá sesión.');
+      if (
+        signUpError.message.toLowerCase().includes('already registered') ||
+        signUpError.message.toLowerCase().includes('user already exists')
+      ) {
+        setServerError('Este email ya tiene una cuenta. Por favor iniciá sesión.');
       } else {
         setServerError(signUpError.message);
       }
       return;
     }
 
-    // Supabase returns a user immediately when email confirmation is disabled
-    const userId = signUpData.user?.id;
-    if (!userId) {
-      setServerError('Error al crear la cuenta. Intentá de nuevo.');
+    // Supabase devuelve identities vacío si el email YA existe (no es un error, pero signUpData.user existe)
+    // Detectar caso "repeated signup" por identities vacías
+    if (signUpData.user && signUpData.user.identities && signUpData.user.identities.length === 0) {
+      setServerError('Este email ya tiene una cuenta. Por favor iniciá sesión o recuperá tu contraseña.');
       return;
     }
 
+    // OTP enviado exitosamente
+    setResendTimer(30);
+    setStep(3);
+  };
+
+  // ── Step 3: verificar OTP → crear empresa + perfil ──
+  const onOtp = async (data: OtpData) => {
+    setServerError(null);
+
+    const { data: verifyData, error: verifyError } = await supabase.auth.verifyOtp({
+      email: formData.email!,
+      token: data.token,
+      type: 'signup',
+    });
+
+    if (verifyError || !verifyData.user) {
+      setServerError('Código incorrecto o expirado. Revisá tu email e intentá de nuevo.');
+      return;
+    }
+
+    const userId = verifyData.user.id;
     const code = generateInviteCode();
 
-    // 2. Create company
     const { data: company, error: companyError } = await supabase
       .from('companies')
       .insert({
-        name: all.companyName,
-        industry: all.industry,
-        size: all.size,
-        country: all.country,
+        name: formData.companyName,
+        industry: formData.industry,
+        size: formData.size,
+        country: formData.country,
         invite_code: code,
         owner_id: userId,
       })
@@ -104,51 +142,39 @@ export const CompanySignup: React.FC = () => {
       .single();
 
     if (companyError) {
-      // Company may exist if user re-submitted — try fetching
-      const { data: existingCompany } = await supabase
-        .from('companies')
-        .select()
-        .eq('owner_id', userId)
-        .single();
-
-      if (!existingCompany) {
-        setServerError('Error al crear la empresa. Intentá de nuevo.');
-        return;
-      }
-      // Use the existing company
-      await supabase.from('profiles').upsert({
-        id: userId,
-        role: 'company_admin',
-        company_id: existingCompany.id,
-        full_name: all.companyName,
-        email: all.email,
-      });
-      await refreshUser();
-      setInviteCode(existingCompany.invite_code);
-      setStep(3);
+      setServerError('Error al crear la empresa. Intentá de nuevo.');
       return;
     }
 
-    // 3. Upsert profile
     await supabase.from('profiles').upsert({
       id: userId,
       role: 'company_admin',
       company_id: company.id,
-      full_name: all.companyName,
-      email: all.email,
+      full_name: formData.companyName,
+      email: formData.email,
     });
 
     await refreshUser();
     setInviteCode(code);
-    setStep(3);
+    setStep(4);
+  };
+
+  // ── Reenviar OTP ─────────────────────────────────
+  const handleResend = async () => {
+    if (resendTimer > 0 || isResending) return;
+    setIsResending(true);
+    setServerError(null);
+    const { error } = await supabase.auth.resend({ type: 'signup', email: formData.email! });
+    setIsResending(false);
+    if (error) setServerError('Error al reenviar. Intentá de nuevo.');
+    else setResendTimer(30);
   };
 
   const copyCode = () => {
-    if (inviteCode) {
-      navigator.clipboard.writeText(inviteCode);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    }
+    if (!inviteCode) return;
+    navigator.clipboard.writeText(inviteCode);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
   };
 
   return (
@@ -168,21 +194,32 @@ export const CompanySignup: React.FC = () => {
             <Building2 size={24} />
           </div>
           <h1 className="text-2xl font-bold text-slate-900">Crear Cuenta Empresa</h1>
-          {step < 3 && <p className="text-slate-500 mt-1">Paso {step} de 2</p>}
+          {step < 4 && (
+            <div className="mt-3 flex justify-center gap-2">
+              {[1, 2, 3].map((s) => (
+                <div
+                  key={s}
+                  className={`h-2 w-8 rounded-full transition-colors ${
+                    s < step ? 'bg-blue-600' : s === step ? 'bg-blue-400' : 'bg-slate-200'
+                  }`}
+                />
+              ))}
+            </div>
+          )}
         </div>
 
-        {/* STEP 1 ─ Datos básicos */}
+        {/* STEP 1 ── Datos básicos */}
         {step === 1 && (
           <form onSubmit={form1.handleSubmit(onStep1)} className="space-y-4">
             <Input label="Nombre de la Empresa" {...form1.register('companyName')} error={form1.formState.errors.companyName?.message} />
             <Input label="Email Corporativo" type="email" {...form1.register('email')} error={form1.formState.errors.email?.message} />
-            <Input label="Contraseña" type="password" {...form1.register('password')} error={form1.formState.errors.password?.message} />
+            <Input label="Contraseña (mín. 8 caracteres)" type="password" {...form1.register('password')} error={form1.formState.errors.password?.message} />
             <Input label="Confirmar Contraseña" type="password" {...form1.register('confirmPassword')} error={form1.formState.errors.confirmPassword?.message} />
             <Button type="submit" className="w-full" size="lg">Siguiente →</Button>
           </form>
         )}
 
-        {/* STEP 2 ─ Detalles empresa */}
+        {/* STEP 2 ── Datos empresa */}
         {step === 2 && (
           <form onSubmit={form2.handleSubmit(onStep2)} className="space-y-4">
             <Input label="Industria / Sector" {...form2.register('industry')} error={form2.formState.errors.industry?.message} />
@@ -206,7 +243,7 @@ export const CompanySignup: React.FC = () => {
             {serverError && <p className="text-sm text-red-500 text-center">{serverError}</p>}
             <div className="flex gap-3 pt-2">
               <Button type="button" variant="outline" onClick={() => setStep(1)} className="w-1/3">
-                <ChevronLeft className="mr-1 h-4 w-4 inline" /> Atrás
+                ← Atrás
               </Button>
               <Button type="submit" className="w-2/3" isLoading={form2.formState.isSubmitting}>
                 Crear Cuenta
@@ -215,12 +252,55 @@ export const CompanySignup: React.FC = () => {
           </form>
         )}
 
-        {/* STEP 3 ─ Éxito + Código invitación */}
-        {step === 3 && inviteCode && (
+        {/* STEP 3 ── Verificación OTP */}
+        {step === 3 && (
+          <div className="space-y-6">
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 flex gap-3 text-left">
+              <Mail size={20} className="text-blue-600 shrink-0 mt-0.5" />
+              <div>
+                <p className="text-sm font-medium text-blue-900">Revisá tu email</p>
+                <p className="text-xs text-blue-700 mt-0.5">
+                  Enviamos un código de verificación a <strong>{formData.email}</strong>
+                </p>
+              </div>
+            </div>
+            <form onSubmit={formOtp.handleSubmit(onOtp)} className="space-y-4">
+              <Input
+                label="Código de verificación"
+                {...formOtp.register('token')}
+                placeholder="Ingresá el código del email"
+                className="text-center text-xl tracking-widest font-mono"
+                error={formOtp.formState.errors.token?.message}
+              />
+              {serverError && <p className="text-sm text-red-500 text-center">{serverError}</p>}
+              <Button
+                type="submit"
+                size="lg"
+                className="w-full"
+                isLoading={formOtp.formState.isSubmitting}
+              >
+                Verificar y Crear Empresa
+              </Button>
+            </form>
+            <div className="text-center text-sm">
+              <button
+                type="button"
+                onClick={handleResend}
+                disabled={resendTimer > 0 || isResending}
+                className={resendTimer > 0 ? 'text-slate-400 cursor-not-allowed' : 'text-blue-600 hover:text-blue-800 font-medium underline'}
+              >
+                {isResending ? 'Enviando...' : resendTimer > 0 ? `Reenviar código en ${resendTimer}s` : 'Reenviar código'}
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* STEP 4 ── Éxito + código de invitación */}
+        {step === 4 && inviteCode && (
           <div className="text-center space-y-6">
             <CheckCircle size={48} className="text-green-500 mx-auto" />
             <div>
-              <h2 className="text-xl font-bold text-slate-900">¡Cuenta creada!</h2>
+              <h2 className="text-xl font-bold text-slate-900">¡Cuenta verificada!</h2>
               <p className="text-slate-500 mt-2 text-sm">
                 Compartí este código con tu equipo para que puedan unirse.
               </p>
@@ -250,7 +330,7 @@ export const CompanySignup: React.FC = () => {
           </div>
         )}
 
-        {step < 3 && (
+        {step < 4 && (
           <div className="mt-6 text-center">
             <button
               onClick={() => navigate('/auth/company/login')}
