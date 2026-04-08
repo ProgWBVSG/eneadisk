@@ -34,12 +34,32 @@ export const ResetPassword: React.FC = () => {
 
   // Detect recovery session from Supabase callback
   useEffect(() => {
+    const searchParams = new URLSearchParams(window.location.search);
+    const hashParams = new URLSearchParams(window.location.hash.substring(1));
+    const errDesc = searchParams.get('error_description') || hashParams.get('error_description');
+    
+    if (errDesc) {
+      setServerError(decodeURIComponent(errDesc).replace(/\+/g, ' '));
+    }
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'PASSWORD_RECOVERY') {
+        setMode('reset');
+      } else if (event === 'SIGNED_IN' && session) {
+        if (window.location.search.includes('code=') || window.location.hash.includes('type=recovery')) {
+          setMode('reset');
+        }
+      }
+    });
+
     const hash = window.location.hash;
     if (hash.includes('type=recovery') || hash.includes('access_token')) {
       supabase.auth.getSession().then(({ data: { session } }) => {
         if (session) setMode('reset');
       });
     }
+
+    return () => subscription.unsubscribe();
   }, []);
 
   const emailForm = useForm<EmailData>({ resolver: zodResolver(emailSchema) });
