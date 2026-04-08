@@ -9,6 +9,7 @@ import { EmployeeLogin } from './pages/auth/employee/EmployeeLogin';
 import { EmployeeSignup } from './pages/auth/employee/EmployeeSignup';
 import { QuestionnaireFlow } from './pages/QuestionnaireFlow';
 import { EmployeeProfile } from './pages/employee/EmployeeProfile';
+import { JoinRequest } from './pages/auth/employee/JoinRequest';
 import { CompanyPanel } from './pages/company/CompanyPanel';
 import { EnneagramLibrary } from './pages/company/EnneagramLibrary';
 import { TeamManagement } from './pages/company/TeamManagement';
@@ -40,6 +41,7 @@ function AppRoutes() {
         <Route path="/auth/company/signup" element={<CompanySignup />} />
         <Route path="/auth/employee/login" element={<EmployeeLogin />} />
         <Route path="/auth/employee/signup" element={<EmployeeSignup />} />
+        <Route path="/join" element={<JoinRequest />} />
       </Route>
 
       {/* Questionnaire (fullscreen, no sidebar) */}

@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Button } from '../../../components/ui/Button';
 import { Input } from '../../../components/ui/Input';
 import { Users, Mail, ChevronLeft } from 'lucide-react';
@@ -28,6 +28,8 @@ type OtpData = z.infer<typeof otpSchema>;
 
 export const EmployeeSignup: React.FC = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const defaultCode = searchParams.get('code') || '';
   const [step, setStep] = useState(1);
   const [formData, setFormData] = useState<Partial<Step1Data & { companyId: string }>>({});
   const [serverError, setServerError] = useState<string | null>(null);
@@ -56,7 +58,10 @@ export const EmployeeSignup: React.FC = () => {
     else setResendTimer(30);
   };
 
-  const form1 = useForm<Step1Data>({ resolver: zodResolver(step1Schema) });
+  const form1 = useForm<Step1Data>({ 
+    resolver: zodResolver(step1Schema),
+    defaultValues: { inviteCode: defaultCode }
+  });
   const formOtp = useForm<OtpData>({ resolver: zodResolver(otpSchema) });
 
   // ── Step 1: validate invite code + signUp → show OTP ──
