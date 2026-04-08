@@ -53,6 +53,15 @@ export const EmployeeLogin: React.FC = () => {
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 text-left">
           <Input label="Email" type="email" {...register('email')} error={errors.email?.message} />
           <Input label="Contraseña" type="password" {...register('password')} error={errors.password?.message} />
+          <div className="text-right">
+            <button
+              type="button"
+              onClick={() => navigate('/auth/reset-password')}
+              className="text-xs text-amber-600 hover:text-amber-700 underline"
+            >
+              ¿Olvidaste tu contraseña?
+            </button>
+          </div>
           {serverError && <p className="text-sm text-red-500 text-center">{serverError}</p>}
           <Button
             type="submit"

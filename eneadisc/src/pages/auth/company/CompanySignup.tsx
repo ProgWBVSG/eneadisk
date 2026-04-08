@@ -1,15 +1,15 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '../../../components/ui/Button';
 import { Input } from '../../../components/ui/Input';
-import { Building2, Mail, ChevronLeft, CheckCircle, Copy } from 'lucide-react';
+import { Building2, ChevronLeft, CheckCircle, Copy } from 'lucide-react';
 import { supabase } from '../../../lib/supabase';
 import { useAuth } from '../../../context/AuthContext';
 
-// ── Schemas ───────────────────────────────────────────────
+// ── Schemas ─────────────────────────────────────────
 const step1Schema = z.object({
   companyName: z.string().min(2, 'Nombre de empresa requerido'),
   email: z.string().email('Email inválido'),
@@ -26,13 +26,8 @@ const step2Schema = z.object({
   country: z.string().min(2, 'País requerido'),
 });
 
-const otpSchema = z.object({
-  token: z.string().min(6, 'El código debe tener al menos 6 caracteres'),
-});
-
 type Step1Data = z.infer<typeof step1Schema>;
 type Step2Data = z.infer<typeof step2Schema>;
-type OtpData = z.infer<typeof otpSchema>;
 
 function generateInviteCode(): string {
   const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
@@ -41,7 +36,7 @@ function generateInviteCode(): string {
   return code;
 }
 
-// ── Component ─────────────────────────────────────────────
+// ── Component ────────────────────────────────────────
 export const CompanySignup: React.FC = () => {
   const navigate = useNavigate();
   const { refreshUser } = useAuth();
@@ -51,47 +46,23 @@ export const CompanySignup: React.FC = () => {
   const [inviteCode, setInviteCode] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
 
-  const [resendTimer, setResendTimer] = useState(30);
-  const [isResending, setIsResending] = useState(false);
-
-  useEffect(() => {
-    let interval: ReturnType<typeof setInterval>;
-    if (step === 3 && resendTimer > 0) {
-      interval = setInterval(() => setResendTimer((p) => p - 1), 1000);
-    }
-    return () => clearInterval(interval);
-  }, [step, resendTimer]);
-
-  const handleResend = async () => {
-    if (resendTimer > 0 || isResending) return;
-    setIsResending(true);
-    setServerError(null);
-    const { error } = await supabase.auth.resend({
-      type: 'signup',
-      email: formData.email!,
-    });
-    setIsResending(false);
-    if (error) setServerError('Error al reenviar: ' + error.message);
-    else setResendTimer(30);
-  };
-
   const form1 = useForm<Step1Data>({ resolver: zodResolver(step1Schema) });
   const form2 = useForm<Step2Data>({ resolver: zodResolver(step2Schema) });
-  const formOtp = useForm<OtpData>({ resolver: zodResolver(otpSchema) });
 
-  // ── Step 1: collect base info (no network call yet) ──────
+  // ── Step 1: collect base info ────────────────────
   const onStep1 = (data: Step1Data) => {
     setFormData((p) => ({ ...p, ...data }));
     setStep(2);
   };
 
-  // ── Step 2: collect company details → signUp → show OTP ──
+  // ── Step 2: signUp → immediate session (no OTP) ──
   const onStep2 = async (dataForm2: Step2Data) => {
     setServerError(null);
     const all = { ...formData, ...dataForm2 };
     setFormData(all);
 
-    const { error } = await supabase.auth.signUp({
+    // 1. Sign up (email confirmation disabled in Supabase dashboard)
+    const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
       email: all.email!,
       password: all.password!,
       options: {
@@ -99,45 +70,33 @@ export const CompanySignup: React.FC = () => {
       },
     });
 
-    if (error) {
-      if (error.message.includes('already registered')) {
-        setServerError('Este email ya está registrado. Iniciá sesión.');
+    if (signUpError) {
+      if (signUpError.message.toLowerCase().includes('already registered') ||
+          signUpError.message.toLowerCase().includes('user already exists')) {
+        setServerError('Este email ya está registrado. Por favor iniciá sesión.');
       } else {
-        setServerError(error.message);
+        setServerError(signUpError.message);
       }
       return;
     }
 
-    setStep(3); // → show OTP screen
-  };
-
-  // ── Step 3: verify OTP → create company + profile ────────
-  const onOtp = async (data: OtpData) => {
-    setServerError(null);
-
-    // Verify the code Supabase sent by email
-    const { data: verifyData, error: verifyError } = await supabase.auth.verifyOtp({
-      email: formData.email!,
-      token: data.token,
-      type: 'signup',
-    });
-
-    if (verifyError || !verifyData.user) {
-      setServerError('Código incorrecto o expirado. Revisá tu email e intentá de nuevo.');
+    // Supabase returns a user immediately when email confirmation is disabled
+    const userId = signUpData.user?.id;
+    if (!userId) {
+      setServerError('Error al crear la cuenta. Intentá de nuevo.');
       return;
     }
 
-    const userId = verifyData.user.id;
     const code = generateInviteCode();
 
-    // Now authenticated → create company
+    // 2. Create company
     const { data: company, error: companyError } = await supabase
       .from('companies')
       .insert({
-        name: formData.companyName,
-        industry: formData.industry,
-        size: formData.size,
-        country: formData.country,
+        name: all.companyName,
+        industry: all.industry,
+        size: all.size,
+        country: all.country,
         invite_code: code,
         owner_id: userId,
       })
@@ -145,21 +104,43 @@ export const CompanySignup: React.FC = () => {
       .single();
 
     if (companyError) {
-      setServerError('Error al crear la empresa. Intentá de nuevo.');
+      // Company may exist if user re-submitted — try fetching
+      const { data: existingCompany } = await supabase
+        .from('companies')
+        .select()
+        .eq('owner_id', userId)
+        .single();
+
+      if (!existingCompany) {
+        setServerError('Error al crear la empresa. Intentá de nuevo.');
+        return;
+      }
+      // Use the existing company
+      await supabase.from('profiles').upsert({
+        id: userId,
+        role: 'company_admin',
+        company_id: existingCompany.id,
+        full_name: all.companyName,
+        email: all.email,
+      });
+      await refreshUser();
+      setInviteCode(existingCompany.invite_code);
+      setStep(3);
       return;
     }
 
-    // Upsert profile (trigger may have created a partial one already)
+    // 3. Upsert profile
     await supabase.from('profiles').upsert({
       id: userId,
       role: 'company_admin',
       company_id: company.id,
-      full_name: formData.companyName,
+      full_name: all.companyName,
+      email: all.email,
     });
 
     await refreshUser();
     setInviteCode(code);
-    setStep(4);
+    setStep(3);
   };
 
   const copyCode = () => {
@@ -180,13 +161,14 @@ export const CompanySignup: React.FC = () => {
         >
           <ChevronLeft size={20} />
         </button>
+
         {/* Header */}
         <div className="mb-8 text-center pt-4">
           <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-blue-100 text-blue-700">
             <Building2 size={24} />
           </div>
           <h1 className="text-2xl font-bold text-slate-900">Crear Cuenta Empresa</h1>
-          {step < 4 && <p className="text-slate-500 mt-1">Paso {step} de 3</p>}
+          {step < 3 && <p className="text-slate-500 mt-1">Paso {step} de 2</p>}
         </div>
 
         {/* STEP 1 ─ Datos básicos */}
@@ -233,46 +215,8 @@ export const CompanySignup: React.FC = () => {
           </form>
         )}
 
-        {/* STEP 3 ─ Verificación OTP */}
-        {step === 3 && (
-          <div className="space-y-6">
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 flex gap-3">
-              <Mail size={20} className="text-blue-600 shrink-0 mt-0.5" />
-              <div>
-                <p className="text-sm font-medium text-blue-900">Revisá tu email</p>
-                <p className="text-xs text-blue-700 mt-0.5">
-                  Enviamos un código de verificación a <strong>{formData.email}</strong>. Puede tardar unos segundos.
-                </p>
-              </div>
-            </div>
-            <form onSubmit={formOtp.handleSubmit(onOtp)} className="space-y-4">
-              <Input
-                label="Código de verificación"
-                {...formOtp.register('token')}
-                placeholder="Ej: 123456"
-                className="text-center text-xl tracking-widest font-mono"
-                error={formOtp.formState.errors.token?.message}
-              />
-              {serverError && <p className="text-sm text-red-500 text-center">{serverError}</p>}
-              <Button type="submit" className="w-full" size="lg" isLoading={formOtp.formState.isSubmitting}>
-                Verificar y Continuar
-              </Button>
-            </form>
-            <div className="text-center mt-4 text-sm">
-              <button
-                type="button"
-                onClick={handleResend}
-                disabled={resendTimer > 0 || isResending}
-                className={resendTimer > 0 ? 'text-slate-400 cursor-not-allowed' : 'text-blue-600 hover:text-blue-800 font-medium underline'}
-              >
-                {isResending ? 'Enviando...' : resendTimer > 0 ? `Reenviar código en ${resendTimer}s` : 'Volver a enviar código'}
-              </button>
-            </div>
-          </div>
-        )}
-
-        {/* STEP 4 ─ Éxito + Código invitación */}
-        {step === 4 && inviteCode && (
+        {/* STEP 3 ─ Éxito + Código invitación */}
+        {step === 3 && inviteCode && (
           <div className="text-center space-y-6">
             <CheckCircle size={48} className="text-green-500 mx-auto" />
             <div>
@@ -306,7 +250,7 @@ export const CompanySignup: React.FC = () => {
           </div>
         )}
 
-        {step < 4 && (
+        {step < 3 && (
           <div className="mt-6 text-center">
             <button
               onClick={() => navigate('/auth/company/login')}
