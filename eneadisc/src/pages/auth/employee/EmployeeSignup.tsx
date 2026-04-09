@@ -93,6 +93,21 @@ export const EmployeeSignup: React.FC = () => {
       return;
     }
 
+    // Si Supabase tiene email confirmation DESACTIVADO, la sesión ya está disponible
+    if (signUpData.session && signUpData.user) {
+      // Crear perfil directamente
+      await supabase.from('profiles').upsert({
+        id: signUpData.user.id,
+        role: 'employee',
+        company_id: company.id,
+        full_name: data.name,
+        email: data.email,
+      });
+      navigate('/questionnaire');
+      return;
+    }
+
+    // Si requiere confirmación por email → ir al OTP
     setFormData({ ...data, companyId: company.id });
     setResendTimer(30);
     setStep(2);

@@ -54,10 +54,8 @@ export const CompanyTracking: React.FC = () => {
 
   useEffect(() => {
     const fetchTracking = async () => {
-       if (employees.length === 0) return;
-       // Si hay equipo seleccionado, filtramos los empleados
        let filteredEmployees = employees;
-       if (selectedTeam !== 'all') {
+       if (selectedTeam !== 'all' && employees.length > 0) {
           const { data: members } = await supabase.from('team_members').select('user_id').eq('team_id', selectedTeam);
           if (members) {
              const memberIds = members.map((m: any) => m.user_id);
@@ -73,12 +71,15 @@ export const CompanyTracking: React.FC = () => {
 
   if (!trackingData) {
     return (
-      <div className="p-8">
-        <h1 className="text-3xl font-bold text-slate-900">Seguimiento y Evolución</h1>
-        <p className="text-slate-600 mb-8 mt-1">Cargando métricas de tu equipo online...</p>
+      <div className="p-8 flex flex-col items-center justify-center min-h-[400px]">
+        <div className="h-10 w-10 animate-spin rounded-full border-4 border-indigo-600 border-t-transparent mb-4" />
+        <p className="text-slate-500 text-sm">Cargando métricas de tu equipo...</p>
       </div>
     );
   }
+
+  const hasEmployees = trackingData.matrix.length > 0;
+
 
   return (
     <div className="p-4 md:p-8 max-w-7xl mx-auto pb-24">
@@ -114,19 +115,37 @@ export const CompanyTracking: React.FC = () => {
         </div>
       </div>
 
-      {/* Renders subcomponents */}
-      <TrackingKPIs kpis={trackingData.kpis} />
-      
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        <div className="lg:col-span-2">
-          <EvolutionChart data={trackingData.chartData} />
+      {/* Estado vacío cuando no hay empleados */}
+      {!hasEmployees ? (
+        <div className="flex flex-col items-center justify-center py-24 text-center">
+          <div className="w-20 h-20 rounded-full bg-indigo-50 flex items-center justify-center mb-6">
+            <Users className="w-10 h-10 text-indigo-400" />
+          </div>
+          <h2 className="text-2xl font-bold text-slate-800 mb-3">Sin empleados aún</h2>
+          <p className="text-slate-500 max-w-md mb-6">
+            Cuando tus empleados se unan a la plataforma y completen check-ins y tareas, sus métricas de evolución y bienestar aparecerán aquí en tiempo real.
+          </p>
+          <p className="text-sm text-indigo-600 font-medium bg-indigo-50 px-4 py-2 rounded-full">
+            💡 Invitá a tu equipo desde el Panel Principal → Copiar link de invitación
+          </p>
         </div>
-        <div className="lg:col-span-1">
-          <StressRadar matrix={trackingData.matrix} />
-        </div>
-      </div>
+      ) : (
+        <>
+          {/* Renders subcomponents */}
+          <TrackingKPIs kpis={trackingData.kpis} />
+          
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <div className="lg:col-span-2">
+              <EvolutionChart data={trackingData.chartData} />
+            </div>
+            <div className="lg:col-span-1">
+              <StressRadar matrix={trackingData.matrix} />
+            </div>
+          </div>
 
-      <EvolutionMatrix matrix={trackingData.matrix} />
+          <EvolutionMatrix matrix={trackingData.matrix} />
+        </>
+      )}
     </div>
   );
 };
