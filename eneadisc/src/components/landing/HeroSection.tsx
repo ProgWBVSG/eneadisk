@@ -1,55 +1,49 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowRight, Activity } from 'lucide-react';
-import { Button } from '../ui/Button';
 
 export const HeroSection: React.FC = () => {
   const navigate = useNavigate();
 
   return (
-    <div className="relative overflow-hidden bg-slate-900 text-white min-h-[85vh] flex items-center">
-      {/* Background decoration */}
-      <div className="absolute inset-0 z-0">
-        <div className="absolute -top-40 -right-40 w-96 h-96 rounded-full bg-blue-600/20 blur-3xl pointer-events-none" />
-        <div className="absolute top-40 -left-20 w-72 h-72 rounded-full bg-amber-500/10 blur-3xl pointer-events-none" />
+    <section className="relative w-full bg-white min-h-[80vh] flex flex-col justify-center items-center py-20 overflow-hidden">
+      {/* Background Subtle Gradients/Artifacts to replace pure flat white */}
+      <div className="absolute inset-x-0 -top-40 -z-10 transform-gpu overflow-hidden blur-3xl sm:-top-80">
+        <div className="relative left-[calc(50%-11rem)] aspect-[1155/678] w-[36.125rem] -translate-x-1/2 rotate-[30deg] bg-gradient-to-tr from-[#f0f0f0] to-[#e2e8f0] opacity-50 sm:left-[calc(50%-30rem)] sm:w-[72.1875rem]" />
       </div>
 
-      <div className="container mx-auto px-6 relative z-10 mt-16 md:mt-0">
-        <div className="max-w-4xl mx-auto text-center space-y-8">
-          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-blue-900/40 border border-blue-700/50 text-blue-300 text-sm font-medium mb-4 animate-[fadeIn_1s_ease-out]">
-            <Activity size={16} />
-            <span>El GPS emocional de tu organización</span>
-          </div>
-          
-          <h1 className="text-5xl md:text-7xl font-extrabold tracking-tight leading-tight animate-[slideUp_0.8s_ease-out]">
-            Descubrí la verdadera <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-amber-400">fuerza de tu equipo</span>
-          </h1>
-          
-          <p className="text-xl md:text-2xl text-slate-300 max-w-2xl mx-auto leading-relaxed animate-[slideUp_1s_ease-out]">
-            Plataforma SaaS integral basada en Eneagrama y DISC para predecir productividad, medir el bienestar emocional y potenciar el talento oculto.
-          </p>
+      <div className="max-w-5xl mx-auto px-6 text-center z-10 flex flex-col items-center">
+        {/* Subtle upper tag */}
+        <div className="mb-8 px-4 py-1.5 border border-slate-200 text-xs font-semibold tracking-widest text-slate-500 uppercase">
+          La nueva era del Management Humano
+        </div>
 
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-8 animate-[fadeIn_1.2s_ease-out]">
-            <Button 
-              size="lg" 
-              className="w-full sm:w-auto bg-blue-600 hover:bg-blue-500 text-white border-none px-8 py-4 h-auto text-lg rounded-xl shadow-[0_0_20px_rgba(37,99,235,0.4)] transition-all hover:scale-105"
-              onClick={() => navigate('/auth/portal')}
-            >
-              Comenzar Ahora <ArrowRight className="ml-2 w-5 h-5" />
-            </Button>
-            <Button 
-              variant="outline"
-              size="lg" 
-              className="w-full sm:w-auto border-slate-700 text-slate-300 hover:text-white hover:bg-slate-800 px-8 py-4 h-auto text-lg rounded-xl transition-all"
-              onClick={() => {
-                document.getElementById('features')?.scrollIntoView({ behavior: 'smooth' });
-              }}
-            >
-              Descubrir más
-            </Button>
-          </div>
+        {/* Heavy typography reminiscent of high-end corporate styling */}
+        <h1 className="text-5xl md:text-7xl font-semibold tracking-tight text-slate-900 leading-[1.1] mb-8 max-w-4xl">
+          Explorá estrategias innovadoras de gestión de talento diseñadas para equipos de alto rendimiento.
+        </h1>
+
+        <p className="text-xl md:text-2xl font-light text-slate-500 max-w-3xl leading-relaxed mb-12">
+          Transformamos la complejidad de la personalidad humana en datos estructurados y medibles. Anticipá conflictos, predecí burn-out y construí ecosistemas de trabajo excepcionales con EneaTeams.
+        </p>
+
+        <div className="flex flex-col sm:flex-row gap-4 items-center">
+          <button 
+            onClick={() => navigate('/auth/portal')}
+            className="px-8 py-4 bg-slate-900 hover:bg-slate-800 text-white text-sm font-medium tracking-wide transition-all w-full sm:w-auto"
+          >
+            Explorar Plataforma
+          </button>
+          
+          <button 
+            onClick={() => {
+                document.getElementById('solutions')?.scrollIntoView({ behavior: 'smooth' });
+            }}
+            className="px-8 py-4 bg-transparent border border-slate-300 text-slate-700 hover:border-slate-900 hover:text-slate-900 text-sm font-medium tracking-wide transition-all w-full sm:w-auto"
+          >
+            Nuestra Metodología
+          </button>
         </div>
       </div>
-    </div>
+    </section>
   );
 };

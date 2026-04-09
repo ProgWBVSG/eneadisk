@@ -1,59 +1,55 @@
 import React from 'react';
-import { Target, TrendingDown, TrendingUp } from 'lucide-react';
 
 export const ValueProposition: React.FC = () => {
   return (
-    <section className="py-24 bg-white" id="problem">
-      <div className="container mx-auto px-6">
-        <div className="text-center max-w-3xl mx-auto mb-16">
-          <h2 className="text-3xl md:text-4xl font-bold text-slate-900 mb-6">¿Por qué los equipos fallan?</h2>
-          <p className="text-lg text-slate-600">
-            La mayoría de las empresas intentan mejorar el rendimiento enfocándose solo en procesos y herramientas técnicas, ignorando el factor humano y las dinamicas de personalidad.
-          </p>
-        </div>
-
-        <div className="grid md:grid-cols-2 gap-12 items-center">
-          {/* Problema */}
-          <div className="bg-slate-50 p-8 md:p-12 rounded-3xl border border-slate-100 relative overflow-hidden group">
-            <div className="absolute top-0 left-0 w-2 h-full bg-red-400 group-hover:bg-red-500 transition-colors" />
-            <TrendingDown className="w-12 h-12 text-red-500 mb-6" />
-            <h3 className="text-2xl font-bold text-slate-900 mb-4">El Enfoque Tradicional</h3>
-            <ul className="space-y-4 text-slate-600">
-              <li className="flex items-start gap-3">
-                <span className="mt-1 font-bold text-red-400 text-xl">×</span>
-                <span className="mt-1.5">Gestión basada en pura intuición y pruebas de ensayo/error.</span>
-              </li>
-              <li className="flex items-start gap-3">
-                <span className="mt-1 font-bold text-red-400 text-xl">×</span>
-                <span className="mt-1.5">Burnout silencioso, detectado recién cuando el talento renuncia.</span>
-              </li>
-              <li className="flex items-start gap-3">
-                <span className="mt-1 font-bold text-red-400 text-xl">×</span>
-                <span className="mt-1.5">Dinámicas tóxicas por incompatibilidad de perfiles.</span>
-              </li>
-            </ul>
+    <section className="py-24 bg-slate-50 border-y border-slate-100" id="solutions">
+      <div className="max-w-7xl mx-auto px-6">
+        <div className="flex flex-col lg:flex-row gap-16 md:gap-24 items-start">
+          
+          <div className="lg:w-1/3">
+            <h2 className="text-3xl font-semibold tracking-tight text-slate-900 mb-6">
+              El Riesgo del Instinto
+            </h2>
+            <p className="text-slate-500 font-light leading-relaxed mb-6">
+              El management tradicional confía ciegamente en la intuición para construir y alinear talento. Este enfoque carece de estructura, provocando fricciones de equipo invisibles, burnout silencioso y fugas de capital humano valioso.
+            </p>
+            <div className="h-[1px] w-12 bg-slate-300"></div>
           </div>
 
-          {/* Solución EneaTeams */}
-          <div className="bg-blue-50 p-8 md:p-12 rounded-3xl border border-blue-100 relative overflow-hidden group shadow-xl shadow-blue-900/5 transform transition-transform hover:-translate-y-2">
-            <div className="absolute top-0 left-0 w-2 h-full bg-blue-500 group-hover:bg-amber-500 transition-colors" />
-            <TrendingUp className="w-12 h-12 text-blue-600 mb-6" />
-            <h3 className="text-2xl font-bold text-slate-900 mb-4">El Enfoque EneaTeams</h3>
-            <ul className="space-y-4 text-slate-700 font-medium">
-              <li className="flex items-start gap-3">
-                <Target className="w-5 h-5 text-amber-500 shrink-0 mt-1.5" />
-                <span>Decisiones 100% basadas en datos psicológicos estructurados.</span>
-              </li>
-              <li className="flex items-start gap-3">
-                <Target className="w-5 h-5 text-amber-500 shrink-0 mt-1.5" />
-                <span>Predicción de desgaste emocional mediante nuestro AI Smart Engine.</span>
-              </li>
-              <li className="flex items-start gap-3">
-                <Target className="w-5 h-5 text-amber-500 shrink-0 mt-1.5" />
-                <span>Match perfecto entre puestos, tareas y mapas de personalidad.</span>
-              </li>
-            </ul>
+          <div className="lg:w-2/3 grid sm:grid-cols-2 gap-x-12 gap-y-16">
+            <div>
+              <span className="text-xs font-bold tracking-widest text-slate-400 uppercase block mb-3">01 / ENFOQUE ENEATEAMS</span>
+              <h3 className="text-xl font-medium text-slate-900 mb-4">Mapeo Psicométrico</h3>
+              <p className="text-slate-500 font-light leading-relaxed">
+                Estandarizamos la estructura psicológica de sus equipos utilizando los marcos analíticos probados de Eneagrama y DISC, transformando perfiles abstractos en datos cuantitativos procesables.
+              </p>
+            </div>
+
+            <div>
+              <span className="text-xs font-bold tracking-widest text-slate-400 uppercase block mb-3">02 / ENFOQUE ENEATEAMS</span>
+              <h3 className="text-xl font-medium text-slate-900 mb-4">Ingeniería Predictiva</h3>
+              <p className="text-slate-500 font-light leading-relaxed">
+                Anticipamos la rotación (desgaste) y los conflictos de liderazgo antes de que se manifiesten. Los algoritmos de mapeo aseguran emparejamientos de alta sinergia entre roles e individuos.
+              </p>
+            </div>
+
+            <div>
+              <span className="text-xs font-bold tracking-widest text-slate-400 uppercase block mb-3">03 / ENFOQUE ENEATEAMS</span>
+              <h3 className="text-xl font-medium text-slate-900 mb-4">Direccionamiento Asistido (IA)</h3>
+              <p className="text-slate-500 font-light leading-relaxed">
+                Proporciona a directores y gerentes tácticas de management personalizadas en tiempo real. Obtenga consejos específicos de liderazgo adaptados a la matriz de personalidad exacta de cada empleado.
+              </p>
+            </div>
+
+            <div>
+              <span className="text-xs font-bold tracking-widest text-slate-400 uppercase block mb-3">04 / ENFOQUE ENEATEAMS</span>
+              <h3 className="text-xl font-medium text-slate-900 mb-4">Adopción sin Fricción</h3>
+              <p className="text-slate-500 font-light leading-relaxed">
+                Diseñado para integrarse al flujo de trabajo corporativo con check-ins no intrusivos que mantienen a la inteligencia organizacional permanentemente actualizada.
+              </p>
+            </div>
           </div>
+
         </div>
       </div>
     </section>

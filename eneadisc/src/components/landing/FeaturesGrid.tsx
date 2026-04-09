@@ -1,53 +1,43 @@
 import React from 'react';
-import { Network, Brain, BarChart3, Clock } from 'lucide-react';
 
 const features = [
   {
-    icon: <BarChart3 className="w-8 h-8 text-blue-500" />,
-    title: 'Analíticas Avanzadas',
-    description: 'Tableros de control con índices de productividad, burn-out y compatibilidad de equipos en tiempo real.'
+    title: 'Analíticas Gerenciales',
+    category: 'Métricas',
+    description: 'Tableros de control sobrios con índices de productividad, burn-out y compatibilidad operativa analizados retrospectivamente y en tiempo real.'
   },
   {
-    icon: <Brain className="w-8 h-8 text-amber-500" />,
-    title: 'Asistente de Inteligencia Artificial',
-    description: 'Recibe consejos gerenciales adaptados a la personalidad exacta de cada miembro de tu equipo.'
+    title: 'Inteligencia Aplicada (IA)',
+    category: 'Sistemas',
+    description: 'Motor conversacional B2B que procesa los datos del organigrama para entregar resoluciones precisas sobre el comportamiento y management del capital humano.'
   },
   {
-    icon: <Network className="w-8 h-8 text-indigo-500" />,
-    title: 'Mapeo de Personalidad',
-    description: 'Identifica la estructura base de tu organización utilizando Eneagrama y modelo DISC.'
-  },
-  {
-    icon: <Clock className="w-8 h-8 text-emerald-500" />,
-    title: 'Check-ins Automatizados',
-    description: 'Seguimiento emocional de baja fricción para anticipar problemas de motivación antes de que sucedan.'
+    title: 'Topología Organizacional',
+    category: 'Estructura',
+    description: 'Visualización clara del entramado de personalidades en cada sector de su compañía, revelando asimetrías de roles y déficits estructurales.'
   }
 ];
 
 export const FeaturesGrid: React.FC = () => {
   return (
-    <section className="py-24 bg-slate-50" id="features">
-      <div className="container mx-auto px-6">
-        <div className="text-center max-w-2xl mx-auto mb-16">
-          <h2 className="text-3xl md:text-4xl font-bold text-slate-900 mb-4">
-            Herramientas diseñadas para el Nuevo Management
+    <section className="py-24 bg-white" id="platform">
+      <div className="max-w-7xl mx-auto px-6">
+        <div className="mb-16">
+          <h2 className="text-3xl font-semibold tracking-tight text-slate-900">
+            Arquitectura de la Plataforma
           </h2>
-          <p className="text-lg text-slate-600">
-            Todo lo que necesitas para liderar equipos sanos, felices y extremadamente productivos.
-          </p>
+          <div className="h-[1px] w-full bg-slate-100 mt-8"></div>
         </div>
 
-        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-8">
+        <div className="grid md:grid-cols-3 gap-x-8 gap-y-12">
           {features.map((feature, index) => (
-            <div 
-              key={index} 
-              className="bg-white p-8 rounded-2xl border border-slate-100 shadow-sm hover:shadow-xl transition-all duration-300 hover:-translate-y-1 group"
-            >
-              <div className="mb-6 p-4 bg-slate-50 rounded-xl inline-block group-hover:bg-blue-50 transition-colors">
-                {feature.icon}
+            <div key={index} className="group cursor-default">
+              <div className="mb-6 overflow-hidden bg-slate-50 aspect-video flex items-center justify-center border border-slate-100 transition-colors group-hover:border-slate-300">
+                <span className="text-slate-300 font-light tracking-widest text-sm uppercase">Interfaz {index + 1}</span>
               </div>
-              <h3 className="text-xl font-bold text-slate-900 mb-3">{feature.title}</h3>
-              <p className="text-slate-600 leading-relaxed">
+              <span className="text-xs font-bold tracking-widest text-slate-400 uppercase block mb-2">{feature.category}</span>
+              <h3 className="text-lg font-medium text-slate-900 mb-3">{feature.title}</h3>
+              <p className="text-slate-500 font-light leading-relaxed">
                 {feature.description}
               </p>
             </div>
