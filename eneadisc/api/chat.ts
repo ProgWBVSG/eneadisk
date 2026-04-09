@@ -6,7 +6,7 @@ interface ChatRequest {
     conversationHistory?: Array<{ role: 'user' | 'assistant'; content: string }>;
 }
 
-const SYSTEM_PROMPT = `Eres "ENEA AI", el asistente inteligente de ENEADISC. Eres un experto de clase mundial en el Eneagrama, el modelo DISC y gestión de equipos de trabajo.
+const SYSTEM_PROMPT = `Eres "ENEA AI", el asistente inteligente de ENEATEAMS. Eres un experto de clase mundial en el Eneagrama, el modelo DISC y gestión de equipos de trabajo.
 
 ## TUS CAPACIDADES (respondé a TODO lo que te pregunten sobre estos temas)
 

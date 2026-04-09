@@ -9,8 +9,20 @@ export const LandingSplit: React.FC = () => {
   return (
     <div className="flex flex-1 w-full flex-col md:flex-row">
       {/* Left Side - Company */}
-      <div className="relative flex flex-col items-center justify-center bg-slate-900 text-white p-6 md:p-16 min-h-[50vh] md:min-h-0 md:w-1/2 transition-all duration-500 ease-in-out hover:md:w-[55%] group">
-        <div className="absolute inset-0 bg-gradient-to-br from-blue-900/60 to-slate-900/90 pointer-events-none" />
+      <div className="relative flex flex-col items-center justify-center bg-slate-900 text-white p-6 md:p-16 min-h-[50vh] md:min-h-0 md:w-1/2 transition-all duration-500 ease-in-out hover:md:w-[55%] overflow-hidden group">
+        {/* Background Video */}
+        <video 
+          autoPlay 
+          loop 
+          muted 
+          playsInline
+          className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+        >
+          <source src="/videos/company-bg.mp4" type="video/mp4" />
+        </video>
+        {/* Overlay for legibility */}
+        <div className="absolute inset-0 bg-slate-900/60 sm:bg-slate-900/50 pointer-events-none" />
+        
         <div className="z-10 text-center max-w-md space-y-6 w-full px-4">
           <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-blue-800/30 backdrop-blur-sm border border-blue-700">
             <Building2 size={36} className="text-blue-200" />
@@ -45,8 +57,20 @@ export const LandingSplit: React.FC = () => {
       </div>
 
       {/* Right Side - Employee */}
-      <div className="relative flex flex-col items-center justify-center bg-slate-50 text-slate-900 p-6 md:p-16 md:border-l border-slate-200 min-h-[50vh] md:min-h-0 md:w-1/2 transition-all duration-500 ease-in-out hover:md:w-[55%]">
-        <div className="absolute inset-0 bg-gradient-to-tl from-amber-50 to-white pointer-events-none" />
+      <div className="relative flex flex-col items-center justify-center bg-slate-50 text-slate-900 p-6 md:p-16 md:border-l border-slate-200 min-h-[50vh] md:min-h-0 md:w-1/2 transition-all duration-500 ease-in-out hover:md:w-[55%] overflow-hidden group">
+        {/* Background Video */}
+        <video 
+          autoPlay 
+          loop 
+          muted 
+          playsInline
+          className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+        >
+          <source src="/videos/employee-bg.mp4" type="video/mp4" />
+        </video>
+        {/* Overlay for legibility */}
+        <div className="absolute inset-0 bg-white/70 sm:bg-white/60 pointer-events-none" />
+        
         <div className="z-10 text-center max-w-md space-y-6 w-full px-4">
           <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-amber-100 border border-amber-200">
             <Users size={36} className="text-amber-700" />

@@ -84,7 +84,7 @@ export const ExportButton: React.FC<ExportButtonProps> = ({
             let csvContent = '';
 
             // Header
-            csvContent += 'Reporte de Analytics EneaDisc\n';
+            csvContent += 'Reporte de Analytics EneaTeams\n';
             csvContent += `Período: ${periodLabel}\n`;
             csvContent += `Fecha de generación: ${new Date().toLocaleDateString()}\n\n`;
 
@@ -152,7 +152,7 @@ export const ExportButton: React.FC<ExportButtonProps> = ({
 
         try {
             // Build text summary
-            let text = '📊 RESUMEN DE ANALYTICS - EneaDisc\n\n';
+            let text = '📊 RESUMEN DE ANALYTICS - EneaTeams\n\n';
             text += `📅 Período: ${periodLabel}\n`;
             text += `👥 Equipos analizados: ${analytics.teams.length}\n\n`;
 

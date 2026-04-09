@@ -78,7 +78,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [isLoading, setIsLoading] = useState(true);
 
   const refreshUser = async () => {
-    if (localStorage.getItem('eneadisk_mock_session')) return; // No refresh needed for mock
+    if (localStorage.getItem('eneateams_mock_session')) return; // No refresh needed for mock
 
     const { data: { session: currentSession } } = await supabase.auth.getSession();
     if (currentSession?.user) {
@@ -93,7 +93,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     let mounted = true;
 
     // VERCEL MOCK DB INTERCEPT
-    const mockSessionStr = localStorage.getItem('eneadisk_mock_session');
+    const mockSessionStr = localStorage.getItem('eneateams_mock_session');
     if (mockSessionStr) {
       try {
         const mockUser = JSON.parse(mockSessionStr);
@@ -101,7 +101,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setIsLoading(false);
         return; // Don't subscribe to Supabase
       } catch (e) {
-        localStorage.removeItem('eneadisk_mock_session');
+        localStorage.removeItem('eneateams_mock_session');
       }
     }
 
@@ -172,13 +172,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     // Mini-DB Vercel Intercept
     if (password === 'vercel123') {
       let mockUser: AppUser | null = null;
-      if (email === 'admin@eneadisk.com') {
+      if (email === 'admin@eneateams.com') {
         mockUser = { id: 'mock-admin-1', role: 'company_admin', companyId: 'mock-company-1', name: 'Empresa Demo (Vercel)', email, inviteCode: 'ENEA-DEMO', questionnaireCompleted: true };
-      } else if (email === 'empleado@eneadisk.com') {
+      } else if (email === 'empleado@eneateams.com') {
         mockUser = { id: 'mock-employee-1', role: 'employee', companyId: 'mock-company-1', name: 'Empleado Demo (Vercel)', email, enneagramType: 3, questionnaireCompleted: true };
       }
       if (mockUser) {
-        localStorage.setItem('eneadisk_mock_session', JSON.stringify(mockUser));
+        localStorage.setItem('eneateams_mock_session', JSON.stringify(mockUser));
         setUser(mockUser);
         return { error: null };
       }
@@ -196,8 +196,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const logout = async () => {
-    if (localStorage.getItem('eneadisk_mock_session')) {
-      localStorage.removeItem('eneadisk_mock_session');
+    if (localStorage.getItem('eneateams_mock_session')) {
+      localStorage.removeItem('eneateams_mock_session');
       setUser(null);
       window.location.href = '/';
       return;

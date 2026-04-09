@@ -24,7 +24,7 @@ export const DEMO_OWNER: DemoUser = {
     role: 'company_admin',
     companyId: 'demo-company-001',
     name: 'María González (Demo)',
-    email: 'demo-owner@eneadisc.com',
+    email: 'demo-owner@eneateams.com',
 };
 
 export const DEMO_EMPLOYEE: DemoUser = {
@@ -32,7 +32,7 @@ export const DEMO_EMPLOYEE: DemoUser = {
     role: 'employee',
     companyId: 'demo-company-001',
     name: 'Juan Pérez (Demo)',
-    email: 'demo-employee@eneadisc.com',
+    email: 'demo-employee@eneateams.com',
     teamId: 'demo-team-marketing',
     enneagramType: 7, // El Enthusiasta
 };
