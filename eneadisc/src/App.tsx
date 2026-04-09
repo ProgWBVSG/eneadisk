@@ -3,6 +3,7 @@ import { AuthProvider, useAuth } from './context/AuthContext';
 import { EntryLayout } from './layouts/EntryLayout';
 import { DashboardLayout } from './layouts/DashboardLayout';
 import { LandingSplit } from './pages/entry/LandingSplit';
+import { HomeLanding } from './pages/entry/HomeLanding';
 import { CompanyLogin } from './pages/auth/company/CompanyLogin';
 import { CompanySignup } from './pages/auth/company/CompanySignup';
 import { EmployeeLogin } from './pages/auth/employee/EmployeeLogin';
@@ -37,7 +38,8 @@ function AppRoutes() {
     <Routes>
       {/* Entry Routes */}
       <Route element={<EntryLayout />}>
-        <Route path="/" element={<LandingSplit />} />
+        <Route path="/" element={<HomeLanding />} />
+        <Route path="/auth/portal" element={<LandingSplit />} />
         <Route path="/auth/company/login" element={<CompanyLogin />} />
         <Route path="/auth/company/signup" element={<CompanySignup />} />
         <Route path="/auth/employee/login" element={<EmployeeLogin />} />
