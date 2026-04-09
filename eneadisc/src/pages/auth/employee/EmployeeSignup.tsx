@@ -32,6 +32,7 @@ export const EmployeeSignup: React.FC = () => {
   const defaultCode = searchParams.get('code') || '';
 
   const [step, setStep] = useState(1);
+  const [isLoading, setIsLoading] = useState(false);
   const [formData, setFormData] = useState<Partial<Step1Data & { companyId: string }>>({});
   const [serverError, setServerError] = useState<string | null>(null);
   const [resendTimer, setResendTimer] = useState(0);
@@ -53,92 +54,108 @@ export const EmployeeSignup: React.FC = () => {
   // ── Step 1: validar código + signUp → envía OTP ──
   const onStep1 = async (data: Step1Data) => {
     setServerError(null);
+    setIsLoading(true);
 
-    // Validar código de empresa
-    const { data: company, error: companyError } = await supabase
-      .from('companies')
-      .select('id, name')
-      .eq('invite_code', data.inviteCode.trim().toUpperCase())
-      .single();
+    try {
+      // Validar código de empresa
+      const { data: company, error: companyError } = await supabase
+        .from('companies')
+        .select('id, name')
+        .eq('invite_code', data.inviteCode.trim().toUpperCase())
+        .single();
 
-    if (companyError || !company) {
-      form1.setError('inviteCode', { message: 'Código inválido. Pedíselo al administrador de tu empresa.' });
-      return;
-    }
-
-    // Intentar crear la cuenta
-    const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
-      email: data.email,
-      password: data.password,
-      options: {
-        data: { role: 'employee', full_name: data.name, company_id: company.id },
-      },
-    });
-
-    if (signUpError) {
-      if (
-        signUpError.message.toLowerCase().includes('already registered') ||
-        signUpError.message.toLowerCase().includes('user already exists')
-      ) {
-        setServerError('Este email ya tiene una cuenta. Por favor iniciá sesión.');
-      } else {
-        setServerError(signUpError.message);
+      if (companyError || !company) {
+        form1.setError('inviteCode', { message: 'Código inválido. Pedíselo al administrador de tu empresa.' });
+        return;
       }
-      return;
-    }
 
-    // Detectar email duplicado silencioso (identities vacías = email ya existe)
-    if (signUpData.user?.identities && signUpData.user.identities.length === 0) {
-      setServerError('Este email ya tiene una cuenta. Por favor iniciá sesión o recuperá tu contraseña.');
-      return;
-    }
-
-    // Si Supabase tiene email confirmation DESACTIVADO, la sesión ya está disponible
-    if (signUpData.session && signUpData.user) {
-      // Crear perfil directamente
-      await supabase.from('profiles').upsert({
-        id: signUpData.user.id,
-        role: 'employee',
-        company_id: company.id,
-        full_name: data.name,
+      // Intentar crear la cuenta
+      const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
         email: data.email,
+        password: data.password,
+        options: {
+          data: { role: 'employee', full_name: data.name, company_id: company.id },
+        },
       });
-      navigate('/questionnaire');
-      return;
-    }
 
-    // Si requiere confirmación por email → ir al OTP
-    setFormData({ ...data, companyId: company.id });
-    setResendTimer(30);
-    setStep(2);
+      if (signUpError) {
+        if (
+          signUpError.message.toLowerCase().includes('already registered') ||
+          signUpError.message.toLowerCase().includes('user already exists')
+        ) {
+          setServerError('Este email ya tiene una cuenta. Por favor iniciá sesión.');
+        } else {
+          setServerError(signUpError.message);
+        }
+        return;
+      }
+
+      // Detectar email duplicado silencioso (identities vacías = email ya existe)
+      if (signUpData.user?.identities && signUpData.user.identities.length === 0) {
+        setServerError('Este email ya tiene una cuenta. Por favor iniciá sesión o recuperá tu contraseña.');
+        return;
+      }
+
+      // Si Supabase tiene email confirmation DESACTIVADO, la sesión ya está disponible
+      if (signUpData.session && signUpData.user) {
+        // Crear perfil directamente (el trigger lo crea, pero hacemos upsert por si acaso)
+        await supabase.from('profiles').upsert({
+          id: signUpData.user.id,
+          role: 'employee',
+          company_id: company.id,
+          full_name: data.name,
+          email: data.email,
+        });
+        navigate('/questionnaire');
+        return;
+      }
+
+      // Si requiere confirmación por email → ir al OTP
+      setFormData({ ...data, companyId: company.id });
+      setResendTimer(30);
+      setStep(2);
+    } catch (err) {
+      setServerError('Ocurrió un error inesperado. Intentá de nuevo.');
+      console.error(err);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   // ── Step 2: verificar OTP → crear perfil ──
   const onOtp = async (data: OtpData) => {
     setServerError(null);
+    setIsLoading(true);
 
-    const { data: verifyData, error: verifyError } = await supabase.auth.verifyOtp({
-      email: formData.email!,
-      token: data.token,
-      type: 'signup',
-    });
+    try {
+      const { data: verifyData, error: verifyError } = await supabase.auth.verifyOtp({
+        email: formData.email!,
+        token: data.token,
+        type: 'signup',
+      });
 
-    if (verifyError || !verifyData.user) {
-      setServerError('Código incorrecto o expirado. Revisá tu email e intentá de nuevo.');
-      return;
+      if (verifyError || !verifyData.user) {
+        setServerError('Código incorrecto o expirado. Revisá tu email e intentá de nuevo.');
+        return;
+      }
+
+      const userId = verifyData.user.id;
+
+      await supabase.from('profiles').upsert({
+        id: userId,
+        role: 'employee',
+        company_id: formData.companyId,
+        full_name: formData.name,
+        email: formData.email,
+      });
+
+      navigate('/questionnaire');
+    } catch (err) {
+      setServerError('Error al verificar. Intentá de nuevo.');
+      console.error(err);
+    } finally {
+      setIsLoading(false);
     }
-
-    const userId = verifyData.user.id;
-
-    await supabase.from('profiles').upsert({
-      id: userId,
-      role: 'employee',
-      company_id: formData.companyId,
-      full_name: formData.name,
-      email: formData.email,
-    });
-
-    navigate('/questionnaire');
   };
 
   // ── Reenviar OTP ─────────────────────────────────
@@ -202,9 +219,10 @@ export const EmployeeSignup: React.FC = () => {
               type="submit"
               size="lg"
               className="w-full bg-amber-500 hover:bg-amber-600 border-none text-white mt-4"
-              isLoading={form1.formState.isSubmitting}
+              isLoading={isLoading}
+              disabled={isLoading}
             >
-              Crear Cuenta
+              {isLoading ? 'Creando cuenta...' : 'Crear Cuenta'}
             </Button>
           </form>
         )}
@@ -234,9 +252,10 @@ export const EmployeeSignup: React.FC = () => {
                 type="submit"
                 size="lg"
                 className="w-full bg-amber-500 hover:bg-amber-600 border-none text-white"
-                isLoading={formOtp.formState.isSubmitting}
+                isLoading={isLoading}
+                disabled={isLoading}
               >
-                <CheckCircle className="mr-2 h-4 w-4" /> Verificar y Entrar
+                <CheckCircle className="mr-2 h-4 w-4" /> {isLoading ? 'Verificando...' : 'Verificar y Entrar'}
               </Button>
             </form>
             <div className="text-center text-sm">
