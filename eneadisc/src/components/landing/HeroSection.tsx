@@ -7,9 +7,10 @@ export const HeroSection: React.FC = () => {
 
   return (
     <section className="relative w-full bg-white min-h-[80vh] flex flex-col justify-center items-center py-20 overflow-hidden">
-      {/* Background Subtle Gradients */}
+      {/* Background Subtle Gradients & Grid */}
+      <div className="absolute inset-0 -z-20 h-full w-full bg-white bg-[linear-gradient(to_right,#f1f5f9_1px,transparent_1px),linear-gradient(to_bottom,#f1f5f9_1px,transparent_1px)] bg-[size:4rem_4rem]" />
       <div className="absolute inset-x-0 -top-40 -z-10 transform-gpu overflow-hidden blur-3xl sm:-top-80">
-        <div className="relative left-[calc(50%-11rem)] aspect-[1155/678] w-[36.125rem] -translate-x-1/2 rotate-[30deg] bg-gradient-to-tr from-[#f0f0f0] to-[#e2e8f0] opacity-50 sm:left-[calc(50%-30rem)] sm:w-[72.1875rem] animate-[pulse_8s_ease-in-out_infinite]" />
+        <div className="relative left-[calc(50%-11rem)] aspect-[1155/678] w-[36.125rem] -translate-x-1/2 rotate-[30deg] bg-gradient-to-tr from-[#e0e7ff] to-[#fef08a] opacity-30 sm:left-[calc(50%-30rem)] sm:w-[72.1875rem] animate-[pulse_8s_ease-in-out_infinite]" />
       </div>
 
       <div className="max-w-5xl mx-auto px-6 text-center z-10 flex flex-col items-center">
@@ -21,8 +22,8 @@ export const HeroSection: React.FC = () => {
         </Reveal>
 
         <Reveal delay={0.1}>
-          <h1 className="text-5xl md:text-7xl font-semibold tracking-tight text-slate-900 leading-[1.1] mb-8 max-w-4xl">
-            Explorá estrategias innovadoras de gestión de talento diseñadas para equipos de alto rendimiento.
+          <h1 className="text-6xl md:text-7xl lg:text-8xl font-semibold tracking-tight text-slate-900 leading-[1.05] mb-8 max-w-4xl">
+            El ADN de los equipos excepcionales.
           </h1>
         </Reveal>
 
