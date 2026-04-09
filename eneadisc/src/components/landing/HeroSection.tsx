@@ -8,7 +8,14 @@ export const HeroSection: React.FC = () => {
   return (
     <section className="relative w-full bg-white min-h-[80vh] flex flex-col justify-center items-center py-20 overflow-hidden">
       {/* Background Subtle Gradients & Grid */}
-      <div className="absolute inset-0 -z-20 h-full w-full bg-white bg-[linear-gradient(to_right,#f1f5f9_1px,transparent_1px),linear-gradient(to_bottom,#f1f5f9_1px,transparent_1px)] bg-[size:4rem_4rem]" />
+      <div className="absolute inset-0 -z-20 h-full w-full bg-white bg-[linear-gradient(to_right,#f1f5f9_1px,transparent_1px),linear-gradient(to_bottom,#f1f5f9_1px,transparent_1px)] bg-[size:4rem_4rem] overflow-hidden">
+        {/* Enneagram Abstract Background */}
+        <svg viewBox="0 0 1000 1000" className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] md:w-[1200px] md:h-[1200px] opacity-[0.03] stroke-slate-900 animate-[spin_120s_linear_infinite]" fill="none" strokeWidth="3">
+          <circle cx="500" cy="500" r="400" />
+          <polygon points="500,100 846,700 154,700" />
+          <polygon points="757,194 637,876 894,431 243,194 363,876 106,431" />
+        </svg>
+      </div>
       <div className="absolute inset-x-0 -top-40 -z-10 transform-gpu overflow-hidden blur-3xl sm:-top-80">
         <div className="relative left-[calc(50%-11rem)] aspect-[1155/678] w-[36.125rem] -translate-x-1/2 rotate-[30deg] bg-gradient-to-tr from-[#e0e7ff] to-[#fef08a] opacity-30 sm:left-[calc(50%-30rem)] sm:w-[72.1875rem] animate-[pulse_8s_ease-in-out_infinite]" />
       </div>
