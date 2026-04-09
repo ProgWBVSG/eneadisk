@@ -62,7 +62,7 @@ export const EmployeeSignup: React.FC = () => {
         .from('companies')
         .select('id, name')
         .eq('invite_code', data.inviteCode.trim().toUpperCase())
-        .single();
+        .maybeSingle();
 
       if (companyError || !company) {
         form1.setError('inviteCode', { message: 'Código inválido. Pedíselo al administrador de tu empresa.' });
