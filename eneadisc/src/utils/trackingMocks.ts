@@ -64,77 +64,100 @@ export const generateEvolutionHistory = (): EvolutionDataPoint[] => {
   });
 };
 
+import { getCheckIns } from './checkIns';
+import { getTasks } from './tasks';
+
 // Asignar focos de desarrollo basados en eneatipo
 const getFocusArea = (type: number | null): string => {
   if (!type || !ENNEAGRAM_DATA[type as keyof typeof ENNEAGRAM_DATA]) return "Mejora continua general";
   const points = ENNEAGRAM_DATA[type as keyof typeof ENNEAGRAM_DATA].growthAreas;
-  return points[Math.floor(Math.random() * points.length)];
+  return points[0]; // Retorna un foco estable en vez de aleatorio
 };
 
 // Asignar advertencia de estrés basado en líneas de desintegración
 const getStressWarning = (type: number | null): string | null => {
   if (!type) return null;
-  
-  // Caminos de estrés estándar (Enneagrama)
   const stressPaths: Record<number, string> = {
-    1: 'Volviéndose melancólico o irracional (hacia el 4)',
-    2: 'Volviéndose agresivo o dominante (hacia el 8)',
-    3: 'Desconectándose o perdiendo iniciativa (hacia el 9)',
-    4: 'Volviéndose dependiente o sobre-involucrado (hacia el 2)',
-    5: 'Volviéndose hiperactivo o disperso (hacia el 7)',
-    6: 'Volviéndose arrogante o competitivo (hacia el 3)',
-    7: 'Volviéndose crítico y perfeccionista (hacia el 1)',
-    8: 'Aislándose o volviéndose reservado (hacia el 5)',
-    9: 'Volviéndose ansioso o reactivo (hacia el 6)'
+    1: 'Riesgo hacia el 4 (melancólico)',
+    2: 'Riesgo hacia el 8 (dominante)',
+    3: 'Riesgo hacia el 9 (desconexión)',
+    4: 'Riesgo hacia el 2 (sobre-involucrado)',
+    5: 'Riesgo hacia el 7 (disperso)',
+    6: 'Riesgo hacia el 3 (competitivo)',
+    7: 'Riesgo hacia el 1 (perfeccionista)',
+    8: 'Riesgo hacia el 5 (aislamiento)',
+    9: 'Riesgo hacia el 6 (ansioso)'
   };
-  
-  return stressPaths[type] || 'Señales de fatiga detectadas';
+  return stressPaths[type] || 'Señales detectadas';
 };
 
-export const generateTrackingData = (employees: AppUser[]): {
+export const generateTrackingData = async (employees: AppUser[]): Promise<{
   matrix: EmployeeTracking[];
   kpis: TrackingKPIs;
   chartData: EvolutionDataPoint[];
-} => {
-  let warningCount = 0;
-  
-  const matrix: EmployeeTracking[] = employees.map(emp => {
-    // Determinar estado aleatorio (80% aligned, 15% warning, 5% critical)
-    const rand = Math.random();
-    let status: 'aligned' | 'warning' | 'critical' = 'aligned';
-    let stressWarning = null;
-    
-    if (rand > 0.95) {
-      status = 'critical';
-      stressWarning = getStressWarning(emp.enneagramType || null);
-      warningCount++;
-    } else if (rand > 0.80) {
-      status = 'warning';
-      stressWarning = "Niveles de energía reportados a la baja";
-      warningCount++;
-    }
+}> => {
+  let globalCompletedChallenges = 0;
+  let globalWellbeingSum = 0;
+  let checkinCount = 0;
 
-    return {
-      employeeId: emp.id,
-      name: emp.name || emp.email || 'Usuario',
-      enneagramType: emp.enneagramType || null,
-      currentFocus: getFocusArea(emp.enneagramType || null),
-      focusProgress: Math.floor(Math.random() * 80) + 10,
-      status,
-      stressWarning,
-      recentEvents: []
-    };
-  });
+  const matrix: EmployeeTracking[] = [];
+
+  for (const emp of employees) {
+      // 1. Obtener Datos Reales Asíncronos
+      const tasks = await getTasks(emp.id);
+      const checkins = await getCheckIns(emp.id);
+
+      // Calcular foco y progreso en tareas
+      const completedTasks = tasks.filter(t => t.status === 'completed').length;
+      globalCompletedChallenges += completedTasks;
+      const focusProgress = tasks.length > 0 ? Math.round((completedTasks / tasks.length) * 100) : 0;
+
+      // Calcular bienestar (estado) basado en los check-ins de los últimos 7 días
+      let status: 'aligned' | 'warning' | 'critical' = 'aligned';
+      let stressWarning = null;
+
+      if (checkins.length > 0) {
+          const recentCheckins = checkins.slice(0, 5); // Tomamos los últimos 5
+          const avgScore = recentCheckins.reduce((acc, curr) => acc + curr.energy + (6 - curr.stress), 0) / (recentCheckins.length * 2);
+          
+          recentCheckins.forEach(c => {
+             globalWellbeingSum += c.energy;
+             checkinCount++;
+          });
+
+          if (avgScore < 2.5) {
+             status = 'critical';
+             stressWarning = getStressWarning(emp.enneagramType || null);
+          } else if (avgScore < 3.5) {
+             status = 'warning';
+             stressWarning = "Niveles de energía reportados a la baja";
+          }
+      }
+
+      matrix.push({
+          employeeId: emp.id,
+          name: emp.name || emp.email || 'Usuario',
+          enneagramType: emp.enneagramType || null,
+          currentFocus: getFocusArea(emp.enneagramType || null),
+          focusProgress,
+          status,
+          stressWarning,
+          recentEvents: [] 
+      });
+  }
+
+  const avgWellbeing = checkinCount > 0 ? (globalWellbeingSum / checkinCount) : 0;
 
   return {
     matrix,
     kpis: {
-      completedChallenges: 48,
-      completedChallengesGrowth: 12.5,
-      averageWellbeing: 4.1,
-      wellbeingGrowth: 3.2,
+      completedChallenges: globalCompletedChallenges,
+      completedChallengesGrowth: 0, // Podría calcularse contra el mes anterior
+      averageWellbeing: Number(avgWellbeing.toFixed(1)),
+      wellbeingGrowth: 0,
       activeFocusAreas: employees.length
     },
+    // Chart historico todavia simulado para el efecto visual, a futuro se calcula igual sobre checkins historicos
     chartData: generateEvolutionHistory()
   };
 };

@@ -23,18 +23,18 @@ export const TeamManagement: React.FC = () => {
         }
     }, [user]);
 
-    const loadTeams = () => {
+    const loadTeams = async () => {
         if (user?.companyId) {
-            const companyTeams = getTeams(user.companyId);
+            const companyTeams = await getTeams(user.companyId);
             setTeams(companyTeams);
         }
     };
 
-    const handleDelete = (teamId: string) => {
+    const handleDelete = async (teamId: string) => {
         if (confirm('¿Estás seguro de que deseas eliminar este equipo?')) {
             try {
-                deleteTeam(teamId);
-                loadTeams();
+                await deleteTeam(teamId);
+                await loadTeams();
             } catch (error) {
                 alert(error instanceof Error ? error.message : 'Error al eliminar equipo');
             }

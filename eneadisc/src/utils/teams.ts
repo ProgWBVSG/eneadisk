@@ -1,4 +1,5 @@
-// Team management utilities
+import { supabase } from '../lib/supabase';
+
 export interface Team {
     id: string;
     companyId: string;
@@ -28,203 +29,186 @@ export interface EnneagramDistribution {
 // TEAM CRUD OPERATIONS
 // ============================================
 
-/**
- * Get all teams for a company
- */
-export const getTeams = (companyId: string): Team[] => {
-    const key = `teams_${companyId}`;
-    const stored = localStorage.getItem(key);
-    return stored ? JSON.parse(stored) : [];
+const loadMemberIds = async (teamId: string): Promise<string[]> => {
+    const { data } = await supabase.from('team_members').select('user_id').eq('team_id', teamId);
+    return data ? data.map(m => m.user_id) : [];
 };
 
-/**
- * Get a specific team by ID
- */
-export const getTeam = (teamId: string): Team | null => {
-    // Search across all companies (in production, would filter by companyId)
-    const allKeys = Object.keys(localStorage).filter(key => key.startsWith('teams_'));
-
-    for (const key of allKeys) {
-        const teams: Team[] = JSON.parse(localStorage.getItem(key) || '[]');
-        const team = teams.find(t => t.id === teamId);
-        if (team) return team;
+export const getTeams = async (companyId: string): Promise<Team[]> => {
+    const { data, error } = await supabase.from('teams').select('*').eq('company_id', companyId);
+    if (error || !data) return [];
+    
+    const teams: Team[] = [];
+    for (const row of data) {
+        const memberIds = await loadMemberIds(row.id);
+        teams.push({
+            id: row.id,
+            companyId: row.company_id,
+            name: row.name,
+            description: row.description,
+            ownerId: row.owner_id,
+            memberIds,
+            createdAt: row.created_at,
+            updatedAt: row.updated_at
+        });
     }
-
-    return null;
+    return teams;
 };
 
-/**
- * Create a new team
- */
-export const createTeam = (team: Omit<Team, 'id' | 'createdAt'>): Team => {
-    const newTeam: Team = {
-        ...team,
-        id: `team-${Date.now()}-${Math.random().toString(36).substring(7)}`,
-        memberIds: team.memberIds || [],
-        createdAt: new Date().toISOString(),
+export const getTeam = async (teamId: string): Promise<Team | null> => {
+    const { data, error } = await supabase.from('teams').select('*').eq('id', teamId).single();
+    if (error || !data) return null;
+    
+    const memberIds = await loadMemberIds(data.id);
+    return {
+        id: data.id,
+        companyId: data.company_id,
+        name: data.name,
+        description: data.description,
+        ownerId: data.owner_id,
+        memberIds,
+        createdAt: data.created_at,
+        updatedAt: data.updated_at
+    };
+};
+
+export const createTeam = async (team: Omit<Team, 'id' | 'createdAt'>): Promise<Team> => {
+    const { data, error } = await supabase.from('teams').insert([{
+        company_id: team.companyId,
+        name: team.name,
+        description: team.description,
+        owner_id: team.ownerId
+    }]).select().single();
+
+    if (error) throw error;
+    
+    const createdTeam = {
+        id: data.id,
+        companyId: data.company_id,
+        name: data.name,
+        description: data.description,
+        ownerId: data.owner_id,
+        memberIds: [] as string[],
+        createdAt: data.created_at,
+        updatedAt: data.updated_at
     };
 
-    const teams = getTeams(team.companyId);
-    teams.push(newTeam);
+    // Add initial members if any
+    if (team.memberIds && team.memberIds.length > 0) {
+        for (const uid of team.memberIds) {
+            await addMemberToTeam(createdTeam.id, uid);
+        }
+        createdTeam.memberIds = team.memberIds;
+    }
 
-    const key = `teams_${team.companyId}`;
-    localStorage.setItem(key, JSON.stringify(teams));
-
-    return newTeam;
+    return createdTeam;
 };
 
-/**
- * Update a team
- */
-export const updateTeam = (teamId: string, updates: Partial<Omit<Team, 'id' | 'companyId' | 'createdAt'>>): void => {
-    const team = getTeam(teamId);
-    if (!team) throw new Error('Team not found');
+export const updateTeam = async (teamId: string, updates: Partial<Omit<Team, 'id' | 'companyId' | 'createdAt'>>): Promise<void> => {
+    const dbUpdates: any = {};
+    if (updates.name !== undefined) dbUpdates.name = updates.name;
+    if (updates.description !== undefined) dbUpdates.description = updates.description;
+    
+    if (Object.keys(dbUpdates).length > 0) {
+        await supabase.from('teams').update(dbUpdates).eq('id', teamId);
+    }
 
-    const teams = getTeams(team.companyId);
-    const index = teams.findIndex(t => t.id === teamId);
-
-    if (index !== -1) {
-        teams[index] = {
-            ...teams[index],
-            ...updates,
-            updatedAt: new Date().toISOString(),
-        };
-
-        const key = `teams_${team.companyId}`;
-        localStorage.setItem(key, JSON.stringify(teams));
+    if (updates.memberIds) {
+        const currentMemberIds = await loadMemberIds(teamId);
+        // Remove those not in new array
+        for (const oldId of currentMemberIds) {
+            if (!updates.memberIds.includes(oldId)) {
+                await removeMemberFromTeam(teamId, oldId);
+            }
+        }
+        // Add new ones
+        for (const newId of updates.memberIds) {
+            if (!currentMemberIds.includes(newId)) {
+                await addMemberToTeam(teamId, newId);
+            }
+        }
     }
 };
 
-/**
- * Delete a team (only if it has no members)
- */
-export const deleteTeam = (teamId: string): void => {
-    const team = getTeam(teamId);
-    if (!team) throw new Error('Team not found');
-
-    if (team.memberIds.length > 0) {
-        throw new Error('Cannot delete team with members. Please remove all members first.');
-    }
-
-    const teams = getTeams(team.companyId);
-    const filtered = teams.filter(t => t.id !== teamId);
-
-    const key = `teams_${team.companyId}`;
-    localStorage.setItem(key, JSON.stringify(filtered));
+export const deleteTeam = async (teamId: string): Promise<void> => {
+    // Member checking handled by application flow usually
+    // By postgres rules ON DELETE CASCADE this cleans up team_members automatically
+    await supabase.from('teams').delete().eq('id', teamId);
 };
 
 // ============================================
 // MEMBER MANAGEMENT
 // ============================================
 
-/**
- * Get team members with their full data
- */
-export const getTeamMembers = (teamId: string): TeamMember[] => {
-    const team = getTeam(teamId);
-    if (!team) return [];
+export const getTeamMembers = async (teamId: string): Promise<TeamMember[]> => {
+    const { data, error } = await supabase.from('team_members')
+        .select(`
+            user_id,
+            profiles!inner ( id, full_name, email, enneagram_type, company_id )
+        `)
+        .eq('team_id', teamId);
+        
+    if (error || !data) return [];
 
-    // Get all users from localStorage (simplified - in production would use a proper user store)
-    const members: TeamMember[] = [];
+    return data.map((m: any) => ({
+        id: m.profiles.id,
+        name: m.profiles.full_name || m.profiles.email,
+        email: m.profiles.email,
+        enneagramType: m.profiles.enneagram_type,
+        role: 'employee',
+        companyId: m.profiles.company_id,
+        teamId
+    }));
+};
 
-    team.memberIds.forEach(userId => {
-        // Try to find user data
-        // For demo user
-        if (userId === 'demo-employee-001') {
-            members.push({
-                id: userId,
-                name: 'Juan Pérez (Demo)',
-                email: 'demo-employee@eneadisc.com',
-                enneagramType: 7,
+export const addMemberToTeam = async (teamId: string, userId: string): Promise<void> => {
+    // Delete from other teams in DB first if required to be in only 1 team. 
+    // In our system right now we allow multiple, but typically we constrain it via UI.
+    const { error } = await supabase.from('team_members').insert([{
+        team_id: teamId,
+        user_id: userId
+    }]);
+    if (error && error.code !== '23505') { // Ignore unique violation if already added
+       throw error;
+    }
+};
+
+export const removeMemberFromTeam = async (teamId: string, userId: string): Promise<void> => {
+    await supabase.from('team_members').delete().eq('team_id', teamId).eq('user_id', userId);
+};
+
+export const getAvailableEmployees = async (companyId: string): Promise<TeamMember[]> => {
+    // En producción, consulta a 'profiles' donde id NO esté en 'team_members' de algún team_id de la compañia.
+    // Para simplificar, obtenemos todos los empleados y filtramos.
+    const { data: profiles } = await supabase.from('profiles').select('*').eq('company_id', companyId);
+    
+    // Obtenemos todos los miembros
+    const { data: membersInTeams } = await supabase.from('team_members').select('user_id');
+    const memberSet = new Set(membersInTeams?.map(m => m.user_id) || []);
+
+    const available: TeamMember[] = [];
+    (profiles || []).forEach(p => {
+        if (!memberSet.has(p.id) && p.role === 'employee') {
+            available.push({
+                id: p.id,
+                name: p.full_name || p.email,
+                email: p.email,
+                enneagramType: p.enneagram_type,
                 role: 'employee',
-                companyId: team.companyId,
-                teamId: teamId,
+                companyId: p.company_id
             });
         }
-        // For other users, try to get from a hypothetical users store
-        // This would be replaced with actual user data fetching in production
     });
 
-    return members;
-};
-
-/**
- * Add member to team (removes from previous team if exists)
- */
-export const addMemberToTeam = (teamId: string, userId: string): void => {
-    const team = getTeam(teamId);
-    if (!team) throw new Error('Team not found');
-
-    // Remove from any existing team first
-    removeMemberFromAllTeams(userId, team.companyId);
-
-    // Add to new team
-    if (!team.memberIds.includes(userId)) {
-        team.memberIds.push(userId);
-        updateTeam(teamId, { memberIds: team.memberIds });
-    }
-};
-
-/**
- * Remove member from team
- */
-export const removeMemberFromTeam = (teamId: string, userId: string): void => {
-    const team = getTeam(teamId);
-    if (!team) throw new Error('Team not found');
-
-    const filtered = team.memberIds.filter(id => id !== userId);
-    updateTeam(teamId, { memberIds: filtered });
-};
-
-/**
- * Remove member from all teams in a company (helper function)
- */
-const removeMemberFromAllTeams = (userId: string, companyId: string): void => {
-    const teams = getTeams(companyId);
-
-    teams.forEach(team => {
-        if (team.memberIds.includes(userId)) {
-            const filtered = team.memberIds.filter(id => id !== userId);
-            updateTeam(team.id, { memberIds: filtered });
-        }
-    });
-};
-
-/**
- * Get employees available to add to teams (not currently in any team)
- */
-export const getAvailableEmployees = (companyId: string): TeamMember[] => {
-    // In production, this would fetch from a users database
-    // For now, return demo employee if not in a team
-    const teams = getTeams(companyId);
-    const allMemberIds = teams.flatMap(t => t.memberIds);
-
-    const demoEmployee: TeamMember = {
-        id: 'demo-employee-001',
-        name: 'Juan Pérez (Demo)',
-        email: 'demo-employee@eneadisc.com',
-        enneagramType: 7,
-        role: 'employee',
-        companyId: companyId,
-    };
-
-    // Return demo employee if not in any team
-    if (!allMemberIds.includes(demoEmployee.id)) {
-        return [demoEmployee];
-    }
-
-    return [];
+    return available;
 };
 
 // ============================================
 // ANALYSIS FUNCTIONS
 // ============================================
 
-/**
- * Get Enneagram type distribution for a team
- */
-export const getTeamEnneagramDistribution = (teamId: string): EnneagramDistribution => {
-    const members = getTeamMembers(teamId);
+export const getTeamEnneagramDistribution = async (teamId: string): Promise<EnneagramDistribution> => {
+    const members = await getTeamMembers(teamId);
     const distribution: EnneagramDistribution = {};
 
     members.forEach(member => {
@@ -236,33 +220,24 @@ export const getTeamEnneagramDistribution = (teamId: string): EnneagramDistribut
     return distribution;
 };
 
-/**
- * Calculate team compatibility score (simplified)
- * Based on diversity of types - more diverse = better collaboration potential
- */
-export const getTeamCompatibilityScore = (teamId: string): number => {
-    const members = getTeamMembers(teamId);
+export const getTeamCompatibilityScore = async (teamId: string): Promise<number> => {
+    const members = await getTeamMembers(teamId);
     if (members.length === 0) return 0;
 
-    const distribution = getTeamEnneagramDistribution(teamId);
+    const distribution = await getTeamEnneagramDistribution(teamId);
     const uniqueTypes = Object.keys(distribution).length;
 
-    // Score based on diversity (more types = higher score)
-    // Also factor in total members
-    const diversityScore = (uniqueTypes / 9) * 100; // Max diversity score
-    const sizeBonus = Math.min(members.length / 5, 1) * 20; // Bonus for having 5+ members
+    const diversityScore = (uniqueTypes / 9) * 100; 
+    const sizeBonus = Math.min(members.length / 5, 1) * 20;
 
     return Math.min(Math.round(diversityScore + sizeBonus), 100);
 };
 
-/**
- * Get team statistics
- */
-export const getTeamStats = (teamId: string) => {
-    const team = getTeam(teamId);
-    const members = getTeamMembers(teamId);
-    const distribution = getTeamEnneagramDistribution(teamId);
-    const compatibilityScore = getTeamCompatibilityScore(teamId);
+export const getTeamStats = async (teamId: string) => {
+    const team = await getTeam(teamId);
+    const members = await getTeamMembers(teamId);
+    const distribution = await getTeamEnneagramDistribution(teamId);
+    const compatibilityScore = await getTeamCompatibilityScore(teamId);
 
     return {
         teamName: team?.name || '',

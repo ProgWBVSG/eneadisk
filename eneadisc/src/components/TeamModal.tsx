@@ -17,7 +17,7 @@ export const TeamModal: React.FC<TeamModalProps> = ({ isOpen, onClose, team, com
 
     if (!isOpen) return null;
 
-    const handleSubmit = (e: React.FormEvent) => {
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setError('');
 
@@ -40,10 +40,10 @@ export const TeamModal: React.FC<TeamModalProps> = ({ isOpen, onClose, team, com
         try {
             if (team) {
                 // Editar equipo existente
-                updateTeam(team.id, { name: name.trim(), description: description.trim() });
+                await updateTeam(team.id, { name: name.trim(), description: description.trim() });
             } else {
                 // Crear nuevo equipo
-                createTeam({
+                await createTeam({
                     name: name.trim(),
                     description: description.trim(),
                     companyId,

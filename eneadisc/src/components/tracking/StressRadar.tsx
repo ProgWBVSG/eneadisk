@@ -44,24 +44,24 @@ export const StressRadar: React.FC<Props> = ({ matrix }) => {
       <div className="p-6">
         <div className="space-y-4">
           {warnings.map((emp) => (
-            <div key={emp.employeeId} className={`p-4 rounded-lg border ${emp.status === 'critical' ? 'bg-red-50 border-red-200' : 'bg-amber-50 border-amber-200'} flex flex-col md:flex-row md:items-center gap-4`}>
-              <div className="flex-1">
+            <div key={emp.employeeId} className={`p-4 rounded-lg border ${emp.status === 'critical' ? 'bg-red-50 border-red-200' : 'bg-amber-50 border-amber-200'} flex flex-col xl:flex-row xl:items-center gap-4`}>
+              <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 mb-1">
-                  <span className="font-bold text-slate-900">{emp.name}</span>
-                  <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-white border border-slate-200 text-slate-600 shadow-sm">
+                  <span className="font-bold text-slate-900 truncate" title={emp.name}>{emp.name}</span>
+                  <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-white border border-slate-200 text-slate-600 shadow-sm shrink-0">
                     Tipo {emp.enneagramType}
                   </span>
                 </div>
-                <p className={`text-sm ${emp.status === 'critical' ? 'text-red-700' : 'text-amber-800'}`}>
+                <p className={`text-sm ${emp.status === 'critical' ? 'text-red-700' : 'text-amber-800'} break-words`}>
                   <strong>Señal:</strong> {emp.stressWarning}
                 </p>
               </div>
-              <div className="shrink-0 flex items-center gap-3">
-                <button className="text-sm px-3 py-1.5 bg-white border border-slate-300 rounded-md font-medium text-slate-700 hover:bg-slate-50 transition-colors">
+              <div className="shrink-0 flex items-center gap-2 flex-wrap">
+                <button className="text-sm px-3 py-1.5 bg-white border border-slate-300 rounded-md font-medium text-slate-700 hover:bg-slate-50 transition-colors whitespace-nowrap">
                   Ver Historial
                 </button>
-                <button className={`text-sm px-3 py-1.5 rounded-md font-medium text-white transition-colors flex items-center gap-1 ${emp.status === 'critical' ? 'bg-red-600 hover:bg-red-700' : 'bg-amber-600 hover:bg-amber-700'}`}>
-                  Recomendación IA <ArrowRight className="w-4 h-4" />
+                <button className={`text-sm px-3 py-1.5 rounded-md font-medium text-white transition-colors flex items-center gap-1 whitespace-nowrap ${emp.status === 'critical' ? 'bg-red-600 hover:bg-red-700' : 'bg-amber-600 hover:bg-amber-700'}`}>
+                  Recomendación IA <ArrowRight className="w-4 h-4 shrink-0" />
                 </button>
               </div>
             </div>

@@ -17,25 +17,66 @@ export const MOOD_CONFIG = {
     terrible: { emoji: '😢', label: 'Terrible', color: '#ef4444' }
 };
 
-export const saveCheckIn = (checkIn: CheckIn): void => {
-    const key = `checkins_${checkIn.userId}`;
-    const existing = getCheckIns(checkIn.userId);
-    const updated = [...existing, checkIn];
-    localStorage.setItem(key, JSON.stringify(updated));
+import { supabase } from '../lib/supabase';
+
+export const saveCheckIn = async (checkIn: Omit<CheckIn, 'id'>): Promise<void> => {
+    const { error } = await supabase.from('checkins').insert([{
+        user_id: checkIn.userId,
+        date: checkIn.date,
+        mood: checkIn.mood,
+        energy: checkIn.energy,
+        stress: checkIn.stress,
+        notes: checkIn.notes
+    }]);
+    if (error) {
+        console.error("Error saving checkin to Supabase:", error);
+        throw error;
+    }
 };
 
-export const getCheckIns = (userId: string): CheckIn[] => {
-    const key = `checkins_${userId}`;
-    const stored = localStorage.getItem(key);
-    return stored ? JSON.parse(stored) : [];
+export const getCheckIns = async (userId: string): Promise<CheckIn[]> => {
+    const { data, error } = await supabase.from('checkins')
+        .select('*')
+        .eq('user_id', userId)
+        .order('date', { ascending: false });
+        
+    if (error || !data) {
+        console.error("Error getting checkins from Supabase:", error);
+        return [];
+    }
+    
+    return data.map((row: any) => ({
+        id: row.id,
+        userId: row.user_id,
+        date: row.date,
+        mood: row.mood,
+        energy: row.energy,
+        stress: row.stress,
+        notes: row.notes
+    }));
 };
 
-export const getCheckInsFromLastDays = (userId: string, days: number): CheckIn[] => {
-    const all = getCheckIns(userId);
+export const getCheckInsFromLastDays = async (userId: string, days: number): Promise<CheckIn[]> => {
     const cutoff = new Date();
     cutoff.setDate(cutoff.getDate() - days);
 
-    return all.filter(c => new Date(c.date) >= cutoff);
+    const { data, error } = await supabase.from('checkins')
+        .select('*')
+        .eq('user_id', userId)
+        .gte('date', cutoff.toISOString())
+        .order('date', { ascending: false });
+
+    if (error || !data) return [];
+    
+    return data.map((row: any) => ({
+        id: row.id,
+        userId: row.user_id,
+        date: row.date,
+        mood: row.mood,
+        energy: row.energy,
+        stress: row.stress,
+        notes: row.notes
+    }));
 };
 
 export const getAverageMoodScore = (checkIns: CheckIn[]): number => {

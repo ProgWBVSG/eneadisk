@@ -9,6 +9,7 @@ import {
     completeTask,
     getUserTeamTasks,
     isTeamTask,
+    updateTeamTask,
     PRIORITY_CONFIG,
     CATEGORY_CONFIG
 } from '../../utils/tasks';
@@ -33,9 +34,9 @@ export const EmployeeTasks: React.FC = () => {
         loadTasks();
     }, [user]);
 
-    const loadTasks = () => {
+    const loadTasks = async () => {
         if (!user) return;
-        const allTasks = getUserTeamTasks(user.id, teamId);
+        const allTasks = await getUserTeamTasks(user.id, teamId);
         setTasks(allTasks);
     };
 
@@ -75,40 +76,50 @@ export const EmployeeTasks: React.FC = () => {
         setShowModal(true);
     };
 
-    const handleDeleteTask = (task: Task) => {
+    const handleDeleteTask = async (task: Task) => {
         if (isTeamTask(task)) {
             alert('No puedes eliminar tareas asignadas por la empresa');
             return;
         }
         if (confirm('¿Estás seguro de eliminar esta tarea?')) {
-            deleteTask(user!.id, task.id);
-            loadTasks();
+            await deleteTask(user!.id, task.id);
+            await loadTasks();
         }
     };
 
-    const handleToggleComplete = (task: Task) => {
+    const handleToggleComplete = async (task: Task) => {
         if (!user) return;
 
         if (isTeamTask(task)) {
-            // Team tasks can't be completed by employees in this version
-            alert('Solo puedes marcar como completadas tus tareas personales');
-            return;
-        }
-
-        if (task.status === 'completed') {
-            updateTask(user.id, task.id, { status: 'pending', completedAt: undefined });
+            // Team tasks can be completed by employees
+            if (task.status === 'completed') {
+                await updateTeamTask(task.teamId!, task.id, { status: 'pending', completedAt: undefined });
+            } else {
+                await updateTeamTask(task.teamId!, task.id, { status: 'completed', completedAt: new Date().toISOString() });
+            }
         } else {
-            completeTask(user.id, task.id);
+            // Personal
+            if (task.status === 'completed') {
+                await updateTask(user.id, task.id, { status: 'pending', completedAt: undefined });
+            } else {
+                await completeTask(user.id, task.id);
+            }
         }
-        loadTasks();
+        await loadTasks();
     };
 
-    const handleToggleInProgress = (task: Task) => {
-        if (!user || isTeamTask(task)) return;
+    const handleToggleInProgress = async (task: Task) => {
+        if (!user) return;
 
         const newStatus = task.status === 'in_progress' ? 'pending' : 'in_progress';
-        updateTask(user.id, task.id, { status: newStatus });
-        loadTasks();
+        
+        if (isTeamTask(task)) {
+            await updateTeamTask(task.teamId!, task.id, { status: newStatus });
+        } else {
+            await updateTask(user.id, task.id, { status: newStatus });
+        }
+        
+        await loadTasks();
     };
 
     return (

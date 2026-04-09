@@ -15,18 +15,22 @@ export const EmployeeCheckins: React.FC = () => {
     const [stress, setStress] = useState<number>(3);
     const [notes, setNotes] = useState('');
 
-    useEffect(() => {
+    const loadCheckins = async () => {
         if (user) {
-            setCheckIns(getCheckIns(user.id).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()));
+            const data = await getCheckIns(user.id);
+            setCheckIns(data);
         }
+    };
+
+    useEffect(() => {
+        loadCheckins();
     }, [user]);
 
-    const handleSubmit = (e: React.FormEvent) => {
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!user) return;
 
-        const newCheckIn: CheckIn = {
-            id: `chk-${Date.now()}`,
+        const newCheckIn = {
             userId: user.id,
             date: new Date().toISOString(),
             mood,
@@ -35,8 +39,9 @@ export const EmployeeCheckins: React.FC = () => {
             notes: notes.trim() || undefined
         };
 
-        saveCheckIn(newCheckIn);
-        setCheckIns(getCheckIns(user.id).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()));
+        await saveCheckIn(newCheckIn);
+        await loadCheckins();
+        
         setShowForm(false);
         setNotes('');
         setMood('neutral');

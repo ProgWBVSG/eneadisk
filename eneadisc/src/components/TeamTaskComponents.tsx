@@ -1,4 +1,4 @@
-﻿// Team Task Card Component
+// Team Task Card Component
 import React from 'react';
 import { Calendar, Flag, X } from 'lucide-react';
 import type { Task } from '../utils/tasks';
@@ -89,18 +89,18 @@ export const TeamTaskModal: React.FC<TeamTaskModalProps> = ({ team, onClose, onS
         dueDate: '',
     });
 
-    const handleSubmit = (e: React.FormEvent) => {
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
 
         if (!formData.title.trim()) {
-            alert('El tÃ­tulo es requerido');
+            alert('El título es requerido');
             return;
         }
 
         if (!user) return;
 
         // Create team task
-        createTeamTask(
+        await createTeamTask(
             team.id,
             {
                 ...formData,

@@ -1,8 +1,8 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Target, Users } from 'lucide-react';
 import { useAuth, type AppUser } from '../../context/AuthContext';
-import { getTeams } from '../../utils/teams';
 import { generateTrackingData } from '../../utils/trackingMocks';
+import { supabase } from '../../lib/supabase';
 
 // Import Tracking subcomponents
 import { TrackingKPIs } from '../../components/tracking/TrackingKPIs';
@@ -16,64 +16,66 @@ export const CompanyTracking: React.FC = () => {
   const [employees, setEmployees] = useState<AppUser[]>([]);
   const [teamsConfig, setTeamsConfig] = useState<{id: string, name: string}[]>([]);
 
-  // Característica simulada: Extraer a los usuarios de localStorage para general mocks
-  // (En un entorno real vendrían directamente de Supabase)
   useEffect(() => {
-    if (!user?.companyId) return;
-    
-    // Obtenemos equipos reales
-    const teams = getTeams(user.companyId);
-    setTeamsConfig(teams.map(t => ({ id: t.id, name: t.name })));
-    
-    // Y extraemos los usuarios "reales" de localStorage o usamos un mock vacío
-    try {
-      const storedProfiles = localStorage.getItem('mockProfiles');
-      // @ts-ignore
-      let allUsers: any[] = storedProfiles ? JSON.parse(storedProfiles) : [];
-      
-      // Filtrar a los empleados de esta compañía
-      allUsers = allUsers.filter(p => p.role === 'employee' || p.role === 'company_admin');
-      
-      // Mapear al modelo AppUser para consistencia
-      let mappedUsers: AppUser[] = allUsers.map(p => ({
+    const loadData = async () => {
+      if (!user?.companyId) return;
+
+      // 1. Obtener equipos reales de Supabase
+      const { data: teamsData } = await supabase.from('teams').select('id, name').eq('company_id', user.companyId);
+      if (teamsData) setTeamsConfig(teamsData);
+
+      // 2. Obtener empleados reales de Supabase
+      const { data: profilesData } = await supabase.from('profiles')
+        .select('*')
+        .eq('company_id', user.companyId)
+        .in('role', ['employee', 'company_admin']);
+
+      const mappedUsers: AppUser[] = (profilesData || []).map((p: any) => ({
         id: p.id,
         role: p.role,
-        companyId: p.companyId || user.companyId,
-        name: p.fullName || p.name || p.email,
+        companyId: p.company_id,
+        name: p.full_name || p.email,
         email: p.email,
-        enneagramType: p.enneagramType,
+        enneagramType: p.enneagram_type,
         questionnaireCompleted: true
       }));
 
-      // Si el array está vacío o muy bajo (es desarrollo), generamos defaults para probar UI
-      if (mappedUsers.length < 3) {
-         mappedUsers = [
-           ...mappedUsers,
-           { id: 'usr-1', role: 'employee', name: 'Laura Martínez', email: 'laura@test.com', enneagramType: 2, companyId: user.companyId },
-           { id: 'usr-2', role: 'employee', name: 'Carlos Rivera', email: 'carlos@test.com', enneagramType: 8, companyId: user.companyId },
-           { id: 'usr-3', role: 'employee', name: 'Ana Gómez', email: 'ana@test.com', enneagramType: 9, companyId: user.companyId },
-           { id: 'usr-4', role: 'employee', name: 'Sofía López', email: 'sofia@test.com', enneagramType: 1, companyId: user.companyId },
-           { id: 'usr-5', role: 'employee', name: 'Javier Pérez', email: 'javier@test.com', enneagramType: 5, companyId: user.companyId }
-         ];
-      }
-      
       setEmployees(mappedUsers);
-    } catch (e) {
-      console.error(e);
-    }
+    };
+
+    loadData();
   }, [user?.companyId]);
 
-  // Generamos los datos funcionales basados en la lista 
-  const trackingData = useMemo(() => {
-    // Si hubiese filtrado por equipo, lo simularíamos aquí reduciendo el array "employees"
-    return generateTrackingData(employees);
+  const [trackingData, setTrackingData] = useState<{
+    matrix: any[];
+    kpis: any;
+    chartData: any[];
+  } | null>(null);
+
+  useEffect(() => {
+    const fetchTracking = async () => {
+       if (employees.length === 0) return;
+       // Si hay equipo seleccionado, filtramos los empleados
+       let filteredEmployees = employees;
+       if (selectedTeam !== 'all') {
+          const { data: members } = await supabase.from('team_members').select('user_id').eq('team_id', selectedTeam);
+          if (members) {
+             const memberIds = members.map((m: any) => m.user_id);
+             filteredEmployees = employees.filter(e => memberIds.includes(e.id));
+          }
+       }
+       
+       const data = await generateTrackingData(filteredEmployees);
+       setTrackingData(data);
+    };
+    fetchTracking();
   }, [employees, selectedTeam]);
 
-  if (employees.length === 0) {
+  if (!trackingData) {
     return (
       <div className="p-8">
         <h1 className="text-3xl font-bold text-slate-900">Seguimiento y Evolución</h1>
-        <p className="text-slate-600 mb-8 mt-1">Cargando métricas de tu equipo...</p>
+        <p className="text-slate-600 mb-8 mt-1">Cargando métricas de tu equipo online...</p>
       </div>
     );
   }

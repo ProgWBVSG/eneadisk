@@ -41,41 +41,41 @@ export const TeamDetailView: React.FC<TeamDetailViewProps> = ({
         loadData();
     }, [team]);
 
-    const loadData = () => {
-        const teamMembers = getTeamMembers(team.id);
+    const loadData = async () => {
+        const teamMembers = await getTeamMembers(team.id);
         setMembers(teamMembers);
 
-        const available = getAvailableEmployees(team.companyId);
+        const available = await getAvailableEmployees(team.companyId);
         setAvailableEmployees(available);
 
-        const dist = getTeamEnneagramDistribution(team.id);
+        const dist = await getTeamEnneagramDistribution(team.id);
         setDistribution(dist);
 
-        const score = getTeamCompatibilityScore(team.id);
+        const score = await getTeamCompatibilityScore(team.id);
         setCompatibilityScore(score);
 
         // Load team tasks
-        const tasks = getTeamTasks(team.id);
+        const tasks = await getTeamTasks(team.id);
         setTeamTasks(tasks);
     };
 
-    const handleAddMember = () => {
+    const handleAddMember = async () => {
         if (!selectedEmployee) return;
 
         try {
-            addMemberToTeam(team.id, selectedEmployee);
+            await addMemberToTeam(team.id, selectedEmployee);
             setSelectedEmployee('');
-            loadData();
+            await loadData();
         } catch (error) {
             alert(error instanceof Error ? error.message : 'Error al agregar miembro');
         }
     };
 
-    const handleRemoveMember = (userId: string) => {
+    const handleRemoveMember = async (userId: string) => {
         if (confirm('¿Estás seguro de que deseas remover a este miembro del equipo?')) {
             try {
-                removeMemberFromTeam(team.id, userId);
-                loadData();
+                await removeMemberFromTeam(team.id, userId);
+                await loadData();
             } catch (error) {
                 alert(error instanceof Error ? error.message : 'Error al remover miembro');
             }
@@ -303,9 +303,9 @@ export const TeamDetailView: React.FC<TeamDetailViewProps> = ({
                             <TeamTaskCard
                                 key={task.id}
                                 task={task}
-                                onDelete={() => {
-                                    deleteTeamTask(team.id, task.id);
-                                    loadData();
+                                onDelete={async () => {
+                                    await deleteTeamTask(team.id, task.id);
+                                    await loadData();
                                 }}
                             />
                         ))}

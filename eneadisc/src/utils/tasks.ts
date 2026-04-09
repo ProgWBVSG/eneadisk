@@ -1,4 +1,6 @@
 // Sistema de Tareas
+import { supabase } from '../lib/supabase';
+
 export interface Task {
     id: string;
     userId: string;
@@ -27,57 +29,75 @@ export const CATEGORY_CONFIG = {
     development: { label: 'Desarrollo', icon: '🎯' }
 };
 
-export const saveTasks = (userId: string, tasks: Task[]): void => {
-    const key = `tasks_${userId}`;
-    localStorage.setItem(key, JSON.stringify(tasks));
+const mapRowToTask = (row: any): Task => ({
+    id: row.id,
+    userId: row.user_id,
+    title: row.title,
+    description: row.description,
+    status: row.status,
+    priority: row.priority,
+    category: row.category,
+    createdAt: row.created_at,
+    completedAt: row.completed_at,
+    dueDate: row.due_date,
+    assignedBy: row.assigned_by,
+    assignedByName: row.profiles?.full_name, // If we join profiles
+    teamId: row.team_id
+});
+
+export const getTasks = async (userId: string): Promise<Task[]> => {
+    const { data } = await supabase.from('tasks')
+        .select('*')
+        .eq('user_id', userId)
+        .is('team_id', null);
+    return (data || []).map(mapRowToTask);
 };
 
-export const getTasks = (userId: string): Task[] => {
-    const key = `tasks_${userId}`;
-    const stored = localStorage.getItem(key);
-    return stored ? JSON.parse(stored) : [];
+export const addTask = async (userId: string, task: Omit<Task, 'id' | 'userId' | 'createdAt'>): Promise<Task> => {
+    const { data, error } = await supabase.from('tasks').insert([{
+        user_id: userId,
+        title: task.title,
+        description: task.description,
+        status: task.status,
+        priority: task.priority,
+        category: task.category,
+        due_date: task.dueDate
+    }]).select().single();
+
+    if (error) throw error;
+    return mapRowToTask(data);
 };
 
-export const addTask = (userId: string, task: Omit<Task, 'id' | 'userId' | 'createdAt'>): Task => {
-    const newTask: Task = {
-        ...task,
-        id: Math.random().toString(36).substring(7),
-        userId,
-        createdAt: new Date().toISOString()
-    };
+export const updateTask = async (userId: string, taskId: string, updates: Partial<Task>): Promise<void> => {
+    const dbUpdates: any = {};
+    if (updates.title !== undefined) dbUpdates.title = updates.title;
+    if (updates.description !== undefined) dbUpdates.description = updates.description;
+    if (updates.status !== undefined) dbUpdates.status = updates.status;
+    if (updates.priority !== undefined) dbUpdates.priority = updates.priority;
+    if (updates.category !== undefined) dbUpdates.category = updates.category;
+    if (updates.dueDate !== undefined) dbUpdates.due_date = updates.dueDate;
+    if (updates.completedAt !== undefined) dbUpdates.completed_at = updates.completedAt;
 
-    const tasks = getTasks(userId);
-    saveTasks(userId, [...tasks, newTask]);
-    return newTask;
+    await supabase.from('tasks').update(dbUpdates).eq('id', taskId).eq('user_id', userId);
 };
 
-export const updateTask = (userId: string, taskId: string, updates: Partial<Task>): void => {
-    const tasks = getTasks(userId);
-    const updated = tasks.map(t =>
-        t.id === taskId ? { ...t, ...updates } : t
-    );
-    saveTasks(userId, updated);
-};
-
-export const completeTask = (userId: string, taskId: string): void => {
-    updateTask(userId, taskId, {
+export const completeTask = async (userId: string, taskId: string): Promise<void> => {
+    await updateTask(userId, taskId, {
         status: 'completed',
         completedAt: new Date().toISOString()
     });
 };
 
-export const deleteTask = (userId: string, taskId: string): void => {
-    const tasks = getTasks(userId);
-    saveTasks(userId, tasks.filter(t => t.id !== taskId));
+export const deleteTask = async (userId: string, taskId: string): Promise<void> => {
+    await supabase.from('tasks').delete().eq('id', taskId).eq('user_id', userId);
 };
 
-export const getTaskStats = (userId: string) => {
-    const tasks = getTasks(userId);
+export const getTaskStats = async (userId: string) => {
+    const tasks = await getTasks(userId);
     const completed = tasks.filter(t => t.status === 'completed');
     const pending = tasks.filter(t => t.status === 'pending');
     const inProgress = tasks.filter(t => t.status === 'in_progress');
 
-    // Tasks completed in last 7 days
     const last7Days = new Date();
     last7Days.setDate(last7Days.getDate() - 7);
     const recentCompleted = completed.filter(t =>
@@ -96,86 +116,56 @@ export const getTaskStats = (userId: string) => {
 
 // ==================== TEAM TASKS ====================
 
-/**
- * Get all tasks for a specific team
- */
-export const getTeamTasks = (teamId: string): Task[] => {
-    const key = `team_tasks_${teamId}`;
-    const stored = localStorage.getItem(key);
-    return stored ? JSON.parse(stored) : [];
+export const getTeamTasks = async (teamId: string): Promise<Task[]> => {
+    const { data } = await supabase.from('tasks')
+        .select('*, profiles!assigned_by(full_name)')
+        .eq('team_id', teamId);
+    return (data || []).map(mapRowToTask);
 };
 
-/**
- * Save team tasks to localStorage
- */
-const saveTeamTasks = (teamId: string, tasks: Task[]): void => {
-    const key = `team_tasks_${teamId}`;
-    localStorage.setItem(key, JSON.stringify(tasks));
-};
-
-/**
- * Create a new task assigned to an entire team
- * This task will be visible to all team members
- */
-export const createTeamTask = (
+export const createTeamTask = async (
     teamId: string,
     task: Omit<Task, 'id' | 'userId' | 'createdAt' | 'teamId'>,
     assignedBy: string,
     assignedByName: string
-): Task => {
-    const newTask: Task = {
-        ...task,
-        id: Math.random().toString(36).substring(7),
-        userId: '', // Team tasks don't belong to a specific user
-        teamId,
-        assignedBy,
-        assignedByName,
-        createdAt: new Date().toISOString()
-    };
+): Promise<Task> => {
+    const { data, error } = await supabase.from('tasks').insert([{
+        user_id: assignedBy, // Fallback rule for tasks requires a valid user_id
+        team_id: teamId,
+        title: task.title,
+        description: task.description,
+        status: task.status || 'pending',
+        priority: task.priority || 'medium',
+        category: task.category || 'team',
+        assigned_by: assignedBy,
+        due_date: task.dueDate
+    }]).select('*, profiles!assigned_by(full_name)').single();
 
-    const tasks = getTeamTasks(teamId);
-    saveTeamTasks(teamId, [...tasks, newTask]);
-    return newTask;
+    if (error) throw error;
+    return mapRowToTask(data);
 };
 
-/**
- * Get all tasks for a user including their personal tasks and team tasks
- */
-export const getUserTeamTasks = (userId: string, teamId?: string): Task[] => {
-    // Get personal tasks
-    const personalTasks = getTasks(userId);
+export const getUserTeamTasks = async (userId: string, teamId?: string): Promise<Task[]> => {
+    const personalTasks = await getTasks(userId);
+    const teamTasks = teamId ? await getTeamTasks(teamId) : [];
 
-    // Get team tasks if teamId provided
-    const teamTasks = teamId ? getTeamTasks(teamId) : [];
-
-    // Combine and sort by creation date (newest first)
     return [...personalTasks, ...teamTasks].sort((a, b) =>
         new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
     );
 };
 
-/**
- * Update a team task
- */
-export const updateTeamTask = (teamId: string, taskId: string, updates: Partial<Task>): void => {
-    const tasks = getTeamTasks(teamId);
-    const updated = tasks.map(t =>
-        t.id === taskId ? { ...t, ...updates } : t
-    );
-    saveTeamTasks(teamId, updated);
+export const updateTeamTask = async (teamId: string, taskId: string, updates: Partial<Task>): Promise<void> => {
+    const dbUpdates: any = {};
+    if (updates.status !== undefined) dbUpdates.status = updates.status;
+    if (updates.completedAt !== undefined) dbUpdates.completed_at = updates.completedAt;
+    
+    await supabase.from('tasks').update(dbUpdates).eq('id', taskId).eq('team_id', teamId);
 };
 
-/**
- * Delete a team task (only company can do this)
- */
-export const deleteTeamTask = (teamId: string, taskId: string): void => {
-    const tasks = getTeamTasks(teamId);
-    saveTeamTasks(teamId, tasks.filter(t => t.id !== taskId));
+export const deleteTeamTask = async (teamId: string, taskId: string): Promise<void> => {
+    await supabase.from('tasks').delete().eq('id', taskId).eq('team_id', teamId);
 };
 
-/**
- * Check if a task was assigned by company
- */
 export const isTeamTask = (task: Task): boolean => {
     return !!task.teamId && !!task.assignedBy;
 };
