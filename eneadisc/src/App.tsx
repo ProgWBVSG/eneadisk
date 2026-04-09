@@ -20,6 +20,7 @@ import { EmployeeProgress } from './pages/employee/EmployeeProgress';
 import { EmployeeAssistant } from './pages/employee/EmployeeAssistant';
 import { EmployeeCheckins } from './pages/employee/EmployeeCheckins';
 import { CompanyAnalytics } from './pages/company/CompanyAnalytics';
+import { CompanyTracking } from './pages/company/CompanyTracking';
 import { AIAssistant } from './pages/company/AIAssistant';
 
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -29,7 +30,6 @@ const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) =
 };
 
 // Placeholder components for upcoming company pages
-const Tracking = () => <div className="p-8"><h1 className="text-2xl font-bold">Seguimiento</h1><p className="text-slate-600 mt-2">Próximamente - Evolución del equipo</p></div>;
 const Subscription = () => <div className="p-8"><h1 className="text-2xl font-bold">Suscripción</h1><p className="text-slate-600 mt-2">Próximamente - Gestión de planes</p></div>;
 
 function AppRoutes() {
@@ -78,7 +78,7 @@ function AppRoutes() {
         <Route path="analisis" element={<CompanyAnalytics />} />
         <Route path="asistente" element={<AIAssistant />} />
         <Route path="biblioteca" element={<EnneagramLibrary />} />
-        <Route path="seguimiento" element={<Tracking />} />
+        <Route path="seguimiento" element={<CompanyTracking />} />
         <Route path="suscripcion" element={<Subscription />} />
       </Route>
     </Routes>

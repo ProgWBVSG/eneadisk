@@ -90,6 +90,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   useEffect(() => {
+    let mounted = true;
+
     // VERCEL MOCK DB INTERCEPT
     const mockSessionStr = localStorage.getItem('eneadisk_mock_session');
     if (mockSessionStr) {
@@ -103,40 +105,67 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
     }
 
+    // Fallback: Evitar pantalla de carga infinita pase lo que pase
+    const safetyTimeout = setTimeout(() => {
+      if (mounted) setIsLoading(false);
+    }, 5000);
+
     // Get initial session
     supabase.auth.getSession().then(async ({ data: { session: s } }) => {
+      if (!mounted) return;
       setSession(s);
       if (s?.user) {
         try {
           const appUser = await buildAppUser(s.user);
-          setUser(appUser);
+          if (mounted) setUser(appUser);
         } catch (e) {
           console.error("Error building app user", e);
         }
       }
-      setIsLoading(false);
+      if (mounted) {
+        setIsLoading(false);
+        clearTimeout(safetyTimeout);
+      }
     }).catch((err) => {
-      console.error("Error fetching session, Supabase might be paused:", err);
-      setIsLoading(false);
+      console.error("Error fetching session:", err);
+      if (mounted) {
+        setIsLoading(false);
+        clearTimeout(safetyTimeout);
+      }
     });
 
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, s) => {
+      if (!mounted) return;
       setSession(s);
-      if (event === 'SIGNED_IN' && s?.user) {
-        const appUser = await buildAppUser(s.user);
-        setUser(appUser);
+      
+      if ((event === 'INITIAL_SESSION' || event === 'SIGNED_IN') && s?.user) {
+        try {
+          const appUser = await buildAppUser(s.user);
+          if (mounted) setUser(appUser);
+        } catch (e) {
+          console.error("Auth context error:", e);
+        }
       } else if (event === 'SIGNED_OUT') {
         setUser(null);
       } else if (event === 'TOKEN_REFRESHED' && s?.user) {
-        // Silently refresh user data
-        const appUser = await buildAppUser(s.user);
-        setUser(appUser);
+        try {
+          const appUser = await buildAppUser(s.user);
+          if (mounted) setUser(appUser);
+        } catch (e) {}
       }
-      setIsLoading(false);
+      
+      if (mounted) {
+        setIsLoading(false);
+        clearTimeout(safetyTimeout);
+      }
     });
 
-    return () => subscription.unsubscribe();
+    return () => {
+      mounted = false;
+      clearTimeout(safetyTimeout);
+      subscription.unsubscribe();
+    };
   }, []);
 
   const login = async (email: string, password: string): Promise<{ error: string | null }> => {
