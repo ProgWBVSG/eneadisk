@@ -69,20 +69,20 @@ Estoy aquí para ayudarte a:
         }
     }, [user, primaryType]);
 
-    const generateContext = (): string => {
+    const generateContext = async (): Promise<string> => {
         if (!user) return 'No user info';
         
         let ctx = `User Enneagram Profile: ${primaryType ? `Type ${primaryType.id} - ${primaryType.name}` : 'Unknown'}. `;
         
         // Include last week's mood
-        const recentCheckins = getCheckInsFromLastDays(user.id, 7);
+        const recentCheckins = await getCheckInsFromLastDays(user.id, 7);
         if (recentCheckins.length > 0) {
-            const avgStress = recentCheckins.reduce((sum, c) => sum + c.stress, 0) / recentCheckins.length;
+            const avgStress = recentCheckins.reduce((sum: number, c: any) => sum + c.stress, 0) / recentCheckins.length;
             ctx += `Recent check-ins average stress level: ${avgStress.toFixed(1)}/5. `;
         }
         
         // Include task completion
-        const tasks = getTaskStats(user.id);
+        const tasks = await getTaskStats(user.id);
         if (tasks) {
             ctx += `Tasks status: ${tasks.completed} completed, ${tasks.pending} pending.`;
         }
@@ -116,7 +116,7 @@ Estoy aquí para ayudarte a:
         setMessages(prev => [...prev, loadingMessage]);
 
         try {
-            const context = generateContext();
+            const context = await generateContext();
 
             const response = await sendToAI({
                 message: text + " \\n\\nPor favor responde como si fueras un coach de vida y carrera compasivo, y bríndame consejos si es necesario.",

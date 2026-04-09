@@ -15,19 +15,35 @@ export const EmployeeProgress: React.FC = () => {
     const hasCompleted = user ? hasCompletedQuestionnaire(user.id) : false;
     const result = user ? getEnneagramResult(user.id) : null;
 
-    // Data fetching
-    const checkIns = user ? getCheckIns(user.id) : [];
-    const recentCheckIns = user ? getCheckInsFromLastDays(user.id, 30) : [];
-    const taskStats = user ? getTaskStats(user.id) : null;
-    const teamStats = user ? getTeamStats(user.id) : null;
+    // Data fetching states
+    const [checkIns, setCheckIns] = useState<any[]>([]);
+    const [recentCheckIns, setRecentCheckIns] = useState<any[]>([]);
+    const [taskStats, setTaskStats] = useState<any>(null);
+    const [teamStats, setTeamStats] = useState<any>(null);
+
+    React.useEffect(() => {
+        const loadData = async () => {
+            if (!user) return;
+            const fetchedCheckIns = await getCheckIns(user.id);
+            setCheckIns(fetchedCheckIns || []);
+            const fetchedRecentCheckIns = await getCheckInsFromLastDays(user.id, 30);
+            setRecentCheckIns(fetchedRecentCheckIns || []);
+            const fetchedTaskStats = await getTaskStats(user.id);
+            setTaskStats(fetchedTaskStats || null);
+            // Si getTeamStats es sync pero podría ser async
+            const fetchedTeamStats = await getTeamStats(user.id);
+            setTeamStats(fetchedTeamStats || null);
+        };
+        loadData();
+    }, [user]);
 
     // Calculate metrics
     const avgMoodScore = getAverageMoodScore(recentCheckIns);
     const avgEnergy = recentCheckIns.length > 0
-        ? recentCheckIns.reduce((sum, c) => sum + c.energy, 0) / recentCheckIns.length
+        ? recentCheckIns.reduce((sum: number, c: any) => sum + c.energy, 0) / recentCheckIns.length
         : 0;
     const avgStress = recentCheckIns.length > 0
-        ? recentCheckIns.reduce((sum, c) => sum + c.stress, 0) / recentCheckIns.length
+        ? recentCheckIns.reduce((sum: number, c: any) => sum + c.stress, 0) / recentCheckIns.length
         : 0;
 
     // Radar chart data
@@ -180,7 +196,7 @@ export const EmployeeProgress: React.FC = () => {
                                 <span>Nivel</span>
                             </div>
                             {moodTimeline.map((checkIn) => {
-                                const moodConfig = MOOD_CONFIG[checkIn.mood];
+                                const moodConfig = MOOD_CONFIG[checkIn.mood as keyof typeof MOOD_CONFIG];
                                 return (
                                     <div key={checkIn.id} className="flex items-center gap-3">
                                         <div className="text-2xl">{moodConfig.emoji}</div>

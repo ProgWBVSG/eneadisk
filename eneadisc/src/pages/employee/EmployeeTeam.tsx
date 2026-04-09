@@ -55,8 +55,12 @@ export const EmployeeTeam: React.FC = () => {
 
     useEffect(() => {
         // Load team tasks
-        const tasks = getTeamTasks(teamId);
-        setTeamTasks(tasks);
+        const fetchTasks = async () => {
+            const tasks = await getTeamTasks(teamId);
+            setTeamTasks(tasks as any[]);
+        };
+        fetchTasks();
+
     }, []);
 
     if (!user) {

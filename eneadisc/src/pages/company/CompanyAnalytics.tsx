@@ -19,57 +19,70 @@ export const CompanyAnalytics: React.FC = () => {
     const [selectedPeriod, setSelectedPeriod] = useState<PeriodType>('month');
     const [selectedTeam, setSelectedTeam] = useState<string | 'all'>('all');
     const [isComparing, setIsComparing] = useState(false);
-    const [refreshKey, setRefreshKey] = useState(0);
+    const [refreshKey] = useState(0);
 
     // Ref for export functionality
     const dashboardRef = useRef<HTMLDivElement | null>(null);
 
-    // Load real teams from localStorage
-    const realTeams = useMemo(() => {
-        if (!user?.companyId) return [];
+    const [realTeams, setRealTeams] = useState<any[]>([]);
+    const [analytics, setAnalytics] = useState<any>({
+        teams: [],
+        insights: [],
+        overallCompletionRate: 0,
+        overallMoodScore: 0,
+        totalTasksCompleted: 0,
+        totalCheckIns: 0
+    });
+    const [comparison, setComparison] = useState<any>(null);
 
-        const teams = getTeams(user.companyId);
-        return teams.map(team => ({
-            id: team.id,
-            name: team.name,
-            memberCount: team.memberIds.length
-        }));
+    // Load real teams
+    useEffect(() => {
+        const fetchTeams = async () => {
+            if (!user?.companyId) return;
+            const teams = await getTeams(user.companyId);
+            setRealTeams(teams.map((team: any) => ({
+                id: team.id,
+                name: team.name,
+                memberCount: team.memberIds?.length || 0
+            })));
+        };
+        fetchTeams();
     }, [user?.companyId, refreshKey]);
 
-    // Sync with localStorage changes (when teams are created/deleted)
-    useEffect(() => {
-        const handleStorageChange = (e: StorageEvent) => {
-            if (e.key?.startsWith('teams_')) {
-                setRefreshKey(prev => prev + 1);
-            }
-        };
-
-        window.addEventListener('storage', handleStorageChange);
-        return () => window.removeEventListener('storage', handleStorageChange);
-    }, []);
-
     // Calculate analytics for selected period
-    const analytics = useMemo(() => {
+    useEffect(() => {
         if (realTeams.length === 0) {
-            // Return empty analytics structure
-            return {
+            setAnalytics({
                 teams: [],
                 insights: [],
                 overallCompletionRate: 0,
                 overallMoodScore: 0,
                 totalTasksCompleted: 0,
                 totalCheckIns: 0
-            };
+            });
+            return;
         }
 
-        const dateRange = getDateRange(selectedPeriod);
-        return calculateCompanyAnalytics(realTeams, dateRange);
+        const fetchAnalytics = async () => {
+            const dateRange = getDateRange(selectedPeriod);
+            const data = await calculateCompanyAnalytics(realTeams, dateRange);
+            setAnalytics(data);
+        };
+        fetchAnalytics();
     }, [selectedPeriod, realTeams]);
 
     // Calculate period comparison if enabled
-    const comparison = useMemo(() => {
-        if (!isComparing || realTeams.length === 0) return null;
-        return calculatePeriodComparison(realTeams, selectedPeriod);
+    useEffect(() => {
+        if (!isComparing || realTeams.length === 0) {
+            setComparison(null);
+            return;
+        }
+
+        const fetchComparison = async () => {
+            const data = await calculatePeriodComparison(realTeams, selectedPeriod);
+            setComparison(data);
+        };
+        fetchComparison();
     }, [selectedPeriod, isComparing, realTeams]);
 
     // Filtrar analytics por equipo seleccionado
@@ -82,7 +95,7 @@ export const CompanyAnalytics: React.FC = () => {
                 totalCheckIns: analytics.totalCheckIns
             };
         }
-        return analytics.teams.find(t => t.teamId === selectedTeam) || null;
+        return analytics.teams.find((t: any) => t.teamId === selectedTeam) || null;
     }, [analytics, selectedTeam]);
 
     const periodLabels: Record<PeriodType, string> = {
@@ -213,10 +226,10 @@ export const CompanyAnalytics: React.FC = () => {
                 />
 
                 {/* Charts */}
-                {selectedTeam !== 'all' && analytics.teams.find(t => t.teamId === selectedTeam) && (
+                {selectedTeam !== 'all' && analytics.teams.find((t: any) => t.teamId === selectedTeam) && (
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-                        <ProductivityChart analytics={analytics.teams.find(t => t.teamId === selectedTeam)!} />
-                        <PriorityDistribution analytics={analytics.teams.find(t => t.teamId === selectedTeam)!} />
+                        <ProductivityChart analytics={analytics.teams.find((t: any) => t.teamId === selectedTeam)!} />
+                        <PriorityDistribution analytics={analytics.teams.find((t: any) => t.teamId === selectedTeam)!} />
                     </div>
                 )}
 

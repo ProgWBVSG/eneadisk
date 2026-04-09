@@ -127,7 +127,7 @@ export const createTeamTask = async (
     teamId: string,
     task: Omit<Task, 'id' | 'userId' | 'createdAt' | 'teamId'>,
     assignedBy: string,
-    assignedByName: string
+    _assignedByName: string
 ): Promise<Task> => {
     const { data, error } = await supabase.from('tasks').insert([{
         user_id: assignedBy, // Fallback rule for tasks requires a valid user_id

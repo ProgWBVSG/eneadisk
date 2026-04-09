@@ -139,34 +139,34 @@ function getWeeksBetween(start: Date, end: Date): number {
 // CORE ANALYTICS FUNCTIONS
 // ==========================================
 
-export function calculateTeamMetrics(
+export async function calculateTeamMetrics(
     teamId: string,
     teamName: string,
     dateRange: DateRange,
     memberCount: number = 1
-): TeamAnalytics {
+): Promise<TeamAnalytics> {
     // Get all team tasks
-    const allTasks = getTeamTasks(teamId);
+    const allTasks = await getTeamTasks(teamId);
 
     // Filter tasks within date range
-    const tasksInPeriod = allTasks.filter(task =>
+    const tasksInPeriod = allTasks.filter((task: any) =>
         isWithinRange(task.createdAt, dateRange)
     );
 
     // Get all check-ins for this period (would need team member IDs in real implementation)
     // For now, we'll use a simplified version
-    const allCheckIns = getCheckIns('demo-employee-001'); // Simplified
-    const checkInsInPeriod = allCheckIns.filter(checkIn =>
+    const allCheckIns = await getCheckIns('demo-employee-001'); // Simplified
+    const checkInsInPeriod = allCheckIns.filter((checkIn: any) =>
         isWithinRange(checkIn.date, dateRange)
     );
 
     // Calculate productivity metrics
     const tasksAssigned = tasksInPeriod.length;
-    const tasksCompleted = tasksInPeriod.filter(t => t.status === 'completed').length;
-    const tasksInProgress = tasksInPeriod.filter(t => t.status === 'in_progress').length;
+    const tasksCompleted = tasksInPeriod.filter((t: any) => t.status === 'completed').length;
+    const tasksInProgress = tasksInPeriod.filter((t: any) => t.status === 'in_progress').length;
 
     const now = new Date();
-    const tasksOverdue = tasksInPeriod.filter(t =>
+    const tasksOverdue = tasksInPeriod.filter((t: any) =>
         t.status !== 'completed' &&
         t.dueDate &&
         new Date(t.dueDate) < now
@@ -175,9 +175,9 @@ export function calculateTeamMetrics(
     const completionRate = tasksAssigned > 0 ? (tasksCompleted / tasksAssigned) * 100 : 0;
 
     // Calculate average completion time
-    const completedTasks = tasksInPeriod.filter(t => t.status === 'completed' && t.completedAt);
+    const completedTasks = tasksInPeriod.filter((t: any) => t.status === 'completed' && t.completedAt);
     const avgCompletionTime = completedTasks.length > 0
-        ? completedTasks.reduce((sum, task) => {
+        ? completedTasks.reduce((sum: number, task: any) => {
             return sum + getDaysBetween(task.createdAt, task.completedAt!);
         }, 0) / completedTasks.length
         : 0;
@@ -187,21 +187,21 @@ export function calculateTeamMetrics(
     const velocityPerWeek = weeks > 0 ? tasksCompleted / weeks : tasksCompleted;
 
     // Priority distribution
-    const completedByPriority = tasksInPeriod.filter(t => t.status === 'completed');
-    const highPriorityCompleted = completedByPriority.filter(t => t.priority === 'high').length;
-    const mediumPriorityCompleted = completedByPriority.filter(t => t.priority === 'medium').length;
-    const lowPriorityCompleted = completedByPriority.filter(t => t.priority === 'low').length;
+    const completedByPriority = tasksInPeriod.filter((t: any) => t.status === 'completed');
+    const highPriorityCompleted = completedByPriority.filter((t: any) => t.priority === 'high').length;
+    const mediumPriorityCompleted = completedByPriority.filter((t: any) => t.priority === 'medium').length;
+    const lowPriorityCompleted = completedByPriority.filter((t: any) => t.priority === 'low').length;
 
     // Calculate wellbeing metrics
     const avgMoodScore = checkInsInPeriod.length > 0
-        ? checkInsInPeriod.reduce((sum, checkIn) => sum + getMoodScore(checkIn.mood), 0) / checkInsInPeriod.length
+        ? checkInsInPeriod.reduce((sum: number, checkIn: any) => sum + getMoodScore(checkIn.mood), 0) / checkInsInPeriod.length
         : 3;
 
     const avgEnergyLevel = checkInsInPeriod.length > 0
-        ? checkInsInPeriod.reduce((sum, checkIn) => sum + checkIn.energy, 0) / checkInsInPeriod.length
+        ? checkInsInPeriod.reduce((sum: number, checkIn: any) => sum + checkIn.energy, 0) / checkInsInPeriod.length
         : 3;
 
-    const stressfulCheckIns = checkInsInPeriod.filter(c => isStressful(c.mood)).length;
+    const stressfulCheckIns = checkInsInPeriod.filter((c: any) => isStressful(c.mood)).length;
     const stressIndex = checkInsInPeriod.length > 0
         ? (stressfulCheckIns / checkInsInPeriod.length) * 100
         : 0;
@@ -448,13 +448,14 @@ export function generateInsights(analytics: TeamAnalytics): Insight[] {
 // COMPANY-WIDE ANALYTICS
 // ==========================================
 
-export function calculateCompanyAnalytics(
+export async function calculateCompanyAnalytics(
     teams: Array<{ id: string; name: string; memberCount: number }>,
     dateRange: DateRange
-): CompanyWideAnalytics {
-    const teamAnalytics = teams.map(team =>
+): Promise<CompanyWideAnalytics> {
+    const teamAnalyticsPromises = teams.map(team =>
         calculateTeamMetrics(team.id, team.name, dateRange, team.memberCount)
     );
+    const teamAnalytics = await Promise.all(teamAnalyticsPromises);
 
     const overallCompletionRate = teamAnalytics.length > 0
         ? teamAnalytics.reduce((sum, t) => sum + t.completionRate, 0) / teamAnalytics.length
@@ -543,15 +544,15 @@ export function getPreviousPeriodRange(period: 'week' | 'month' | 'quarter'): Da
 /**
  * Calculate comparison between current and previous period
  */
-export function calculatePeriodComparison(
+export async function calculatePeriodComparison(
     teams: Array<{ id: string; name: string; memberCount: number }>,
     period: 'week' | 'month' | 'quarter'
-): PeriodComparison {
+): Promise<PeriodComparison> {
     const currentRange = getDateRange(period);
     const previousRange = getPreviousPeriodRange(period);
 
-    const current = calculateCompanyAnalytics(teams, currentRange);
-    const previous = calculateCompanyAnalytics(teams, previousRange);
+    const current = await calculateCompanyAnalytics(teams, currentRange);
+    const previous = await calculateCompanyAnalytics(teams, previousRange);
 
     // Calculate deltas
     const delta = {

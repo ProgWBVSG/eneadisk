@@ -117,8 +117,8 @@ Puedo ayudarte con:
         if (!user?.companyId) return 'No hay datos disponibles';
 
         try {
-            const teams = getTeams(user.companyId);
-            const teamsData = teams.map(team => ({
+            const teams = await getTeams(user.companyId);
+            const teamsData = teams.map((team: any) => ({
                 id: team.id,
                 name: team.name,
                 memberCount: team.memberIds.length
@@ -129,7 +129,7 @@ Puedo ayudarte con:
             }
 
             const dateRange = getDateRange('month');
-            const analytics = calculateCompanyAnalytics(teamsData, dateRange);
+            const analytics = await calculateCompanyAnalytics(teamsData, dateRange);
 
             return generateAnalyticsContext(analytics);
         } catch (error) {
