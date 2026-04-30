@@ -65,8 +65,8 @@ export const Sidebar: React.FC = () => {
             >
                 {/* Logo */}
                 <div className="p-6 border-b border-slate-200">
-                    <h1 className="text-2xl font-bold text-purple-600">ENEATEAMS</h1>
-                    <p className="text-xs text-slate-500 mt-1">
+                    <img src="/logo.png" alt="EneaTeams" className="h-10 w-auto" />
+                    <p className="text-xs text-slate-500 mt-2">
                         {isEmployee ? 'Panel del Colaborador' : 'Panel de Administrador'}
                     </p>
                 </div>
