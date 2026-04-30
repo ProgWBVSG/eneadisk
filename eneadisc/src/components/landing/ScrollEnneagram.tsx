@@ -265,7 +265,7 @@ function ScrollEnneagram({ sections, enneagramConfig = defaultConfig, className 
           filter: `opacity(${activeSection === sections.length - 1 ? 0.3 : 0.7})`,
         }}
       >
-        <div className="scale-75 sm:scale-90 lg:scale-100">
+        <div className="scale-[0.55] sm:scale-75 md:scale-90 lg:scale-100">
           <Enneagram />
         </div>
       </div>

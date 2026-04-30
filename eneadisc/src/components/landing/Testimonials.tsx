@@ -53,7 +53,7 @@ const testimonials = [
 ];
 
 const TestimonialCard: React.FC<{ testimonial: typeof testimonials[0] }> = ({ testimonial }) => (
-  <div className="flex-shrink-0 w-[380px] bg-white/[0.04] border border-white/10 rounded-xl p-6 mx-3 backdrop-blur-sm hover:bg-white/[0.08] transition-colors duration-300">
+  <div className="flex-shrink-0 w-[300px] sm:w-[380px] bg-white/[0.04] border border-white/10 rounded-xl p-6 mx-3 backdrop-blur-sm hover:bg-white/[0.08] transition-colors duration-300">
     <div className="flex items-center gap-4 mb-4">
       <div className="w-11 h-11 rounded-full bg-indigo-500/20 border border-indigo-400/30 flex items-center justify-center text-indigo-300 font-bold text-sm">
         {testimonial.avatar}
