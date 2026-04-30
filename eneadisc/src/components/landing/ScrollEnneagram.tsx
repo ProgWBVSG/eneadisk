@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState, useCallback, useMemo } from "react";
+import { useEffect, useRef, useState, useCallback, useMemo } from "react";
 import Enneagram from "../ui/Enneagram";
 import { cn } from "../../lib/utils";
 import { useNavigate } from "react-router-dom";
@@ -40,7 +40,7 @@ function ScrollEnneagram({ sections, enneagramConfig = defaultConfig, className 
   const [enneagramTransform, setEnneagramTransform] = useState("");
   const containerRef = useRef<HTMLDivElement>(null);
   const sectionRefs = useRef<(HTMLDivElement | null)[]>([]);
-  const animationFrameId = useRef<number>();
+  const animationFrameId = useRef<number>(0);
 
   const calculatedPositions = useMemo(() => {
     return enneagramConfig.positions.map(pos => ({
@@ -274,7 +274,7 @@ function ScrollEnneagram({ sections, enneagramConfig = defaultConfig, className 
       {sections.map((section, index) => (
         <section
           key={section.id}
-          ref={(el) => { sectionRefs.current[index] = el; }}
+          ref={(el) => { sectionRefs.current[index] = el as HTMLDivElement | null; }}
           className={cn(
             "relative min-h-screen flex flex-col justify-center px-6 md:px-8 lg:px-12 z-20 py-16 lg:py-20",
             "w-full max-w-full overflow-hidden",
@@ -329,7 +329,7 @@ function ScrollEnneagram({ sections, enneagramConfig = defaultConfig, className 
             {/* Features */}
             {section.features && (
               <div className="grid gap-4 mb-10">
-                {section.features.map((feature, fi) => (
+                {section.features.map((feature) => (
                   <div
                     key={feature.title}
                     className="group p-5 lg:p-6 rounded-xl border border-white/10 bg-white/[0.03] backdrop-blur-sm hover:bg-white/[0.06] transition-all duration-300 hover:shadow-lg hover:shadow-indigo-500/5 hover:border-indigo-500/20 hover:-translate-y-1"

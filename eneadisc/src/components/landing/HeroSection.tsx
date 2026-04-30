@@ -1,12 +1,13 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
+import type { Variants } from 'framer-motion';
 
 export const HeroSection: React.FC = () => {
   const navigate = useNavigate();
 
   // Animation variants
-  const containerVariants = {
+  const containerVariants: Variants = {
     hidden: { opacity: 0 },
     visible: {
       opacity: 1,
@@ -17,12 +18,12 @@ export const HeroSection: React.FC = () => {
     }
   };
 
-  const textVariants = {
+  const textVariants: Variants = {
     hidden: { opacity: 0, y: 50 },
     visible: { opacity: 1, y: 0, transition: { duration: 0.8, ease: "easeOut" } }
   };
 
-  const buttonVariants = {
+  const buttonVariants: Variants = {
     hidden: { opacity: 0, scale: 0.8 },
     visible: { opacity: 1, scale: 1, transition: { duration: 0.8, delay: 1, ease: "easeOut" } }
   };
