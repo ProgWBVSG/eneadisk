@@ -104,10 +104,17 @@ export default async function handler(req: Request): Promise<Response> {
         }
 
         // Build messages - inject real dashboard data as context
+        // El mensaje de contexto se cachea para evitar reprocesarlo en cada turno
         const messages = [
             {
                 role: 'user' as const,
-                content: `Estos son los datos actuales del dashboard de la empresa (úsalos cuando te pregunten sobre métricas, equipos o análisis):\n\n${context}\n\nPero no te limites solo a los datos — también podés responder preguntas sobre eneatipos, DISC, desarrollo personal y gestión de equipos en general.`
+                content: [
+                    {
+                        type: 'text' as const,
+                        text: `Estos son los datos actuales del dashboard de la empresa (úsalos cuando te pregunten sobre métricas, equipos o análisis):\n\n${context}\n\nPero no te limites solo a los datos — también podés responder preguntas sobre eneatipos, DISC, desarrollo personal y gestión de equipos en general.`,
+                        cache_control: { type: 'ephemeral' as const }
+                    }
+                ]
             },
             {
                 role: 'assistant' as const,
@@ -121,17 +128,26 @@ export default async function handler(req: Request): Promise<Response> {
         ];
 
         // Direct fetch to Anthropic API (Edge-compatible, no SDK)
+        // Sistema de caché: el system prompt y el contexto del dashboard se cachean
+        // para reducir latencia y costo en conversaciones largas (~90% ahorro en tokens repetidos)
         const anthropicRes = await fetch('https://api.anthropic.com/v1/messages', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
                 'x-api-key': apiKey,
                 'anthropic-version': '2023-06-01',
+                'anthropic-beta': 'prompt-caching-2024-07-31',
             },
             body: JSON.stringify({
-                model: 'claude-3-5-sonnet-20241022',
+                model: 'claude-sonnet-4-6',
                 max_tokens: 900,
-                system: SYSTEM_PROMPT,
+                system: [
+                    {
+                        type: 'text',
+                        text: SYSTEM_PROMPT,
+                        cache_control: { type: 'ephemeral' }
+                    }
+                ],
                 messages
             })
         });

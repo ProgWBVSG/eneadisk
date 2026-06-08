@@ -6,7 +6,6 @@ import { getTaskStats } from '../../utils/tasks';
 import { sendToAI } from '../../services/aiService';
 import { MessageBubble } from '../../components/ai/MessageBubble';
 import { SuggestedPrompts } from '../../components/ai/SuggestedPrompts';
-import { getEnneagramResult } from '../../utils/calculateEnneagram';
 import { ENNEAGRAM_TYPES } from '../../data/enneagramData';
 import type { Message, SuggestedPrompt } from '../../types/ai';
 
@@ -41,8 +40,8 @@ export const EmployeeAssistant: React.FC = () => {
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const inputRef = useRef<HTMLTextAreaElement>(null);
 
-    const enneagramResult = user ? getEnneagramResult(user.id) : null;
-    const primaryType = enneagramResult ? ENNEAGRAM_TYPES[enneagramResult.primaryType] : null;
+    // Usar el eneatipo guardado en Supabase (profiles.enneagram_type), no localStorage
+    const primaryType = user?.enneagramType ? ENNEAGRAM_TYPES[user.enneagramType] : null;
 
     useEffect(() => {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -70,24 +69,45 @@ Estoy aquí para ayudarte a:
     }, [user, primaryType]);
 
     const generateContext = async (): Promise<string> => {
-        if (!user) return 'No user info';
-        
-        let ctx = `User Enneagram Profile: ${primaryType ? `Type ${primaryType.id} - ${primaryType.name}` : 'Unknown'}. `;
-        
-        // Include last week's mood
-        const recentCheckins = await getCheckInsFromLastDays(user.id, 7);
-        if (recentCheckins.length > 0) {
-            const avgStress = recentCheckins.reduce((sum: number, c: any) => sum + c.stress, 0) / recentCheckins.length;
-            ctx += `Recent check-ins average stress level: ${avgStress.toFixed(1)}/5. `;
-        }
-        
-        // Include task completion
-        const tasks = await getTaskStats(user.id);
-        if (tasks) {
-            ctx += `Tasks status: ${tasks.completed} completed, ${tasks.pending} pending.`;
+        if (!user) return 'No hay información del usuario.';
+
+        const lines: string[] = [];
+
+        // Eneatipo real desde Supabase
+        if (primaryType) {
+            lines.push(`PERFIL DEL USUARIO:`);
+            lines.push(`• Nombre: ${user.name}`);
+            lines.push(`• Eneatipo: ${primaryType.id} - ${primaryType.name}`);
+            lines.push(`• Motivación: ${primaryType.motivation}`);
+            lines.push(`• Miedo principal: ${primaryType.fear}`);
+            lines.push(`• Fortalezas: ${primaryType.strengths.join(', ')}`);
+            lines.push(`• Áreas de crecimiento: ${primaryType.growthAreas.join(', ')}`);
+        } else {
+            lines.push(`Usuario: ${user.name} (sin eneatipo completado aún)`);
         }
 
-        return ctx;
+        // Check-ins de la última semana
+        const recentCheckins = await getCheckInsFromLastDays(user.id, 7);
+        if (recentCheckins.length > 0) {
+            const avgStress = recentCheckins.reduce((s: number, c: any) => s + c.stress, 0) / recentCheckins.length;
+            const avgEnergy = recentCheckins.reduce((s: number, c: any) => s + c.energy, 0) / recentCheckins.length;
+            const lastMood = recentCheckins[0]?.mood || 'neutral';
+            lines.push(`\nESTADO EMOCIONAL (últimos 7 días):`);
+            lines.push(`• Check-ins realizados: ${recentCheckins.length}`);
+            lines.push(`• Estrés promedio: ${avgStress.toFixed(1)}/5`);
+            lines.push(`• Energía promedio: ${avgEnergy.toFixed(1)}/5`);
+            lines.push(`• Último estado de ánimo: ${lastMood}`);
+        }
+
+        // Estadísticas de tareas
+        const tasks = await getTaskStats(user.id);
+        if (tasks && tasks.total > 0) {
+            lines.push(`\nTAREAS:`);
+            lines.push(`• Total: ${tasks.total} | Completadas: ${tasks.completed} | Pendientes: ${tasks.pending}`);
+            lines.push(`• Tasa de completación: ${tasks.completionRate.toFixed(0)}%`);
+        }
+
+        return lines.join('\n');
     };
 
     const sendMessage = async (text: string) => {

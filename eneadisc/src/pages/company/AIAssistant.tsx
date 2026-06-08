@@ -121,7 +121,8 @@ Puedo ayudarte con:
             const teamsData = teams.map((team: any) => ({
                 id: team.id,
                 name: team.name,
-                memberCount: team.memberIds.length
+                memberCount: team.memberIds?.length || 0,
+                memberIds: team.memberIds || []
             }));
 
             if (teamsData.length === 0) {
