@@ -20,6 +20,7 @@ export const CompanyPanel: React.FC = () => {
     const navigate = useNavigate();
     const { user } = useAuth();
     const [employeeCount, setEmployeeCount] = useState(0);
+    const [completedTests, setCompletedTests] = useState(0);
     const [copied, setCopied] = useState(false);
     const [runTutorial, setRunTutorial] = useState(false);
     const [inviteCode, setInviteCode] = useState<string>('');
@@ -38,14 +39,22 @@ export const CompanyPanel: React.FC = () => {
 
         if (data?.invite_code) setInviteCode(data.invite_code);
 
-        // Count employees (profiles belonging to this company, excluding admin)
+        // Contar empleados
         const { count } = await supabase
             .from('profiles')
             .select('id', { count: 'exact', head: true })
             .eq('company_id', user.companyId)
             .eq('role', 'employee');
-
         setEmployeeCount(count ?? 0);
+
+        // Contar tests completados
+        const { count: doneCount } = await supabase
+            .from('profiles')
+            .select('id', { count: 'exact', head: true })
+            .eq('company_id', user.companyId)
+            .eq('role', 'employee')
+            .eq('questionnaire_completed', true);
+        setCompletedTests(doneCount ?? 0);
     }, [user?.companyId]);
 
     // ── Fetch pending join requests ────────────────────────────────────────
@@ -211,8 +220,12 @@ export const CompanyPanel: React.FC = () => {
                         <h3 className="text-slate-500 text-sm font-medium">Tests Completados</h3>
                         <CheckCircle className="text-green-600" size={24} />
                     </div>
-                    <p className="text-3xl font-bold text-slate-900">—</p>
-                    <p className="text-xs text-slate-500 mt-1">Próximamente disponible</p>
+                    <p className="text-3xl font-bold text-slate-900">{completedTests}</p>
+                    <p className="text-xs text-slate-500 mt-1">
+                        {employeeCount > 0
+                            ? `${Math.round((completedTests / employeeCount) * 100)}% del equipo perfilado`
+                            : 'Invita empleados para comenzar'}
+                    </p>
                 </div>
 
                 <div className="bg-white rounded-xl p-6 shadow-md">

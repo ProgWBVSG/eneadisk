@@ -63,7 +63,9 @@ export const CompanyTracking: React.FC = () => {
           }
        }
        
-       const data = await generateTrackingData(filteredEmployees);
+       // Pasamos todos los IDs de empleados para el gráfico histórico completo
+       const allEmployeeIds = employees.map(e => e.id);
+       const data = await generateTrackingData(filteredEmployees, allEmployeeIds);
        setTrackingData(data);
     };
     fetchTracking();

@@ -64,7 +64,7 @@ export const generateEvolutionHistory = (): EvolutionDataPoint[] => {
   });
 };
 
-import { getCheckIns } from './checkIns';
+import { getCheckIns, getMonthlyWellbeingHistory } from './checkIns';
 import { getTasks } from './tasks';
 
 // Asignar focos de desarrollo basados en eneatipo
@@ -91,7 +91,7 @@ const getStressWarning = (type: number | null): string | null => {
   return stressPaths[type] || 'Señales detectadas';
 };
 
-export const generateTrackingData = async (employees: AppUser[]): Promise<{
+export const generateTrackingData = async (employees: AppUser[], companyEmployeeIds?: string[]): Promise<{
   matrix: EmployeeTracking[];
   kpis: TrackingKPIs;
   chartData: EvolutionDataPoint[];
@@ -148,16 +148,25 @@ export const generateTrackingData = async (employees: AppUser[]): Promise<{
 
   const avgWellbeing = checkinCount > 0 ? (globalWellbeingSum / checkinCount) : 0;
 
+  // Historial real: usar todos los empleados visibles o los de la empresa completa
+  const allIds = companyEmployeeIds ?? employees.map(e => e.id);
+  let chartData: EvolutionDataPoint[] = [];
+  if (allIds.length > 0) {
+    const realHistory = await getMonthlyWellbeingHistory(allIds, 6);
+    chartData = realHistory.length > 0 ? realHistory : generateEvolutionHistory();
+  } else {
+    chartData = generateEvolutionHistory();
+  }
+
   return {
     matrix,
     kpis: {
       completedChallenges: globalCompletedChallenges,
-      completedChallengesGrowth: 0, // Podría calcularse contra el mes anterior
+      completedChallengesGrowth: 0,
       averageWellbeing: Number(avgWellbeing.toFixed(1)),
       wellbeingGrowth: 0,
       activeFocusAreas: employees.length
     },
-    // Chart historico todavia simulado para el efecto visual, a futuro se calcula igual sobre checkins historicos
-    chartData: generateEvolutionHistory()
+    chartData
   };
 };

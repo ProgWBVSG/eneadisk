@@ -1,7 +1,8 @@
 import type { Task } from './tasks';
 import type { CheckIn } from './checkIns';
 import { getTeamTasks } from './tasks';
-import { getCheckIns } from './checkIns';
+import { getCheckInsForUsers } from './checkIns';
+import { supabase } from '../lib/supabase';
 
 // ==========================================
 // INTERFACES & TYPES
@@ -143,7 +144,8 @@ export async function calculateTeamMetrics(
     teamId: string,
     teamName: string,
     dateRange: DateRange,
-    memberCount: number = 1
+    memberCount: number = 1,
+    memberIds: string[] = []
 ): Promise<TeamAnalytics> {
     // Get all team tasks
     const allTasks = await getTeamTasks(teamId);
@@ -153,9 +155,18 @@ export async function calculateTeamMetrics(
         isWithinRange(task.createdAt, dateRange)
     );
 
-    // Get all check-ins for this period (would need team member IDs in real implementation)
-    // For now, we'll use a simplified version
-    const allCheckIns = await getCheckIns('demo-employee-001'); // Simplified
+    // Si no se pasaron memberIds, los obtenemos de la DB
+    let resolvedMemberIds = memberIds;
+    if (resolvedMemberIds.length === 0 && teamId) {
+        const { data } = await supabase
+            .from('team_members')
+            .select('user_id')
+            .eq('team_id', teamId);
+        resolvedMemberIds = (data || []).map((m: any) => m.user_id);
+    }
+
+    // Obtener check-ins reales de todos los miembros del equipo
+    const allCheckIns = await getCheckInsForUsers(resolvedMemberIds);
     const checkInsInPeriod = allCheckIns.filter((checkIn: any) =>
         isWithinRange(checkIn.date, dateRange)
     );
@@ -449,11 +460,11 @@ export function generateInsights(analytics: TeamAnalytics): Insight[] {
 // ==========================================
 
 export async function calculateCompanyAnalytics(
-    teams: Array<{ id: string; name: string; memberCount: number }>,
+    teams: Array<{ id: string; name: string; memberCount: number; memberIds?: string[] }>,
     dateRange: DateRange
 ): Promise<CompanyWideAnalytics> {
     const teamAnalyticsPromises = teams.map(team =>
-        calculateTeamMetrics(team.id, team.name, dateRange, team.memberCount)
+        calculateTeamMetrics(team.id, team.name, dateRange, team.memberCount, team.memberIds ?? [])
     );
     const teamAnalytics = await Promise.all(teamAnalyticsPromises);
 
@@ -545,7 +556,7 @@ export function getPreviousPeriodRange(period: 'week' | 'month' | 'quarter'): Da
  * Calculate comparison between current and previous period
  */
 export async function calculatePeriodComparison(
-    teams: Array<{ id: string; name: string; memberCount: number }>,
+    teams: Array<{ id: string; name: string; memberCount: number; memberIds?: string[] }>,
     period: 'week' | 'month' | 'quarter'
 ): Promise<PeriodComparison> {
     const currentRange = getDateRange(period);

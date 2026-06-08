@@ -35,7 +35,7 @@ export const CompanyAnalytics: React.FC = () => {
     });
     const [comparison, setComparison] = useState<any>(null);
 
-    // Load real teams
+    // Load real teams including memberIds for accurate analytics
     useEffect(() => {
         const fetchTeams = async () => {
             if (!user?.companyId) return;
@@ -43,7 +43,8 @@ export const CompanyAnalytics: React.FC = () => {
             setRealTeams(teams.map((team: any) => ({
                 id: team.id,
                 name: team.name,
-                memberCount: team.memberIds?.length || 0
+                memberCount: team.memberIds?.length || 0,
+                memberIds: team.memberIds || []
             })));
         };
         fetchTeams();
