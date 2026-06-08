@@ -24,6 +24,7 @@ import { EmployeeCheckins } from './pages/employee/EmployeeCheckins';
 import { CompanyAnalytics } from './pages/company/CompanyAnalytics';
 import { CompanyTracking } from './pages/company/CompanyTracking';
 import { AIAssistant } from './pages/company/AIAssistant';
+import { Subscription } from './pages/company/Subscription';
 
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { isAuthenticated } = useAuth();
@@ -31,8 +32,6 @@ const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) =
   return <>{children}</>;
 };
 
-// Placeholder components for upcoming company pages
-const Subscription = () => <div className="p-8"><h1 className="text-2xl font-bold">Suscripción</h1><p className="text-slate-600 mt-2">Próximamente - Gestión de planes</p></div>;
 
 function AppRoutes() {
   return (
