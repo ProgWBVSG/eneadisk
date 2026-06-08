@@ -25,6 +25,10 @@ interface AuthContextType {
   login: (email: string, password: string) => Promise<{ error: string | null }>;
   logout: () => Promise<void>;
   refreshUser: () => Promise<void>;
+  signInWithGoogle: (
+    role: 'company_admin' | 'employee',
+    extraData?: { companyName?: string; inviteCode?: string; companyId?: string }
+  ) => Promise<{ error: string | null }>;
 }
 
 // ============================================
@@ -195,6 +199,26 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return { error: null };
   };
 
+  const signInWithGoogle = async (
+    role: 'company_admin' | 'employee',
+    extraData?: { companyName?: string; inviteCode?: string; companyId?: string }
+  ): Promise<{ error: string | null }> => {
+    localStorage.setItem('eneateams_oauth_intent', JSON.stringify({ role, ...extraData }));
+
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        redirectTo: `${window.location.origin}/auth/callback`,
+      },
+    });
+
+    if (error) {
+      localStorage.removeItem('eneateams_oauth_intent');
+      return { error: error.message };
+    }
+    return { error: null };
+  };
+
   const logout = async () => {
     if (localStorage.getItem('eneateams_mock_session')) {
       localStorage.removeItem('eneateams_mock_session');
@@ -229,6 +253,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       login,
       logout,
       refreshUser,
+      signInWithGoogle,
     }}>
       {children}
     </AuthContext.Provider>

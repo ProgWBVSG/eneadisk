@@ -12,6 +12,7 @@ import { QuestionnaireFlow } from './pages/QuestionnaireFlow';
 import { EmployeeProfile } from './pages/employee/EmployeeProfile';
 import { JoinRequest } from './pages/auth/employee/JoinRequest';
 import { ResetPassword } from './pages/auth/ResetPassword';
+import { OAuthCallback } from './pages/auth/OAuthCallback';
 import { CompanyPanel } from './pages/company/CompanyPanel';
 import { EnneagramLibrary } from './pages/company/EnneagramLibrary';
 import { TeamManagement } from './pages/company/TeamManagement';
@@ -46,6 +47,7 @@ function AppRoutes() {
         <Route path="/auth/employee/signup" element={<EmployeeSignup />} />
         <Route path="/auth/reset-password" element={<ResetPassword />} />
         <Route path="/join" element={<JoinRequest />} />
+        <Route path="/auth/callback" element={<OAuthCallback />} />
       </Route>
 
       {/* Questionnaire (fullscreen, no sidebar) */}

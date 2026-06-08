@@ -1,19 +1,22 @@
 import { createClient } from '@supabase/supabase-js';
 
-// Valores por defecto para prevenir una pantalla blanca ("White Screen of Death") en Vercel
-// si las variables de entorno aún no fueron configuradas en el dashboard.
-// Nota: ANON_KEY es pública y segura para estar en el frontend (RLS protege los datos de la DB).
-const FALLBACK_URL = 'https://bmhpxjnuugufecmizzve.supabase.co';
-const FALLBACK_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJtaHB4am51dWd1ZmVjbWl6enZlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM5Nzc4MTIsImV4cCI6MjA4OTU1MzgxMn0.cDVf0ZlVIWDOl5wcZG2cYd-caqCiTUjWbGv3ro7aP3M';
+// ── Configuración del proyecto Supabase ──────────────────────────────
+// Para cambiar de proyecto:
+//   1. Reemplazá FALLBACK_URL y FALLBACK_KEY con los valores del nuevo proyecto.
+//   2. O (recomendado) creá eneadisc/.env.local con:
+//        VITE_SUPABASE_URL=https://TU_PROYECTO.supabase.co
+//        VITE_SUPABASE_ANON_KEY=TU_ANON_KEY
+//   3. En Vercel → Settings → Environment Variables, agregá las mismas variables.
+//
+// PROYECTO ACTUAL: vgdexspqcrkvssawblze (cuenta nueva)
+// ── Para migrar: cambiá solo estas dos líneas ────────────────────────
+const FALLBACK_URL = 'https://vgdexspqcrkvssawblze.supabase.co';
+const FALLBACK_KEY = 'sb_publishable_LwAFata94z048xPDfB1kUQ_lp_d4DF-';
 
 const supabaseUrl = (import.meta.env.VITE_SUPABASE_URL as string) || FALLBACK_URL;
 const supabaseAnonKey = (import.meta.env.VITE_SUPABASE_ANON_KEY as string) || FALLBACK_KEY;
 
-if (!supabaseUrl || !supabaseAnonKey) {
-  console.error('Faltan variables de entorno de Supabase y Fallbacks no están configurados.');
-}
-
-export const supabase = createClient(supabaseUrl || FALLBACK_URL, supabaseAnonKey || FALLBACK_KEY);
+export const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
 // ============================================
 // DATABASE TYPES
