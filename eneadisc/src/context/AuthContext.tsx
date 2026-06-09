@@ -233,7 +233,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     window.location.href = '/';
   };
 
-  if (isLoading) {
+  // No bloquear /auth/callback con el spinner — OAuthCallback maneja su propio estado
+  const isCallbackPage = typeof window !== 'undefined' && window.location.pathname === '/auth/callback';
+
+  if (isLoading && !isCallbackPage) {
     return (
       <div className="flex h-screen items-center justify-center bg-slate-50">
         <div className="flex flex-col items-center gap-3">

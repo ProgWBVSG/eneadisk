@@ -50,129 +50,180 @@ export const OAuthCallback: React.FC = () => {
   const [userEmail, setUserEmail] = useState<string | null>(null);
 
   const handledRef = useRef(false);
-
   const companyForm = useForm<CompanyData>({ resolver: zodResolver(companySchema) });
   const employeeForm = useForm<EmployeeData>({ resolver: zodResolver(employeeSchema) });
 
-  useEffect(() => {
-    let mounted = true;
+  // ── Procesamiento del usuario autenticado ──────────────────────────────
+  const processUser = async (
+    user: { id: string; email?: string; user_metadata?: Record<string, string> },
+    mounted: { current: boolean }
+  ) => {
+    if (handledRef.current || !mounted.current) return;
+    handledRef.current = true;
 
-    const handleUser = async (user: { id: string; email?: string; user_metadata?: Record<string, string> }) => {
-      if (handledRef.current || !mounted) return;
-      handledRef.current = true;
+    const googleName = user.user_metadata?.full_name || user.user_metadata?.name || '';
+    setUserId(user.id);
+    setUserEmail(user.email ?? '');
 
-      const googleName: string =
-        user.user_metadata?.full_name || user.user_metadata?.name || '';
+    // ── REGISTRO vs LOGIN ──────────────────────────────────────────────────
+    // Si hay intent en localStorage = REGISTRO nuevo (chequear ANTES del perfil).
+    // El trigger de Supabase crea el perfil con role='employee' automáticamente,
+    // así que no podemos fiarnos del perfil para determinar el rol real.
+    const intentStr = localStorage.getItem('eneateams_oauth_intent');
 
-      setUserId(user.id);
-      setUserEmail(user.email ?? '');
-
-      // ── PASO 1: Verificar intent PRIMERO ─────────────────────────────────
-      // El trigger de Supabase crea el perfil automáticamente al hacer OAuth,
-      // pero con role='employee' por defecto. Por eso revisamos el intent
-      // ANTES de mirar el perfil existente.
-      // Si hay intent = es un REGISTRO nuevo → mostrar formulario de completar.
-      // Si no hay intent = es un LOGIN → redirigir según perfil real.
-      const intentStr = localStorage.getItem('eneateams_oauth_intent');
-
-      if (intentStr) {
-        // ── Flujo de REGISTRO ──────────────────────────────────────────────
-        const intent: OAuthIntent = JSON.parse(intentStr);
-
-        if (intent.role === 'company_admin') {
-          // Mostrar formulario de datos de empresa
-          if (intent.companyName) companyForm.setValue('companyName', intent.companyName);
-          if (mounted) setPhase('company-complete');
-
-        } else {
-          // Empleado con código pre-validado → completar perfil y redirigir
-          if (intent.inviteCode && intent.companyId) {
-            await supabase.from('profiles').upsert(
-              {
-                id: user.id,
-                role: 'employee',
-                company_id: intent.companyId,
-                full_name: googleName || user.email?.split('@')[0] || 'Usuario',
-                email: user.email,
-                questionnaire_completed: false,
-              },
-              { onConflict: 'id' }
-            );
-            localStorage.removeItem('eneateams_oauth_intent');
-            await refreshUser();
-            if (mounted) navigate('/questionnaire', { replace: true });
-            return;
-          }
-
-          // Sin companyId pre-validado → mostrar formulario para ingresar código
-          if (googleName) employeeForm.setValue('name', googleName);
-          if (intent.inviteCode) employeeForm.setValue('inviteCode', intent.inviteCode);
-          if (mounted) setPhase('employee-complete');
-        }
-        return; // No redirigir, quedarse en el formulario
-      }
-
-      // ── PASO 2: Sin intent = es LOGIN de usuario existente ───────────────
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('role, company_id')
-        .eq('id', user.id)
-        .maybeSingle();
-
-      if (profile?.company_id && mounted) {
-        // Perfil completo con empresa → redirigir al dashboard correcto
-        await refreshUser();
-        navigate(
-          profile.role === 'company_admin' ? '/dashboard/company' : '/dashboard/employee',
-          { replace: true }
-        );
+    if (intentStr) {
+      // ── FLUJO DE REGISTRO ────────────────────────────────────────────────
+      let intent: OAuthIntent;
+      try {
+        intent = JSON.parse(intentStr);
+      } catch {
+        setPhase('error');
+        setErrorMsg('Error al leer datos del registro. Intentá de nuevo.');
         return;
       }
 
-      // Perfil sin company_id = registro incompleto (raro pero posible)
-      if (mounted) {
-        setPhase('error');
-        setErrorMsg(
-          'Tu cuenta existe pero no está completamente configurada. ' +
-          'Por favor registrate de nuevo o contacta a soporte.'
-        );
+      if (intent.role === 'company_admin') {
+        // Mostrar formulario para completar datos de empresa
+        if (intent.companyName) companyForm.setValue('companyName', intent.companyName);
+        if (mounted.current) setPhase('company-complete');
+        return;
       }
+
+      if (intent.role === 'employee') {
+        // Empleado con código ya validado → crear perfil y redirigir directo
+        if (intent.inviteCode && intent.companyId) {
+          const { error: profErr } = await supabase.from('profiles').upsert(
+            {
+              id: user.id,
+              role: 'employee',
+              company_id: intent.companyId,
+              full_name: googleName || user.email?.split('@')[0] || 'Usuario',
+              email: user.email,
+              questionnaire_completed: false,
+            },
+            { onConflict: 'id' }
+          );
+          if (profErr) {
+            setPhase('error');
+            setErrorMsg('Error al crear tu perfil. Intentá de nuevo.');
+            return;
+          }
+          localStorage.removeItem('eneateams_oauth_intent');
+          await refreshUser();
+          if (mounted.current) navigate('/questionnaire', { replace: true });
+          return;
+        }
+
+        // Empleado sin código validado → mostrar formulario para ingresarlo
+        if (googleName) employeeForm.setValue('name', googleName);
+        if (intent.inviteCode) employeeForm.setValue('inviteCode', intent.inviteCode);
+        if (mounted.current) setPhase('employee-complete');
+        return;
+      }
+    }
+
+    // ── FLUJO DE LOGIN (no hay intent = usuario existente) ─────────────────
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('role, company_id')
+      .eq('id', user.id)
+      .maybeSingle();
+
+    if (!mounted.current) return;
+
+    if (profile?.company_id) {
+      // Perfil completo → redirigir al dashboard correcto
+      await refreshUser();
+      navigate(
+        profile.role === 'company_admin' ? '/dashboard/company' : '/dashboard/employee',
+        { replace: true }
+      );
+      return;
+    }
+
+    // Perfil sin empresa = registro incompleto
+    setPhase('error');
+    setErrorMsg(
+      'Tu cuenta de Google existe pero no está vinculada a ninguna empresa. ' +
+      'Por favor registrate nuevamente desde la pantalla de registro.'
+    );
+  };
+
+  useEffect(() => {
+    const mounted = { current: true };
+    let cleanup: (() => void) | undefined;
+
+    const run = async () => {
+      // ── PASO 1: Intercambio PKCE explícito ──────────────────────────────
+      // En producción, el código viene como ?code=... en la URL.
+      // Lo intercambiamos explícitamente para evitar race conditions
+      // con el AuthProvider.
+      const urlParams = new URLSearchParams(window.location.search);
+      const code = urlParams.get('code');
+
+      if (code) {
+        try {
+          const { data: { session }, error } = await supabase.auth.exchangeCodeForSession(code);
+          if (!error && session?.user && mounted.current) {
+            await processUser(session.user, mounted);
+            return;
+          }
+          if (error) {
+            console.error('[OAuthCallback] PKCE exchange error:', error.message);
+          }
+        } catch (e) {
+          console.error('[OAuthCallback] PKCE exchange exception:', e);
+        }
+      }
+
+      // ── PASO 2: Sesión ya establecida (el cliente la procesó antes) ──────
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session?.user && mounted.current) {
+        await processUser(session.user, mounted);
+        return;
+      }
+
+      // ── PASO 3: Escuchar cambio de auth (último recurso) ─────────────────
+      const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, s) => {
+        if (!mounted.current) return;
+        if ((event === 'SIGNED_IN' || event === 'INITIAL_SESSION') && s?.user) {
+          await processUser(s.user, mounted);
+        }
+      });
+
+      cleanup = () => subscription.unsubscribe();
+
+      // ── Timeout de seguridad: 15 s ────────────────────────────────────────
+      const timeout = setTimeout(() => {
+        if (mounted.current) {
+          setPhase(p => {
+            if (p === 'loading') {
+              setErrorMsg(
+                'La autenticación tardó demasiado. Cerrá esta pestaña y volvé a intentarlo.'
+              );
+              return 'error';
+            }
+            return p;
+          });
+        }
+      }, 15000);
+
+      const prevCleanup = cleanup;
+      cleanup = () => {
+        clearTimeout(timeout);
+        prevCleanup?.();
+      };
     };
 
-    // Try existing session first (handles page refresh after redirect)
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session?.user && mounted) handleUser(session.user);
-    });
-
-    // Also listen for the auth state change fired when Supabase exchanges the code
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      if (!mounted) return;
-      if ((event === 'SIGNED_IN' || event === 'INITIAL_SESSION') && session?.user) {
-        handleUser(session.user);
-      }
-    });
-
-    // Safety net — if nothing happens in 12 seconds
-    const timeout = setTimeout(() => {
-      if (mounted) {
-        setPhase((p) => {
-          if (p === 'loading') {
-            setErrorMsg('La autenticación tardó demasiado. Por favor intentá de nuevo.');
-            return 'error';
-          }
-          return p;
-        });
-      }
-    }, 12000);
+    run();
 
     return () => {
-      mounted = false;
-      clearTimeout(timeout);
-      subscription.unsubscribe();
+      mounted.current = false;
+      cleanup?.();
     };
   }, []);
 
-  // ── Company completion ─────────────────────────────
+  // ── Company completion form ────────────────────────────────────────────
   const onCompanyComplete = async (data: CompanyData) => {
     setServerError(null);
     const code = generateInviteCode();
@@ -195,8 +246,8 @@ export const OAuthCallback: React.FC = () => {
       return;
     }
 
-    // UPSERT: actualiza el perfil que el trigger creó automáticamente
-    // (el trigger lo crea con role='employee' por defecto, lo corregimos acá)
+    // Upsert: el trigger ya creó el perfil con role='employee'.
+    // Aquí lo actualizamos con los datos correctos de empresa.
     const { error: profileError } = await supabase.from('profiles').upsert(
       {
         id: userId,
@@ -219,7 +270,7 @@ export const OAuthCallback: React.FC = () => {
     navigate('/dashboard/company', { replace: true });
   };
 
-  // ── Employee completion ────────────────────────────
+  // ── Employee completion form ───────────────────────────────────────────
   const onEmployeeComplete = async (data: EmployeeData) => {
     setServerError(null);
 
@@ -258,7 +309,7 @@ export const OAuthCallback: React.FC = () => {
     navigate('/questionnaire', { replace: true });
   };
 
-  // ── Render ─────────────────────────────────────────
+  // ── Render ─────────────────────────────────────────────────────────────
 
   if (phase === 'loading') {
     return (
@@ -278,12 +329,20 @@ export const OAuthCallback: React.FC = () => {
           <AlertCircle size={48} className="text-red-500 mx-auto mb-4" />
           <h2 className="text-xl font-bold text-slate-900 mb-2">Error de autenticación</h2>
           <p className="text-slate-500 text-sm mb-6">{errorMsg}</p>
-          <button
-            onClick={() => navigate('/')}
-            className="text-blue-600 hover:text-blue-800 underline text-sm"
-          >
-            Volver al inicio
-          </button>
+          <div className="space-y-3">
+            <button
+              onClick={() => navigate('/auth/company/signup')}
+              className="block w-full py-2 px-4 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700"
+            >
+              Volver al registro de empresa
+            </button>
+            <button
+              onClick={() => navigate('/')}
+              className="block w-full py-2 px-4 text-slate-500 text-sm hover:text-slate-700"
+            >
+              Ir al inicio
+            </button>
+          </div>
         </div>
       </div>
     );
@@ -297,9 +356,9 @@ export const OAuthCallback: React.FC = () => {
             <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-blue-100 text-blue-700">
               <Building2 size={24} />
             </div>
-            <h1 className="text-2xl font-bold text-slate-900">Completar Registro</h1>
+            <h1 className="text-2xl font-bold text-slate-900">¡Google verificado! ✅</h1>
             <p className="text-slate-500 text-sm mt-1">
-              Cuenta de Google verificada. Completá los datos de tu empresa.
+              Completá los datos de tu empresa para continuar.
             </p>
           </div>
           <form onSubmit={companyForm.handleSubmit(onCompanyComplete)} className="space-y-4">
@@ -311,11 +370,13 @@ export const OAuthCallback: React.FC = () => {
             <Input
               label="Industria / Sector"
               {...companyForm.register('industry')}
+              placeholder="ej: Tecnología, Salud, Educación..."
               error={companyForm.formState.errors.industry?.message}
             />
             <Input
               label="País"
               {...companyForm.register('country')}
+              placeholder="ej: Argentina"
               error={companyForm.formState.errors.country?.message}
             />
             <div className="space-y-1.5">
@@ -341,7 +402,7 @@ export const OAuthCallback: React.FC = () => {
               size="lg"
               isLoading={companyForm.formState.isSubmitting}
             >
-              Crear Empresa y Continuar
+              Crear Empresa y Continuar →
             </Button>
           </form>
         </div>
@@ -357,9 +418,9 @@ export const OAuthCallback: React.FC = () => {
             <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-amber-100 text-amber-600">
               <Users size={24} />
             </div>
-            <h1 className="text-2xl font-bold text-slate-900">Completar Registro</h1>
+            <h1 className="text-2xl font-bold text-slate-900">¡Google verificado! ✅</h1>
             <p className="text-slate-500 text-sm mt-1">
-              Cuenta de Google verificada. Ingresá el código de tu empresa para unirte.
+              Ingresá el código de tu empresa para unirte al equipo.
             </p>
           </div>
           <form onSubmit={employeeForm.handleSubmit(onEmployeeComplete)} className="space-y-4">
@@ -382,7 +443,7 @@ export const OAuthCallback: React.FC = () => {
               size="lg"
               isLoading={employeeForm.formState.isSubmitting}
             >
-              Unirme al Equipo
+              Unirme al Equipo →
             </Button>
           </form>
         </div>
