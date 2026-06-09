@@ -67,14 +67,60 @@ export const OAuthCallback: React.FC = () => {
       setUserId(user.id);
       setUserEmail(user.email ?? '');
 
-      // Check if profile already exists
+      // ── PASO 1: Verificar intent PRIMERO ─────────────────────────────────
+      // El trigger de Supabase crea el perfil automáticamente al hacer OAuth,
+      // pero con role='employee' por defecto. Por eso revisamos el intent
+      // ANTES de mirar el perfil existente.
+      // Si hay intent = es un REGISTRO nuevo → mostrar formulario de completar.
+      // Si no hay intent = es un LOGIN → redirigir según perfil real.
+      const intentStr = localStorage.getItem('eneateams_oauth_intent');
+
+      if (intentStr) {
+        // ── Flujo de REGISTRO ──────────────────────────────────────────────
+        const intent: OAuthIntent = JSON.parse(intentStr);
+
+        if (intent.role === 'company_admin') {
+          // Mostrar formulario de datos de empresa
+          if (intent.companyName) companyForm.setValue('companyName', intent.companyName);
+          if (mounted) setPhase('company-complete');
+
+        } else {
+          // Empleado con código pre-validado → completar perfil y redirigir
+          if (intent.inviteCode && intent.companyId) {
+            await supabase.from('profiles').upsert(
+              {
+                id: user.id,
+                role: 'employee',
+                company_id: intent.companyId,
+                full_name: googleName || user.email?.split('@')[0] || 'Usuario',
+                email: user.email,
+                questionnaire_completed: false,
+              },
+              { onConflict: 'id' }
+            );
+            localStorage.removeItem('eneateams_oauth_intent');
+            await refreshUser();
+            if (mounted) navigate('/questionnaire', { replace: true });
+            return;
+          }
+
+          // Sin companyId pre-validado → mostrar formulario para ingresar código
+          if (googleName) employeeForm.setValue('name', googleName);
+          if (intent.inviteCode) employeeForm.setValue('inviteCode', intent.inviteCode);
+          if (mounted) setPhase('employee-complete');
+        }
+        return; // No redirigir, quedarse en el formulario
+      }
+
+      // ── PASO 2: Sin intent = es LOGIN de usuario existente ───────────────
       const { data: profile } = await supabase
         .from('profiles')
-        .select('role')
+        .select('role, company_id')
         .eq('id', user.id)
         .maybeSingle();
 
-      if (profile && mounted) {
+      if (profile?.company_id && mounted) {
+        // Perfil completo con empresa → redirigir al dashboard correcto
         await refreshUser();
         navigate(
           profile.role === 'company_admin' ? '/dashboard/company' : '/dashboard/employee',
@@ -83,43 +129,13 @@ export const OAuthCallback: React.FC = () => {
         return;
       }
 
-      // New user — need to complete registration
-      const intentStr = localStorage.getItem('eneateams_oauth_intent');
-      if (!intentStr) {
-        if (mounted) {
-          setPhase('error');
-          setErrorMsg(
-            'No se pudo determinar el tipo de cuenta. Por favor registrate usando el formulario de email.'
-          );
-        }
-        return;
-      }
-
-      const intent: OAuthIntent = JSON.parse(intentStr);
-
-      if (intent.role === 'company_admin') {
-        if (intent.companyName) companyForm.setValue('companyName', intent.companyName);
-        if (mounted) setPhase('company-complete');
-      } else {
-        // employee with pre-validated invite code → create profile automatically
-        if (intent.inviteCode && intent.companyId) {
-          await supabase.from('profiles').upsert({
-            id: user.id,
-            role: 'employee',
-            company_id: intent.companyId,
-            full_name: googleName || user.email?.split('@')[0] || 'Usuario',
-            email: user.email,
-            questionnaire_completed: false,
-          });
-          localStorage.removeItem('eneateams_oauth_intent');
-          await refreshUser();
-          if (mounted) navigate('/questionnaire', { replace: true });
-          return;
-        }
-
-        if (googleName) employeeForm.setValue('name', googleName);
-        if (intent.inviteCode) employeeForm.setValue('inviteCode', intent.inviteCode);
-        if (mounted) setPhase('employee-complete');
+      // Perfil sin company_id = registro incompleto (raro pero posible)
+      if (mounted) {
+        setPhase('error');
+        setErrorMsg(
+          'Tu cuenta existe pero no está completamente configurada. ' +
+          'Por favor registrate de nuevo o contacta a soporte.'
+        );
       }
     };
 
@@ -179,14 +195,19 @@ export const OAuthCallback: React.FC = () => {
       return;
     }
 
-    const { error: profileError } = await supabase.from('profiles').upsert({
-      id: userId,
-      role: 'company_admin',
-      company_id: company.id,
-      full_name: data.companyName,
-      email: userEmail,
-      questionnaire_completed: false,
-    });
+    // UPSERT: actualiza el perfil que el trigger creó automáticamente
+    // (el trigger lo crea con role='employee' por defecto, lo corregimos acá)
+    const { error: profileError } = await supabase.from('profiles').upsert(
+      {
+        id: userId,
+        role: 'company_admin',
+        company_id: company.id,
+        full_name: data.companyName,
+        email: userEmail,
+        questionnaire_completed: true, // admins no hacen cuestionario
+      },
+      { onConflict: 'id' }
+    );
 
     if (profileError) {
       setServerError('Error al guardar el perfil. Intentá de nuevo.');
@@ -215,14 +236,17 @@ export const OAuthCallback: React.FC = () => {
       return;
     }
 
-    const { error: profileError } = await supabase.from('profiles').upsert({
-      id: userId,
-      role: 'employee',
-      company_id: company.id,
-      full_name: data.name,
-      email: userEmail,
-      questionnaire_completed: false,
-    });
+    const { error: profileError } = await supabase.from('profiles').upsert(
+      {
+        id: userId,
+        role: 'employee',
+        company_id: company.id,
+        full_name: data.name,
+        email: userEmail,
+        questionnaire_completed: false,
+      },
+      { onConflict: 'id' }
+    );
 
     if (profileError) {
       setServerError('Error al guardar el perfil. Intentá de nuevo.');
