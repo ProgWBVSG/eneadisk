@@ -276,11 +276,9 @@ export const OAuthCallback: React.FC = () => {
   const onEmployeeComplete = async (data: EmployeeData) => {
     setServerError(null);
 
-    const { data: company, error: companyError } = await supabase
-      .from('companies')
-      .select('id')
-      .eq('invite_code', data.inviteCode.trim().toUpperCase())
-      .maybeSingle();
+    const { data: companyRows, error: companyError } = await supabase
+      .rpc('get_company_by_invite_code', { p_code: data.inviteCode.trim().toUpperCase() });
+    const company = Array.isArray(companyRows) ? companyRows[0] : null;
 
     if (companyError || !company) {
       employeeForm.setError('inviteCode', {

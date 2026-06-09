@@ -26,16 +26,17 @@ export const JoinRequest: React.FC = () => {
         }
 
         const verifyCode = async () => {
+            // Usamos la función RPC (SECURITY DEFINER) para validar el código
+            // sin necesidad de estar autenticado ni ser miembro de la empresa.
             const { data, error } = await supabase
-                .from('companies')
-                .select('id, name')
-                .eq('invite_code', code)
-                .maybeSingle();
+                .rpc('get_company_by_invite_code', { p_code: code });
 
-            if (error || !data) {
+            const found = Array.isArray(data) ? data[0] : null;
+
+            if (error || !found) {
                 setCodeStatus('invalid');
             } else {
-                setCompany(data);
+                setCompany(found);
                 setCodeStatus('valid');
             }
         };

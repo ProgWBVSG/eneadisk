@@ -69,12 +69,10 @@ export const EmployeeSignup: React.FC = () => {
     setIsLoading(true);
 
     try {
-      // Validar código de empresa
-      const { data: company, error: companyError } = await supabase
-        .from('companies')
-        .select('id, name')
-        .eq('invite_code', data.inviteCode.trim().toUpperCase())
-        .maybeSingle();
+      // Validar código de empresa vía RPC (funciona sin sesión iniciada)
+      const { data: companyRows, error: companyError } = await supabase
+        .rpc('get_company_by_invite_code', { p_code: data.inviteCode.trim().toUpperCase() });
+      const company = Array.isArray(companyRows) ? companyRows[0] : null;
 
       if (companyError || !company) {
         form1.setError('inviteCode', { message: 'Código inválido. Pedíselo al administrador de tu empresa.' });
@@ -181,11 +179,9 @@ export const EmployeeSignup: React.FC = () => {
 
     setGoogleLoading(true);
 
-    const { data: company, error: companyError } = await supabase
-      .from('companies')
-      .select('id, name')
-      .eq('invite_code', inviteCode)
-      .maybeSingle();
+    const { data: companyRows, error: companyError } = await supabase
+      .rpc('get_company_by_invite_code', { p_code: inviteCode });
+    const company = Array.isArray(companyRows) ? companyRows[0] : null;
 
     if (companyError || !company) {
       form1.setError('inviteCode', { message: 'Código inválido. Pedíselo al administrador de tu empresa.' });
