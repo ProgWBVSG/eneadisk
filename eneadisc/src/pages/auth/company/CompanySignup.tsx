@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { useForm } from 'react-hook-form';
+import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '../../../components/ui/Button';
 import { Input } from '../../../components/ui/Input';
+import { Combobox } from '../../../components/ui/Combobox';
+import { COUNTRIES, INDUSTRIES, TEAM_SIZES } from '../../../data/formOptions';
 import { Building2, ChevronLeft, CheckCircle, Copy, Mail } from 'lucide-react';
 import { supabase } from '../../../lib/supabase';
 import { useAuth } from '../../../context/AuthContext';
@@ -265,24 +267,49 @@ export const CompanySignup: React.FC = () => {
         {/* STEP 2 ── Datos empresa */}
         {step === 2 && (
           <form onSubmit={form2.handleSubmit(onStep2)} className="space-y-4">
-            <Input label="Industria / Sector" {...form2.register('industry')} error={form2.formState.errors.industry?.message} />
-            <Input label="País" {...form2.register('country')} error={form2.formState.errors.country?.message} />
-            <div className="space-y-1.5">
-              <label className="text-sm font-medium text-slate-700">Tamaño del Equipo</label>
-              <select
-                {...form2.register('size')}
-                className="flex h-10 w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none"
-              >
-                <option value="">Selecciona...</option>
-                <option value="1-10">1-10 empleados</option>
-                <option value="11-50">11-50 empleados</option>
-                <option value="51-200">51-200 empleados</option>
-                <option value="200+">200+ empleados</option>
-              </select>
-              {form2.formState.errors.size && (
-                <p className="text-xs text-red-500">{form2.formState.errors.size.message}</p>
+            <Controller
+              name="industry"
+              control={form2.control}
+              render={({ field }) => (
+                <Combobox
+                  label="Industria / Sector"
+                  options={INDUSTRIES}
+                  value={field.value || ''}
+                  onChange={field.onChange}
+                  placeholder="Buscá o escribí tu industria..."
+                  allowCustom
+                  error={form2.formState.errors.industry?.message}
+                />
               )}
-            </div>
+            />
+            <Controller
+              name="country"
+              control={form2.control}
+              render={({ field }) => (
+                <Combobox
+                  label="País"
+                  options={COUNTRIES}
+                  value={field.value || ''}
+                  onChange={field.onChange}
+                  placeholder="Buscá tu país..."
+                  error={form2.formState.errors.country?.message}
+                />
+              )}
+            />
+            <Controller
+              name="size"
+              control={form2.control}
+              render={({ field }) => (
+                <Combobox
+                  label="Tamaño del Equipo"
+                  options={TEAM_SIZES}
+                  value={field.value || ''}
+                  onChange={field.onChange}
+                  placeholder="Seleccioná el tamaño..."
+                  error={form2.formState.errors.size?.message}
+                />
+              )}
+            />
             {serverError && <p className="text-sm text-red-500 text-center">{serverError}</p>}
             <div className="flex gap-3 pt-2">
               <Button type="button" variant="outline" onClick={() => setStep(1)} className="w-1/3">

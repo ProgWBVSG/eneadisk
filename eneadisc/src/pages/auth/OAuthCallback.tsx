@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useForm } from 'react-hook-form';
+import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Building2, Users, AlertCircle } from 'lucide-react';
@@ -8,6 +8,8 @@ import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../context/AuthContext';
 import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
+import { Combobox } from '../../components/ui/Combobox';
+import { COUNTRIES, INDUSTRIES, TEAM_SIZES } from '../../data/formOptions';
 
 function generateInviteCode(): string {
   const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
@@ -367,34 +369,49 @@ export const OAuthCallback: React.FC = () => {
               {...companyForm.register('companyName')}
               error={companyForm.formState.errors.companyName?.message}
             />
-            <Input
-              label="Industria / Sector"
-              {...companyForm.register('industry')}
-              placeholder="ej: Tecnología, Salud, Educación..."
-              error={companyForm.formState.errors.industry?.message}
-            />
-            <Input
-              label="País"
-              {...companyForm.register('country')}
-              placeholder="ej: Argentina"
-              error={companyForm.formState.errors.country?.message}
-            />
-            <div className="space-y-1.5">
-              <label className="text-sm font-medium text-slate-700">Tamaño del Equipo</label>
-              <select
-                {...companyForm.register('size')}
-                className="flex h-10 w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none"
-              >
-                <option value="">Seleccioná...</option>
-                <option value="1-10">1-10 empleados</option>
-                <option value="11-50">11-50 empleados</option>
-                <option value="51-200">51-200 empleados</option>
-                <option value="200+">200+ empleados</option>
-              </select>
-              {companyForm.formState.errors.size && (
-                <p className="text-xs text-red-500">{companyForm.formState.errors.size.message}</p>
+            <Controller
+              name="industry"
+              control={companyForm.control}
+              render={({ field }) => (
+                <Combobox
+                  label="Industria / Sector"
+                  options={INDUSTRIES}
+                  value={field.value || ''}
+                  onChange={field.onChange}
+                  placeholder="Buscá o escribí tu industria..."
+                  allowCustom
+                  error={companyForm.formState.errors.industry?.message}
+                />
               )}
-            </div>
+            />
+            <Controller
+              name="country"
+              control={companyForm.control}
+              render={({ field }) => (
+                <Combobox
+                  label="País"
+                  options={COUNTRIES}
+                  value={field.value || ''}
+                  onChange={field.onChange}
+                  placeholder="Buscá tu país..."
+                  error={companyForm.formState.errors.country?.message}
+                />
+              )}
+            />
+            <Controller
+              name="size"
+              control={companyForm.control}
+              render={({ field }) => (
+                <Combobox
+                  label="Tamaño del Equipo"
+                  options={TEAM_SIZES}
+                  value={field.value || ''}
+                  onChange={field.onChange}
+                  placeholder="Seleccioná el tamaño..."
+                  error={companyForm.formState.errors.size?.message}
+                />
+              )}
+            />
             {serverError && <p className="text-sm text-red-500 text-center">{serverError}</p>}
             <Button
               type="submit"
