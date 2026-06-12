@@ -43,7 +43,10 @@ interface OAuthIntent {
 
 export const OAuthCallback: React.FC = () => {
   const navigate = useNavigate();
-  const { refreshUser } = useAuth();
+  // Usamos el session del AuthContext (que ya maneja el intercambio del code
+  // y los locks de token) en vez de llamar supabase.auth directamente, lo cual
+  // causaba un deadlock al competir con el onAuthStateChange del AuthProvider.
+  const { refreshUser, session, isLoading: authLoading } = useAuth();
 
   const [phase, setPhase] = useState<Phase>('loading');
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
@@ -161,77 +164,36 @@ export const OAuthCallback: React.FC = () => {
 
   useEffect(() => {
     const mounted = { current: true };
-    let cleanup: (() => void) | undefined;
 
-    const run = async () => {
-      // ── PASO 1: Intercambio PKCE explícito ──────────────────────────────
-      // En producción, el código viene como ?code=... en la URL.
-      // Lo intercambiamos explícitamente para evitar race conditions
-      // con el AuthProvider.
-      const urlParams = new URLSearchParams(window.location.search);
-      const code = urlParams.get('code');
+    // Esperamos a que el AuthContext termine de procesar la sesión.
+    // El AuthProvider ya maneja la detección del code OAuth en la URL y
+    // el establecimiento de la sesión — acá solo reaccionamos al resultado.
+    if (authLoading) {
+      return () => { mounted.current = false; };
+    }
 
-      if (code) {
-        try {
-          const { data: { session }, error } = await supabase.auth.exchangeCodeForSession(code);
-          if (!error && session?.user && mounted.current) {
-            await processUser(session.user, mounted);
-            return;
-          }
-          if (error) {
-            console.error('[OAuthCallback] PKCE exchange error:', error.message);
-          }
-        } catch (e) {
-          console.error('[OAuthCallback] PKCE exchange exception:', e);
-        }
+    if (session?.user) {
+      // Sesión lista → procesar (decidir registro vs login)
+      processUser(session.user, mounted);
+      return () => { mounted.current = false; };
+    }
+
+    // No hay sesión tras cargar. Damos un pequeño margen por si el code
+    // todavía se está intercambiando, luego mostramos error.
+    const timeout = setTimeout(() => {
+      if (mounted.current && !handledRef.current) {
+        setPhase('error');
+        setErrorMsg(
+          'No pudimos verificar tu sesión de Google. Por favor volvé a intentar el registro.'
+        );
       }
-
-      // ── PASO 2: Sesión ya establecida (el cliente la procesó antes) ──────
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session?.user && mounted.current) {
-        await processUser(session.user, mounted);
-        return;
-      }
-
-      // ── PASO 3: Escuchar cambio de auth (último recurso) ─────────────────
-      const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, s) => {
-        if (!mounted.current) return;
-        if ((event === 'SIGNED_IN' || event === 'INITIAL_SESSION') && s?.user) {
-          await processUser(s.user, mounted);
-        }
-      });
-
-      cleanup = () => subscription.unsubscribe();
-
-      // ── Timeout de seguridad: 15 s ────────────────────────────────────────
-      const timeout = setTimeout(() => {
-        if (mounted.current) {
-          setPhase(p => {
-            if (p === 'loading') {
-              setErrorMsg(
-                'La autenticación tardó demasiado. Cerrá esta pestaña y volvé a intentarlo.'
-              );
-              return 'error';
-            }
-            return p;
-          });
-        }
-      }, 15000);
-
-      const prevCleanup = cleanup;
-      cleanup = () => {
-        clearTimeout(timeout);
-        prevCleanup?.();
-      };
-    };
-
-    run();
+    }, 6000);
 
     return () => {
       mounted.current = false;
-      cleanup?.();
+      clearTimeout(timeout);
     };
-  }, []);
+  }, [authLoading, session]);
 
   // ── Company completion form ────────────────────────────────────────────
   const onCompanyComplete = async (data: CompanyData) => {
