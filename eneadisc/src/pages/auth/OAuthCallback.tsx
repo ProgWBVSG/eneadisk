@@ -67,14 +67,35 @@ export const OAuthCallback: React.FC = () => {
     setUserId(user.id);
     setUserEmail(user.email ?? '');
 
-    // ── REGISTRO vs LOGIN ──────────────────────────────────────────────────
-    // Si hay intent en localStorage = REGISTRO nuevo (chequear ANTES del perfil).
-    // El trigger de Supabase crea el perfil con role='employee' automáticamente,
-    // así que no podemos fiarnos del perfil para determinar el rol real.
+    // ── PASO 1: ¿El usuario YA tiene un perfil completo? ───────────────────
+    // Verificamos esto PRIMERO. Si ya tiene company_id, es un usuario
+    // existente haciendo LOGIN → va directo al dashboard, sin importar el
+    // intent. Esto evita:
+    //   • Pedirle datos de empresa de nuevo a usuarios ya registrados
+    //   • Crear empresas duplicadas
+    const { data: existingProfile } = await supabase
+      .from('profiles')
+      .select('role, company_id')
+      .eq('id', user.id)
+      .maybeSingle();
+
+    if (!mounted.current) return;
+
+    if (existingProfile?.company_id) {
+      // Usuario existente con empresa → LOGIN directo
+      localStorage.removeItem('eneateams_oauth_intent'); // limpiar intent obsoleto
+      await refreshUser();
+      navigate(
+        existingProfile.role === 'company_admin' ? '/dashboard/company' : '/dashboard/employee',
+        { replace: true }
+      );
+      return;
+    }
+
+    // ── PASO 2: Usuario sin perfil completo = REGISTRO nuevo ───────────────
     const intentStr = localStorage.getItem('eneateams_oauth_intent');
 
     if (intentStr) {
-      // ── FLUJO DE REGISTRO ────────────────────────────────────────────────
       let intent: OAuthIntent;
       try {
         intent = JSON.parse(intentStr);
@@ -124,31 +145,18 @@ export const OAuthCallback: React.FC = () => {
       }
     }
 
-    // ── FLUJO DE LOGIN (no hay intent = usuario existente) ─────────────────
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('role, company_id')
-      .eq('id', user.id)
-      .maybeSingle();
-
-    if (!mounted.current) return;
-
-    if (profile?.company_id) {
-      // Perfil completo → redirigir al dashboard correcto
-      await refreshUser();
-      navigate(
-        profile.role === 'company_admin' ? '/dashboard/company' : '/dashboard/employee',
-        { replace: true }
-      );
+    // ── PASO 3: Sin intent y sin perfil completo ───────────────────────────
+    // Caso típico: el usuario hizo "Continuar con Google" desde el LOGIN
+    // pero nunca completó su registro. Si tiene rol pero sin empresa,
+    // lo mandamos a completar según su rol.
+    if (existingProfile?.role === 'company_admin') {
+      if (mounted.current) setPhase('company-complete');
       return;
     }
 
-    // Perfil sin empresa = registro incompleto
-    setPhase('error');
-    setErrorMsg(
-      'Tu cuenta de Google existe pero no está vinculada a ninguna empresa. ' +
-      'Por favor registrate nuevamente desde la pantalla de registro.'
-    );
+    // Por defecto (sin empresa) → pedir código de empresa como empleado
+    if (googleName) employeeForm.setValue('name', googleName);
+    if (mounted.current) setPhase('employee-complete');
   };
 
   useEffect(() => {
