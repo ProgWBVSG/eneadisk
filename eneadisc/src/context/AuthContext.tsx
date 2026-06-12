@@ -138,27 +138,38 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
     });
 
-    // Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, s) => {
+    // Listen for auth changes.
+    // IMPORTANTE: el callback de onAuthStateChange NO debe hacer llamadas async
+    // a Supabase directamente — eso deadlockea el lock interno de tokens de
+    // supabase-js (queda colgado "Verificando..." en el callback OAuth).
+    // Por eso envolvemos buildAppUser en setTimeout(0): se ejecuta DESPUÉS de
+    // que onAuthStateChange libera el lock.
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, s) => {
       if (!mounted) return;
       setSession(s);
-      
-      if ((event === 'INITIAL_SESSION' || event === 'SIGNED_IN') && s?.user) {
-        try {
-          const appUser = await buildAppUser(s.user);
-          if (mounted) setUser(appUser);
-        } catch (e) {
-          console.error("Auth context error:", e);
-        }
-      } else if (event === 'SIGNED_OUT') {
-        setUser(null);
-      } else if (event === 'TOKEN_REFRESHED' && s?.user) {
-        try {
-          const appUser = await buildAppUser(s.user);
-          if (mounted) setUser(appUser);
-        } catch (e) {}
+
+      if ((event === 'INITIAL_SESSION' || event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') && s?.user) {
+        setTimeout(async () => {
+          if (!mounted) return;
+          try {
+            const appUser = await buildAppUser(s.user);
+            if (mounted) setUser(appUser);
+          } catch (e) {
+            console.error('Auth context error:', e);
+          } finally {
+            if (mounted) {
+              setIsLoading(false);
+              clearTimeout(safetyTimeout);
+            }
+          }
+        }, 0);
+        return;
       }
-      
+
+      if (event === 'SIGNED_OUT') {
+        setUser(null);
+      }
+
       if (mounted) {
         setIsLoading(false);
         clearTimeout(safetyTimeout);
