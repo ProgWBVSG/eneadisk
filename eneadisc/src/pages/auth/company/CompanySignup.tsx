@@ -94,7 +94,50 @@ export const CompanySignup: React.FC = () => {
     }
   };
 
-  // ── Step 2: datos empresa → signUp → envía OTP ──
+  // ── Crear empresa + perfil (reutilizable para ambos flujos) ──
+  const createCompanyAndProfile = async (
+    userId: string,
+    data: Partial<Step1Data & Step2Data>
+  ): Promise<void> => {
+    const code = generateInviteCode();
+
+    const { data: company, error: companyError } = await supabase
+      .from('companies')
+      .insert({
+        name: data.companyName,
+        industry: data.industry,
+        size: data.size,
+        country: data.country,
+        invite_code: code,
+        owner_id: userId,
+      })
+      .select()
+      .single();
+
+    if (companyError) {
+      setServerError('Error al crear la empresa. Intentá de nuevo.');
+      return;
+    }
+
+    // Upsert: el trigger ya creó el perfil con role='employee'; lo corregimos.
+    await supabase.from('profiles').upsert(
+      {
+        id: userId,
+        role: 'company_admin',
+        company_id: company.id,
+        full_name: data.companyName,
+        email: data.email,
+        questionnaire_completed: true, // los admins no hacen cuestionario
+      },
+      { onConflict: 'id' }
+    );
+
+    await refreshUser();
+    setInviteCode(code);
+    setStep(4);
+  };
+
+  // ── Step 2: datos empresa → signUp ──
   const onStep2 = async (dataForm2: Step2Data) => {
     setServerError(null);
     const all = { ...formData, ...dataForm2 };
@@ -120,19 +163,25 @@ export const CompanySignup: React.FC = () => {
       return;
     }
 
-    // Supabase devuelve identities vacío si el email YA existe (no es un error, pero signUpData.user existe)
-    // Detectar caso "repeated signup" por identities vacías
+    // identities vacío = el email YA existe
     if (signUpData.user && signUpData.user.identities && signUpData.user.identities.length === 0) {
       setServerError('Este email ya tiene una cuenta. Por favor iniciá sesión o recuperá tu contraseña.');
       return;
     }
 
-    // OTP enviado exitosamente
+    // Si la confirmación de email está DESACTIVADA, hay sesión inmediata
+    // → creamos la empresa directo, sin pedir código.
+    if (signUpData.session && signUpData.user) {
+      await createCompanyAndProfile(signUpData.user.id, all);
+      return;
+    }
+
+    // Si requiere confirmación por email → ir al paso del código OTP
     setResendTimer(30);
     setStep(3);
   };
 
-  // ── Step 3: verificar OTP → crear empresa + perfil ──
+  // ── Step 3: verificar OTP (solo si la confirmación está activada) ──
   const onOtp = async (data: OtpData) => {
     setServerError(null);
 
@@ -147,38 +196,7 @@ export const CompanySignup: React.FC = () => {
       return;
     }
 
-    const userId = verifyData.user.id;
-    const code = generateInviteCode();
-
-    const { data: company, error: companyError } = await supabase
-      .from('companies')
-      .insert({
-        name: formData.companyName,
-        industry: formData.industry,
-        size: formData.size,
-        country: formData.country,
-        invite_code: code,
-        owner_id: userId,
-      })
-      .select()
-      .single();
-
-    if (companyError) {
-      setServerError('Error al crear la empresa. Intentá de nuevo.');
-      return;
-    }
-
-    await supabase.from('profiles').upsert({
-      id: userId,
-      role: 'company_admin',
-      company_id: company.id,
-      full_name: formData.companyName,
-      email: formData.email,
-    });
-
-    await refreshUser();
-    setInviteCode(code);
-    setStep(4);
+    await createCompanyAndProfile(verifyData.user.id, formData);
   };
 
   // ── Reenviar OTP ─────────────────────────────────
