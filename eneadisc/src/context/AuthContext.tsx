@@ -200,12 +200,26 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       return { error: 'Correo inválido para modo Demo Local' };
     }
 
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
     if (error) {
       if (error.message.includes('Invalid login credentials')) {
         return { error: 'Email o contraseña incorrectos' };
       }
       return { error: error.message };
+    }
+
+    // Construir el usuario AQUÍ y esperar a que esté listo ANTES de devolver.
+    // Si no, la pantalla de login navega al dashboard antes de que el user
+    // exista, y el ProtectedRoute rebota al inicio ("/"). signInWithPassword
+    // ya liberó el lock, así que esta query no se deadlockea.
+    if (data.user) {
+      try {
+        const appUser = await buildAppUser(data.user);
+        setUser(appUser);
+        setSession(data.session);
+      } catch (e) {
+        console.error('Error building user on login:', e);
+      }
     }
     return { error: null };
   };

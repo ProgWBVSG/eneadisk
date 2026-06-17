@@ -27,7 +27,20 @@ import { AIAssistant } from './pages/company/AIAssistant';
 import { Subscription } from './pages/company/Subscription';
 
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, session, isLoading } = useAuth();
+
+  // Si hay una sesión activa pero el usuario todavía se está construyendo
+  // (o la auth aún está cargando), mostramos un loader en vez de rebotar
+  // al inicio. Sin esto, hay un race donde el login navega antes de que
+  // el user exista y el guardia patea a "/".
+  if (isLoading || (session && !isAuthenticated)) {
+    return (
+      <div className="flex h-screen items-center justify-center bg-slate-50">
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-blue-600 border-t-transparent" />
+      </div>
+    );
+  }
+
   if (!isAuthenticated) return <Navigate to="/" replace />;
   return <>{children}</>;
 };
