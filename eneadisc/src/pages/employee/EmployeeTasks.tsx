@@ -14,9 +14,23 @@ import {
     CATEGORY_CONFIG
 } from '../../utils/tasks';
 import { EmployeeTasksTutorial } from '../../components/tutorial/EmployeeTasksTutorial';
+import { Lightbulb } from 'lucide-react';
 
 type FilterType = 'all' | 'personal' | 'team';
 type StatusFilter = 'all' | 'pending' | 'in_progress' | 'completed';
+
+// Consejo de productividad según eneatipo — cómo cada tipo trabaja mejor sus tareas
+const PRODUCTIVITY_TIPS: Record<number, string> = {
+  1: 'Ponete un límite de tiempo por tarea. "Hecho" es mejor que "perfecto" — no todas necesitan tu máximo estándar.',
+  2: 'Antes de ayudar a otros, asegurate de avanzar en tus propias tareas. Tu trabajo también importa.',
+  3: 'Enfocate en lo importante, no solo en lo visible. Celebrá el avance, no solo el resultado final.',
+  4: 'Empezá por una tarea concreta aunque no te inspire. La acción suele traer la motivación, no al revés.',
+  5: 'Pasá del análisis a la acción: dividí la tarea en un primer paso pequeño y arrancá por ahí.',
+  6: 'Confiá en tu criterio. No esperes la certeza total para empezar — avanzá con lo que sabés hoy.',
+  7: 'Elegí UNA tarea y terminala antes de empezar otra. Cerrar también es satisfactorio.',
+  8: 'Delegá lo que puedas y enfocá tu energía en lo que de verdad mueve la aguja.',
+  9: 'Empezá por la tarea más importante, no por la más fácil. Poné una sola prioridad para hoy.',
+};
 
 export const EmployeeTasks: React.FC = () => {
     const { user } = useAuth();
@@ -29,6 +43,8 @@ export const EmployeeTasks: React.FC = () => {
 
     // Demo team ID - in production this would come from user data
     const teamId = 'demo-team-marketing';
+
+    const productivityTip = user?.enneagramType ? PRODUCTIVITY_TIPS[user.enneagramType] : null;
 
     useEffect(() => {
         loadTasks();
@@ -149,6 +165,19 @@ export const EmployeeTasks: React.FC = () => {
                         </button>
                     </div>
                 </div>
+
+                {/* Consejo de productividad según eneatipo */}
+                {productivityTip && (
+                    <div className="mb-4 bg-gradient-to-r from-purple-50 to-indigo-50 border border-purple-200 rounded-xl p-4 flex items-start gap-3">
+                        <div className="p-2 bg-purple-500 rounded-lg text-white shrink-0">
+                            <Lightbulb size={18} />
+                        </div>
+                        <div>
+                            <p className="text-xs font-bold text-purple-700 uppercase tracking-wide mb-0.5">Cómo trabajás mejor</p>
+                            <p className="text-sm text-slate-700">{productivityTip}</p>
+                        </div>
+                    </div>
+                )}
 
                 {/* Stats Cards */}
                 <div id="tour-emp-tasks-stats" className="grid grid-cols-2 md:grid-cols-4 gap-4">

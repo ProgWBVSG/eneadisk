@@ -1,422 +1,231 @@
 import React, { useState, useEffect } from 'react';
-import { Users, Heart, TrendingUp, Lightbulb, ListTodo, ArrowRight, HelpCircle } from 'lucide-react';
+import { Users, Heart, TrendingUp, Lightbulb, MessageCircle, HelpCircle, Clock } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
+import { supabase } from '../../lib/supabase';
 import { getEnneagramBadge } from '../../utils/enneagramColors';
-import { getCompatibilityScore, getCompatibilityInsights, getTeamDynamics } from '../../utils/compatibility';
-import type { Task } from '../../utils/tasks';
-import { getTeamTasks } from '../../utils/tasks';
+import { getCompatibilityScore, getTeamDynamics } from '../../utils/compatibility';
+import { ENNEAGRAM_TYPES } from '../../data/enneagramData';
+import { WORK_PROFILES } from '../../data/enneagramWorkData';
 import { EmployeeTeamTutorial } from '../../components/tutorial/EmployeeTeamTutorial';
 
 interface Teammate {
-    id: string;
-    name: string;
-    email: string;
-    enneagramType: number;
-    tasksCompleted: number;
-    lastCheckIn?: {
-        mood: string;
-        energy: number;
-    };
+  id: string;
+  name: string;
+  enneagramType: number | null;
 }
 
-// Demo data hardcoded - will be replaced with real data later
-const DEMO_TEAMMATES: Teammate[] = [
-    {
-        id: 'demo-employee-002',
-        name: 'Ana García',
-        email: 'ana.garcia@demo.com',
-        enneagramType: 2,
-        tasksCompleted: 5,
-        lastCheckIn: {
-            mood: 'good',
-            energy: 4,
-        },
-    },
-    {
-        id: 'demo-employee-003',
-        name: 'Carlos Ruiz',
-        email: 'carlos.ruiz@demo.com',
-        enneagramType: 5,
-        tasksCompleted: 3,
-        lastCheckIn: {
-            mood: 'neutral',
-            energy: 3,
-        },
-    },
-];
-
 export const EmployeeTeam: React.FC = () => {
-    const { user } = useAuth();
-    const [teamTasks, setTeamTasks] = useState<Task[]>([]);
-    const [forceRunTutorial, setForceRunTutorial] = useState(false);
+  const { user } = useAuth();
+  const [teammates, setTeammates] = useState<Teammate[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [forceRunTutorial, setForceRunTutorial] = useState(false);
 
-    // For demo, hardcoded team ID
-    const teamId = 'demo-team-marketing';
+  const myType = user?.enneagramType ?? null;
 
-    useEffect(() => {
-        // Load team tasks
-        const fetchTasks = async () => {
-            const tasks = await getTeamTasks(teamId);
-            setTeamTasks(tasks as any[]);
-        };
-        fetchTasks();
-
-    }, []);
-
-    if (!user) {
-        return <div className="p-8">Cargando...</div>;
-    }
-
-    // For demo, use hardcoded data for any employee
-    const teammates = DEMO_TEAMMATES;
-    const teamName = 'Equipo Marketing';
-    const userEnneagramType = 7; // Juan Pérez is type 7
-
-    const getTeamTypes = (): number[] => {
-        const types: number[] = [];
-        if (userEnneagramType) types.push(userEnneagramType);
-        teammates.forEach(t => {
-            if (t.enneagramType) types.push(t.enneagramType);
-        });
-        return types;
+  useEffect(() => {
+    const load = async () => {
+      if (!user) return;
+      setLoading(true);
+      const { data } = await supabase.rpc('get_my_teammates');
+      const mapped: Teammate[] = (data || []).map((t: any) => ({
+        id: t.id,
+        name: t.full_name || 'Sin nombre',
+        enneagramType: t.questionnaire_completed ? t.enneagram_type : null,
+      }));
+      setTeammates(mapped);
+      setLoading(false);
     };
+    load();
+  }, [user]);
 
-    const teamDynamics = getTeamDynamics(getTeamTypes());
-
-    const getMoodEmoji = (mood: string) => {
-        const moodMap: { [key: string]: string } = {
-            excellent: '🤩',
-            good: '😊',
-            neutral: '😐',
-            stressed: '😰',
-            overwhelmed: '😫',
-        };
-        return moodMap[mood] || '😊';
-    };
-
+  if (loading) {
     return (
-        <div className="p-4 md:p-8 max-w-7xl mx-auto">
-            {/* Tutorial Onboarding */}
-            <EmployeeTeamTutorial forceRun={forceRunTutorial} onResetComplete={() => setForceRunTutorial(false)} />
-
-            {/* Header */}
-            <div className="mb-8">
-                <div className="flex items-center justify-between">
-                    <h1 className="text-3xl font-bold text-slate-900 mb-2">Mi Equipo</h1>
-                    <button
-                        onClick={() => setForceRunTutorial(true)}
-                        className="flex items-center gap-1 text-xs text-slate-400 hover:text-purple-600 transition-colors"
-                    >
-                        <HelpCircle size={14} />
-                        Ver tutorial
-                    </button>
-                </div>
-                <div className="flex items-center gap-2 text-slate-600">
-                    <Users className="w-5 h-5" />
-                    <span className="font-medium">{teamName}</span>
-                    <span className="text-slate-400">•</span>
-                    <span>{teammates.length + 1} miembros</span>
-                </div>
-            </div>
-
-            {teammates.length === 0 ? (
-                <div className="text-center py-16 bg-slate-50 rounded-lg border-2 border-dashed border-slate-300">
-                    <Users className="w-16 h-16 text-slate-400 mx-auto mb-4" />
-                    <h3 className="text-xl font-semibold text-slate-700 mb-2">
-                        No hay compañeros en tu equipo aún
-                    </h3>
-                    <p className="text-slate-600">
-                        Cuando tu líder agregue más miembros al equipo, aparecerán aquí
-                    </p>
-                </div>
-            ) : (
-                <>
-                    {/* Teammates Grid */}
-                    <div id="tour-emp-team-list" className="mb-8">
-                        <h2 className="text-xl font-semibold text-slate-900 mb-4">Compañeros de Equipo</h2>
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                            {teammates.map(teammate => {
-                                const badge = getEnneagramBadge(teammate.enneagramType);
-                                const compatibilityScore = getCompatibilityScore(userEnneagramType, teammate.enneagramType);
-
-                                return (
-                                    <div key={teammate.id} className="bg-white border border-slate-200 rounded-lg p-4 hover:border-blue-300 transition-all hover:shadow-md">
-                                        {/* Avatar and Name */}
-                                        <div className="flex items-start gap-3 mb-3">
-                                            <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center text-white font-bold text-lg flex-shrink-0">
-                                                {teammate.name.charAt(0).toUpperCase()}
-                                            </div>
-                                            <div className="flex-1 min-w-0">
-                                                <h4 className="font-semibold text-slate-900 truncate">{teammate.name}</h4>
-                                                <p className="text-xs text-slate-600 truncate">{teammate.email}</p>
-                                            </div>
-                                        </div>
-
-                                        {/* Enneagram Badge */}
-                                        {badge && (
-                                            <div
-                                                className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold mb-3"
-                                                style={{ backgroundColor: badge.bg, color: badge.text }}
-                                            >
-                                                <span className="w-5 h-5 rounded-full flex items-center justify-center font-bold text-xs"
-                                                    style={{ backgroundColor: badge.text, color: 'white' }}>
-                                                    {teammate.enneagramType}
-                                                </span>
-                                                {badge.name}
-                                            </div>
-                                        )}
-
-                                        {/* Metrics */}
-                                        <div className="space-y-2 text-sm">
-                                            <div className="flex items-center justify-between">
-                                                <span className="text-slate-600">Tareas esta semana:</span>
-                                                <span className="font-semibold text-slate-900">{teammate.tasksCompleted}</span>
-                                            </div>
-
-                                            {teammate.lastCheckIn && (
-                                                <>
-                                                    <div className="flex items-center justify-between">
-                                                        <span className="text-slate-600">Último check-in:</span>
-                                                        <span className="font-medium text-slate-900">
-                                                            {getMoodEmoji(teammate.lastCheckIn.mood)} {teammate.lastCheckIn.mood}
-                                                        </span>
-                                                    </div>
-                                                    <div className="flex items-center justify-between">
-                                                        <span className="text-slate-600">Energía:</span>
-                                                        <div className="flex gap-0.5">
-                                                            {[...Array(5)].map((_, i) => (
-                                                                <div
-                                                                    key={i}
-                                                                    className={`w-2 h-4 rounded-sm ${i < teammate.lastCheckIn!.energy ? 'bg-blue-500' : 'bg-slate-200'
-                                                                        }`}
-                                                                />
-                                                            ))}
-                                                        </div>
-                                                    </div>
-                                                </>
-                                            )}
-
-                                            <div className="flex items-center justify-between pt-2 border-t border-slate-100">
-                                                <span className="text-slate-600">Compatibilidad:</span>
-                                                <span className={`font-semibold ${compatibilityScore >= 80 ? 'text-green-600' :
-                                                    compatibilityScore >= 60 ? 'text-yellow-600' :
-                                                        'text-orange-600'
-                                                    }`}>
-                                                    {compatibilityScore}%
-                                                </span>
-                                            </div>
-                                        </div>
-                                    </div>
-                                );
-                            })}
-                        </div>
-                    </div>
-
-                    {/* Team Analysis */}
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-                        {/* Team Dynamics */}
-                        <div id="tour-emp-team-dynamics" className="bg-gradient-to-br from-purple-50 to-blue-50 border border-purple-200 rounded-xl p-6">
-                            <h3 className="text-xl font-semibold text-slate-900 mb-4 flex items-center gap-2">
-                                <TrendingUp className="w-5 h-5 text-purple-600" />
-                                Dinámica del Equipo
-                            </h3>
-
-                            <div className="space-y-4">
-                                <div>
-                                    <div className="flex items-center justify-between mb-2">
-                                        <span className="text-sm font-medium text-slate-700">Diversidad</span>
-                                        <span className="text-lg font-bold text-purple-600">{teamDynamics.diversity}%</span>
-                                    </div>
-                                    <div className="w-full bg-slate-200 rounded-full h-2">
-                                        <div
-                                            className="bg-gradient-to-r from-purple-500 to-blue-500 h-2 rounded-full transition-all"
-                                            style={{ width: `${teamDynamics.diversity}%` }}
-                                        />
-                                    </div>
-                                </div>
-
-                                {teamDynamics.strengths.length > 0 && (
-                                    <div>
-                                        <h4 className="text-sm font-semibold text-green-700 mb-2">Fortalezas:</h4>
-                                        <ul className="space-y-1">
-                                            {teamDynamics.strengths.map((strength, i) => (
-                                                <li key={i} className="text-sm text-slate-700 flex items-start gap-2">
-                                                    <span className="text-green-600 mt-0.5">✓</span>
-                                                    {strength}
-                                                </li>
-                                            ))}
-                                        </ul>
-                                    </div>
-                                )}
-
-                                {teamDynamics.recommendations.length > 0 && (
-                                    <div>
-                                        <h4 className="text-sm font-semibold text-blue-700 mb-2 flex items-center gap-1">
-                                            <Lightbulb className="w-4 h-4" />
-                                            Recomendaciones:
-                                        </h4>
-                                        <ul className="space-y-1">
-                                            {teamDynamics.recommendations.slice(0, 3).map((rec, i) => (
-                                                <li key={i} className="text-sm text-slate-700">
-                                                    • {rec}
-                                                </li>
-                                            ))}
-                                        </ul>
-                                    </div>
-                                )}
-                            </div>
-                        </div>
-
-                        {/* Compatibility Summary */}
-                        <div id="tour-emp-team-compatibility" className="bg-white border border-slate-200 rounded-xl p-6">
-                            <h3 className="text-xl font-semibold text-slate-900 mb-4 flex items-center gap-2">
-                                <Heart className="w-5 h-5 text-pink-600" />
-                                Tu Compatibilidad
-                            </h3>
-
-                            <div className="space-y-3">
-                                {teammates.map(teammate => {
-                                    const score = getCompatibilityScore(userEnneagramType, teammate.enneagramType);
-
-                                    return (
-                                        <div key={teammate.id} className="border-b border-slate-100 last:border-0 pb-3 last:pb-0">
-                                            <div className="flex items-center justify-between mb-2">
-                                                <span className="font-medium text-slate-900 text-sm">{teammate.name}</span>
-                                                <span className={`text-sm font-semibold ${score >= 80 ? 'text-green-600' :
-                                                    score >= 60 ? 'text-yellow-600' :
-                                                        'text-orange-600'
-                                                    }`}>
-                                                    {score}%
-                                                </span>
-                                            </div>
-                                            <div className="w-full bg-slate-100 rounded-full h-1.5">
-                                                <div
-                                                    className={`h-1.5 rounded-full transition-all ${score >= 80 ? 'bg-green-500' :
-                                                        score >= 60 ? 'bg-yellow-500' :
-                                                            'bg-orange-500'
-                                                        }`}
-                                                    style={{ width: `${score}%` }}
-                                                />
-                                            </div>
-                                        </div>
-                                    );
-                                })}
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* Compatibility Details */}
-                    <div>
-                        <h2 className="text-xl font-semibold text-slate-900 mb-4">Consejos de Colaboración</h2>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            {teammates.map(teammate => {
-                                const insights = getCompatibilityInsights(userEnneagramType, teammate.enneagramType);
-                                const badge = getEnneagramBadge(teammate.enneagramType);
-
-                                return (
-                                    <div key={teammate.id} className="bg-white border border-slate-200 rounded-lg p-5 hover:shadow-md transition-shadow">
-                                        <div className="flex items-center gap-3 mb-4">
-                                            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center text-white font-bold">
-                                                {teammate.name.charAt(0).toUpperCase()}
-                                            </div>
-                                            <div className="flex-1">
-                                                <h4 className="font-semibold text-slate-900">{teammate.name}</h4>
-                                                {badge && (
-                                                    <span className="text-xs" style={{ color: badge.text }}>
-                                                        Tipo {teammate.enneagramType}: {badge.name}
-                                                    </span>
-                                                )}
-                                            </div>
-                                            <span className={`text-2xl font-bold ${insights.score >= 80 ? 'text-green-600' :
-                                                insights.score >= 60 ? 'text-yellow-600' :
-                                                    'text-orange-600'
-                                                }`}>
-                                                {insights.score}%
-                                            </span>
-                                        </div>
-
-                                        <div className="space-y-3">
-                                            {insights.strengths.length > 0 && (
-                                                <div>
-                                                    <h5 className="text-xs font-semibold text-green-700 mb-1">✓ Fortalezas:</h5>
-                                                    <ul className="space-y-1">
-                                                        {insights.strengths.slice(0, 2).map((strength, i) => (
-                                                            <li key={i} className="text-xs text-slate-700">• {strength}</li>
-                                                        ))}
-                                                    </ul>
-                                                </div>
-                                            )}
-
-                                            {insights.tips.length > 0 && (
-                                                <div>
-                                                    <h5 className="text-xs font-semibold text-blue-700 mb-1 flex items-center gap-1">
-                                                        <Lightbulb className="w-3 h-3" />
-                                                        Consejos:
-                                                    </h5>
-                                                    <ul className="space-y-1">
-                                                        {insights.tips.slice(0, 2).map((tip, i) => (
-                                                            <li key={i} className="text-xs text-slate-700">• {tip}</li>
-                                                        ))}
-                                                    </ul>
-                                                </div>
-                                            )}
-                                        </div>
-                                    </div>
-                                );
-                            })}
-                        </div>
-                    </div>
-                </>
-            )}
-
-            {/* Team Tasks Section */}
-            {teammates.length > 0 && (
-                <div id="tour-emp-team-tasks" className="mt-8">
-                    <div className="flex items-center justify-between mb-4">
-                        <h2 className="text-xl font-semibold text-slate-900 flex items-center gap-2">
-                            <ListTodo className="w-6 h-6" />
-                            Tareas del Equipo
-                        </h2>
-                        {teamTasks.length > 0 && (
-                            <a href="/tareas" className="flex items-center gap-1 text-blue-600 hover:text-blue-700 text-sm font-medium">
-                                Ver todas
-                                <ArrowRight className="w-4 h-4" />
-                            </a>
-                        )}
-                    </div>
-                    {teamTasks.length === 0 ? (
-                        <div className="text-center py-12 bg-slate-50 rounded-lg border-2 border-dashed border-slate-300">
-                            <ListTodo className="w-12 h-12 text-slate-400 mx-auto mb-3" />
-                            <p className="text-slate-600">No hay tareas asignadas al equipo aun.</p>
-                        </div>
-                    ) : (
-                        <div className="bg-white border border-slate-200 rounded-lg divide-y divide-slate-100">
-                            {teamTasks.slice(0, 5).map(task => (
-                                <div key={task.id} className="p-4 hover:bg-slate-50 transition-colors">
-                                    <div className="flex items-start justify-between gap-4">
-                                        <div className="flex-1">
-                                            <h3 className="font-semibold text-slate-900 mb-1">{task.title}</h3>
-                                            {task.description && <p className="text-sm text-slate-600 mb-2">{task.description}</p>}
-                                            <div className="flex items-center gap-2 text-xs">
-                                                <span className={`px-2 py-1 rounded-full font-medium ${task.priority === 'high' ? 'bg-red-100 text-red-700' : task.priority === 'medium' ? 'bg-yellow-100 text-yellow-700' : 'bg-blue-100 text-blue-700'}`}>
-                                                    {task.priority === 'high' ? 'Alta' : task.priority === 'medium' ? 'Media' : 'Baja'}
-                                                </span>
-                                                <span className="px-2 py-1 bg-slate-100 text-slate-600 rounded-full">
-                                                    {task.status === 'completed' ? 'Completada' : task.status === 'in_progress' ? 'En progreso' : 'Pendiente'}
-                                                </span>
-                                                {task.dueDate && (<span className="text-slate-500">{new Date(task.dueDate).toLocaleDateString()}</span>)}
-                                            </div>
-                                        </div>
-                                        <span className="text-xs text-slate-500 whitespace-nowrap">Por: {task.assignedByName}</span>
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                    )}
-                </div>
-            )}
-        </div>
+      <div className="p-8 flex flex-col items-center justify-center min-h-[400px]">
+        <div className="h-10 w-10 animate-spin rounded-full border-4 border-purple-600 border-t-transparent mb-4" />
+        <p className="text-slate-500 text-sm">Cargando tu equipo...</p>
+      </div>
     );
+  }
+
+  // Tipos del equipo (incluyendo el mío) para la dinámica
+  const teamTypes = [myType, ...teammates.map((t) => t.enneagramType)].filter(
+    (x): x is number => typeof x === 'number'
+  );
+  const teamDynamics = getTeamDynamics(teamTypes);
+  const profiled = teammates.filter((t) => t.enneagramType);
+
+  return (
+    <div className="p-4 md:p-8 max-w-7xl mx-auto">
+      <EmployeeTeamTutorial forceRun={forceRunTutorial} onResetComplete={() => setForceRunTutorial(false)} />
+
+      {/* Header */}
+      <div className="mb-8">
+        <div className="flex items-center justify-between">
+          <h1 className="text-3xl font-bold text-slate-900 mb-2">Mi Equipo</h1>
+          <button
+            onClick={() => setForceRunTutorial(true)}
+            className="flex items-center gap-1 text-xs text-slate-400 hover:text-purple-600 transition-colors"
+          >
+            <HelpCircle size={14} /> Ver tutorial
+          </button>
+        </div>
+        <div className="flex items-center gap-2 text-slate-600">
+          <Users className="w-5 h-5" />
+          <span>{teammates.length + 1} miembro{teammates.length !== 0 ? 's' : ''}</span>
+        </div>
+      </div>
+
+      {teammates.length === 0 ? (
+        <div className="text-center py-16 bg-slate-50 rounded-lg border-2 border-dashed border-slate-300">
+          <Users className="w-16 h-16 text-slate-400 mx-auto mb-4" />
+          <h3 className="text-xl font-semibold text-slate-700 mb-2">Todavía sos el único en tu equipo</h3>
+          <p className="text-slate-600 max-w-md mx-auto">
+            Cuando se sumen más compañeros a tu empresa, vas a ver acá sus perfiles, tu compatibilidad
+            y consejos de cómo trabajar mejor con cada uno.
+          </p>
+        </div>
+      ) : (
+        <>
+          {/* ── Guía de comunicación por compañero (lo más valioso) ── */}
+          <div id="tour-emp-team-list" className="mb-8">
+            <h2 className="text-xl font-semibold text-slate-900 mb-1">Cómo trabajar con cada compañero</h2>
+            <p className="text-sm text-slate-500 mb-4">Consejos personalizados según el eneatipo de cada persona</p>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+              {teammates.map((tm) => {
+                const badge = tm.enneagramType ? getEnneagramBadge(tm.enneagramType) : null;
+                const wp = tm.enneagramType ? WORK_PROFILES[tm.enneagramType] : null;
+                const ct = tm.enneagramType ? ENNEAGRAM_TYPES[tm.enneagramType] : null;
+                const score = myType && tm.enneagramType ? getCompatibilityScore(myType, tm.enneagramType) : null;
+
+                return (
+                  <div key={tm.id} className="bg-white border border-slate-200 rounded-xl p-5 hover:shadow-md transition-all">
+                    {/* Header del compañero */}
+                    <div className="flex items-start gap-3 mb-4">
+                      <div
+                        className="w-12 h-12 rounded-full flex items-center justify-center text-white font-bold text-lg shrink-0"
+                        style={{ background: ct ? `linear-gradient(135deg, ${ct.color}, ${ct.color}cc)` : 'linear-gradient(135deg,#94a3b8,#64748b)' }}
+                      >
+                        {tm.name.charAt(0).toUpperCase()}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <h4 className="font-semibold text-slate-900 truncate">{tm.name}</h4>
+                        {badge ? (
+                          <span className="text-xs font-medium" style={{ color: badge.text }}>
+                            Tipo {tm.enneagramType}: {ct?.name}
+                          </span>
+                        ) : (
+                          <span className="text-xs text-slate-400 flex items-center gap-1">
+                            <Clock size={11} /> Pendiente de completar test
+                          </span>
+                        )}
+                      </div>
+                      {score !== null && (
+                        <span
+                          className={`text-sm font-bold ${score >= 80 ? 'text-green-600' : score >= 60 ? 'text-yellow-600' : 'text-orange-600'}`}
+                          title="Compatibilidad"
+                        >
+                          {score}%
+                        </span>
+                      )}
+                    </div>
+
+                    {/* Cómo comunicarte con él/ella */}
+                    {wp ? (
+                      <div className="bg-indigo-50/60 rounded-lg p-4">
+                        <p className="text-xs font-bold text-indigo-700 uppercase tracking-wide mb-2 flex items-center gap-1.5">
+                          <MessageCircle size={13} /> Cómo comunicarte
+                        </p>
+                        <ul className="space-y-1.5">
+                          {wp.howToCommunicate.slice(0, 3).map((tip, i) => (
+                            <li key={i} className="text-sm text-slate-700 flex items-start gap-2">
+                              <span className="text-indigo-400 mt-1">•</span> {tip}
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    ) : (
+                      <p className="text-sm text-slate-400 italic bg-slate-50 rounded-lg p-4">
+                        Cuando complete su test de eneagrama, vas a ver acá cómo comunicarte mejor con {tm.name.split(' ')[0]}.
+                      </p>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* ── Dinámica del equipo + compatibilidad ── */}
+          {profiled.length > 0 && (
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* Dinámica */}
+              <div id="tour-emp-team-dynamics" className="bg-gradient-to-br from-purple-50 to-blue-50 border border-purple-200 rounded-xl p-6">
+                <h3 className="text-xl font-semibold text-slate-900 mb-4 flex items-center gap-2">
+                  <TrendingUp className="w-5 h-5 text-purple-600" /> Dinámica del Equipo
+                </h3>
+                <div className="space-y-4">
+                  <div>
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-sm font-medium text-slate-700">Diversidad de perfiles</span>
+                      <span className="text-lg font-bold text-purple-600">{teamDynamics.diversity}%</span>
+                    </div>
+                    <div className="w-full bg-slate-200 rounded-full h-2">
+                      <div className="bg-gradient-to-r from-purple-500 to-blue-500 h-2 rounded-full" style={{ width: `${teamDynamics.diversity}%` }} />
+                    </div>
+                  </div>
+                  {teamDynamics.strengths.length > 0 && (
+                    <div>
+                      <h4 className="text-sm font-semibold text-green-700 mb-2">Fortalezas del equipo:</h4>
+                      <ul className="space-y-1">
+                        {teamDynamics.strengths.map((s, i) => (
+                          <li key={i} className="text-sm text-slate-700 flex items-start gap-2"><span className="text-green-600 mt-0.5">✓</span>{s}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                  {teamDynamics.recommendations.length > 0 && (
+                    <div>
+                      <h4 className="text-sm font-semibold text-blue-700 mb-2 flex items-center gap-1"><Lightbulb className="w-4 h-4" /> Recomendaciones:</h4>
+                      <ul className="space-y-1">
+                        {teamDynamics.recommendations.slice(0, 3).map((r, i) => (
+                          <li key={i} className="text-sm text-slate-700">• {r}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Compatibilidad */}
+              {myType && (
+                <div id="tour-emp-team-compatibility" className="bg-white border border-slate-200 rounded-xl p-6">
+                  <h3 className="text-xl font-semibold text-slate-900 mb-4 flex items-center gap-2">
+                    <Heart className="w-5 h-5 text-pink-600" /> Tu Compatibilidad
+                  </h3>
+                  <div className="space-y-3">
+                    {profiled.map((tm) => {
+                      const score = getCompatibilityScore(myType, tm.enneagramType!);
+                      return (
+                        <div key={tm.id} className="border-b border-slate-100 last:border-0 pb-3 last:pb-0">
+                          <div className="flex items-center justify-between mb-2">
+                            <span className="font-medium text-slate-900 text-sm">{tm.name}</span>
+                            <span className={`text-sm font-semibold ${score >= 80 ? 'text-green-600' : score >= 60 ? 'text-yellow-600' : 'text-orange-600'}`}>{score}%</span>
+                          </div>
+                          <div className="w-full bg-slate-100 rounded-full h-1.5">
+                            <div className={`h-1.5 rounded-full ${score >= 80 ? 'bg-green-500' : score >= 60 ? 'bg-yellow-500' : 'bg-orange-500'}`} style={{ width: `${score}%` }} />
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                  {!myType && (
+                    <p className="text-sm text-slate-400 italic mt-2">Completá tu test de eneagrama para ver tu compatibilidad.</p>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
+        </>
+      )}
+    </div>
+  );
 };
-
-
