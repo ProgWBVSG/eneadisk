@@ -47,6 +47,7 @@ export const EmployeeSignup: React.FC = () => {
   const [googleLoading, setGoogleLoading] = useState(false);
   const [formData, setFormData] = useState<Partial<Step1Data & { companyId: string }>>({});
   const [serverError, setServerError] = useState<string | null>(null);
+  const [emailExists, setEmailExists] = useState(false);
   const [resendTimer, setResendTimer] = useState(0);
   const [isResending, setIsResending] = useState(false);
 
@@ -66,6 +67,7 @@ export const EmployeeSignup: React.FC = () => {
   // ── Step 1: validar código + signUp → envía OTP ──
   const onStep1 = async (data: Step1Data) => {
     setServerError(null);
+    setEmailExists(false);
     setIsLoading(true);
 
     try {
@@ -93,7 +95,7 @@ export const EmployeeSignup: React.FC = () => {
           signUpError.message.toLowerCase().includes('already registered') ||
           signUpError.message.toLowerCase().includes('user already exists')
         ) {
-          setServerError('Este email ya tiene una cuenta. Por favor iniciá sesión.');
+          setEmailExists(true);
         } else {
           setServerError(signUpError.message);
         }
@@ -102,7 +104,7 @@ export const EmployeeSignup: React.FC = () => {
 
       // Detectar email duplicado silencioso (identities vacías = email ya existe)
       if (signUpData.user?.identities && signUpData.user.identities.length === 0) {
-        setServerError('Este email ya tiene una cuenta. Por favor iniciá sesión o recuperá tu contraseña.');
+        setEmailExists(true);
         return;
       }
 
@@ -279,6 +281,21 @@ export const EmployeeSignup: React.FC = () => {
               <Input label="Email" type="email" {...form1.register('email')} error={form1.formState.errors.email?.message} />
               <Input label="Contraseña (mín. 8 caracteres)" type="password" {...form1.register('password')} error={form1.formState.errors.password?.message} />
               <Input label="Confirmar Contraseña" type="password" {...form1.register('confirmPassword')} error={form1.formState.errors.confirmPassword?.message} />
+              {/* Email ya registrado → invitar a iniciar sesión */}
+              {emailExists && (
+                <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 text-center space-y-3">
+                  <p className="text-sm text-amber-800">
+                    Ya existe una cuenta creada con este email.
+                  </p>
+                  <Button
+                    type="button"
+                    onClick={() => navigate('/auth/employee/login')}
+                    className="w-full bg-amber-500 hover:bg-amber-600 border-none text-white"
+                  >
+                    Iniciar sesión →
+                  </Button>
+                </div>
+              )}
               {serverError && <p className="text-sm text-red-500 text-center">{serverError}</p>}
               <Button
                 type="submit"

@@ -62,6 +62,7 @@ export const CompanySignup: React.FC = () => {
   const [step, setStep] = useState(1);
   const [formData, setFormData] = useState<Partial<Step1Data & Step2Data>>({});
   const [serverError, setServerError] = useState<string | null>(null);
+  const [emailExists, setEmailExists] = useState(false);
   const [inviteCode, setInviteCode] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
   const [resendTimer, setResendTimer] = useState(0);
@@ -140,6 +141,7 @@ export const CompanySignup: React.FC = () => {
   // ── Step 2: datos empresa → signUp ──
   const onStep2 = async (dataForm2: Step2Data) => {
     setServerError(null);
+    setEmailExists(false);
     const all = { ...formData, ...dataForm2 };
     setFormData(all);
 
@@ -156,7 +158,7 @@ export const CompanySignup: React.FC = () => {
         signUpError.message.toLowerCase().includes('already registered') ||
         signUpError.message.toLowerCase().includes('user already exists')
       ) {
-        setServerError('Este email ya tiene una cuenta. Por favor iniciá sesión.');
+        setEmailExists(true);
       } else {
         setServerError(signUpError.message);
       }
@@ -165,7 +167,7 @@ export const CompanySignup: React.FC = () => {
 
     // identities vacío = el email YA existe
     if (signUpData.user && signUpData.user.identities && signUpData.user.identities.length === 0) {
-      setServerError('Este email ya tiene una cuenta. Por favor iniciá sesión o recuperá tu contraseña.');
+      setEmailExists(true);
       return;
     }
 
@@ -328,6 +330,21 @@ export const CompanySignup: React.FC = () => {
                 />
               )}
             />
+            {/* Email ya registrado → invitar a iniciar sesión */}
+            {emailExists && (
+              <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 text-center space-y-3">
+                <p className="text-sm text-amber-800">
+                  Ya existe una cuenta creada con <strong>{formData.email}</strong>.
+                </p>
+                <Button
+                  type="button"
+                  onClick={() => navigate('/auth/company/login')}
+                  className="w-full bg-amber-500 hover:bg-amber-600 border-none text-white"
+                >
+                  Iniciar sesión →
+                </Button>
+              </div>
+            )}
             {serverError && <p className="text-sm text-red-500 text-center">{serverError}</p>}
             <div className="flex gap-3 pt-2">
               <Button type="button" variant="outline" onClick={() => setStep(1)} className="w-1/3">
