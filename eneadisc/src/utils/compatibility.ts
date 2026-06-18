@@ -202,15 +202,23 @@ export function getTeamDynamics(types: number[]): {
     challenges: string[];
     recommendations: string[];
 } {
-    const uniqueTypes = new Set(types);
-    const diversity = Math.min((uniqueTypes.size / 9) * 100, 100);
-
     const dynamics = {
-        diversity: Math.round(diversity),
+        diversity: 0,
         strengths: [] as string[],
         challenges: [] as string[],
         recommendations: [] as string[],
     };
+
+    // Sin tipos (equipo vacío o sin tests completados) → devolver estado neutro
+    // y evitar el reduce sobre un array vacío más abajo.
+    if (!types || types.length === 0) {
+        dynamics.recommendations.push('Sumá miembros con su test de eneagrama completado para ver la dinámica del equipo');
+        return dynamics;
+    }
+
+    const uniqueTypes = new Set(types);
+    const diversity = Math.min((uniqueTypes.size / 9) * 100, 100);
+    dynamics.diversity = Math.round(diversity);
 
     // Count types
     const typeCounts: { [key: number]: number } = {};

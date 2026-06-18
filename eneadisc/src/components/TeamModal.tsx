@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { X } from 'lucide-react';
 import { createTeam, updateTeam, type Team } from '../utils/teams';
 import { Button } from './ui/Button';
+import { useAuth } from '../context/AuthContext';
 
 interface TeamModalProps {
     isOpen: boolean;
@@ -11,6 +12,7 @@ interface TeamModalProps {
 }
 
 export const TeamModal: React.FC<TeamModalProps> = ({ isOpen, onClose, team, companyId }) => {
+    const { user } = useAuth();
     const [name, setName] = useState(team?.name || '');
     const [description, setDescription] = useState(team?.description || '');
     const [error, setError] = useState('');
@@ -42,12 +44,12 @@ export const TeamModal: React.FC<TeamModalProps> = ({ isOpen, onClose, team, com
                 // Editar equipo existente
                 await updateTeam(team.id, { name: name.trim(), description: description.trim() });
             } else {
-                // Crear nuevo equipo
+                // Crear nuevo equipo (el dueño es el admin actual, no la empresa)
                 await createTeam({
                     name: name.trim(),
                     description: description.trim(),
                     companyId,
-                    ownerId: companyId, // In production, use actual owner ID
+                    ownerId: user?.id || '',
                     memberIds: [],
                 });
             }
