@@ -80,7 +80,7 @@ export const TeamsTutorial: React.FC<Props> = ({ forceRun = false, onResetComple
         close: 'Cerrar',
         last: 'Finalizar',
         next: 'Siguiente',
-        nextWithProgress: 'Siguiente ({step} de {steps})',
+        nextWithProgress: 'Siguiente ({current} de {total})',
         skip: 'Saltar'
       }}
     />
