@@ -75,6 +75,7 @@ export const LibraryTutorial: React.FC<Props> = ({ forceRun = false, onResetComp
         close: 'Cerrar',
         last: 'Finalizar',
         next: 'Siguiente',
+        nextWithProgress: 'Siguiente ({step} de {steps})',
         skip: 'Saltar'
       }}
     />

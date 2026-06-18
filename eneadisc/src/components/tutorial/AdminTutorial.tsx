@@ -84,6 +84,7 @@ export const AdminTutorial: React.FC<Props> = ({ forceRun = false, onResetComple
         close: 'Cerrar',
         last: 'Finalizar',
         next: 'Siguiente',
+        nextWithProgress: 'Siguiente ({step} de {steps})',
         skip: 'Saltar Tutorial'
       }}
     />

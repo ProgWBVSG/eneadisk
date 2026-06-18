@@ -83,6 +83,7 @@ export const EmployeeTasksTutorial: React.FC<Props> = ({ forceRun = false, onRes
         close: 'Cerrar',
         last: 'Finalizar',
         next: 'Siguiente',
+        nextWithProgress: 'Siguiente ({step} de {steps})',
         skip: 'Saltar Tutorial'
       }}
     />

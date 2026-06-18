@@ -86,6 +86,7 @@ export const AITutorial: React.FC<Props> = ({ forceRun = false, onResetComplete 
         close: 'Cerrar',
         last: 'Finalizar',
         next: 'Siguiente',
+        nextWithProgress: 'Siguiente ({step} de {steps})',
         skip: 'Saltar'
       }}
     />
