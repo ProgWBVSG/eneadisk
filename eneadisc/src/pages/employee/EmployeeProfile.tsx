@@ -3,9 +3,10 @@ import { useAuth } from '../../context/AuthContext';
 import { getEnneagramResult } from '../../utils/calculateEnneagram';
 import { ENNEAGRAM_TYPES } from '../../data/enneagramData';
 import { WORK_PROFILES, getDailyTip } from '../../data/enneagramWorkData';
+import { RESOURCES } from '../../data/enneagramResources';
 import {
   Heart, AlertTriangle, TrendingUp, Target, Users, Lock, HelpCircle,
-  MessageCircle, MessageSquareReply, Sparkles, Flame, Zap, Sun, Share2, Check, UserCircle, BookOpen,
+  MessageCircle, MessageSquareReply, Sparkles, Flame, Zap, Sun, Share2, Check, UserCircle, BookOpen, Dumbbell,
 } from 'lucide-react';
 import { EmployeeTutorial } from '../../components/tutorial/EmployeeTutorial';
 
@@ -212,6 +213,26 @@ export const EmployeeProfile: React.FC = () => {
                 <h3 className="text-lg font-bold text-slate-900">Tu Auto-cuidado</h3>
               </div>
               <p className="text-slate-700 italic">{wp.selfCareTip}</p>
+            </div>
+          )}
+
+          {/* Biblioteca de ejercicios según eneatipo */}
+          {RESOURCES[typeId] && (
+            <div className="bg-white rounded-xl p-6 shadow-md">
+              <div className="flex items-center gap-3 mb-1">
+                <Dumbbell className="text-purple-600" size={24} />
+                <h3 className="text-xl font-bold text-slate-900">Ejercicios para crecer</h3>
+              </div>
+              <p className="text-sm text-slate-500 mb-4">Prácticas concretas pensadas para tu tipo</p>
+              <div className="grid sm:grid-cols-3 gap-3">
+                {RESOURCES[typeId].map((r, i) => (
+                  <div key={i} className="bg-slate-50 rounded-xl p-4 border border-slate-100">
+                    <div className="text-2xl mb-2">{r.icon}</div>
+                    <p className="font-semibold text-slate-900 text-sm mb-1">{r.title}</p>
+                    <p className="text-xs text-slate-600">{r.desc}</p>
+                  </div>
+                ))}
+              </div>
             </div>
           )}
 

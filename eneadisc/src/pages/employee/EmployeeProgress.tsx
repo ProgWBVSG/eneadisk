@@ -1,482 +1,303 @@
-import React, { useMemo, useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../../context/AuthContext';
-import { getEnneagramResult, hasCompletedQuestionnaire } from '../../utils/calculateEnneagram';
+import { getEnneagramResult } from '../../utils/calculateEnneagram';
 import { ENNEAGRAM_TYPES, getAllEnneagramTypes } from '../../data/enneagramData';
-import { getCheckIns, getCheckInsFromLastDays, getAverageMoodScore, MOOD_CONFIG } from '../../utils/checkIns';
+import { WORK_PROFILES } from '../../data/enneagramWorkData';
+import { JOURNAL_PROMPTS } from '../../data/enneagramResources';
+import { getCheckIns, getCheckInsFromLastDays } from '../../utils/checkIns';
 import { getTaskStats } from '../../utils/tasks';
-import { getTeamStats } from '../../utils/teamCollaboration';
-import { Lock, TrendingUp, Target, Zap, CheckCircle2, Heart, Users, BarChart3, Plus, HelpCircle } from 'lucide-react';
+import { computeInsights, computeAchievements, type Insight, type Achievement } from '../../utils/wellbeingInsights';
+import {
+  getGoals, addGoal, toggleGoal, deleteGoal,
+  getJournalEntries, addJournalEntry, type Goal, type JournalEntry,
+} from '../../utils/employeeFeatures';
+import {
+  Lock, TrendingUp, CheckCircle2, Heart, Flame, Plus, HelpCircle,
+  Target, BookOpen, Trophy, Lightbulb, X, Check, Calendar,
+} from 'lucide-react';
 import { Button } from '../../components/ui/Button';
 import { EmployeeProgressTutorial } from '../../components/tutorial/EmployeeProgressTutorial';
-import { Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Tooltip as RechartsTooltip, ResponsiveContainer } from 'recharts';
+import { Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ResponsiveContainer } from 'recharts';
+
 export const EmployeeProgress: React.FC = () => {
-    const [forceRunTutorial, setForceRunTutorial] = useState(false);
-    const { user } = useAuth();
-    const hasCompleted = user ? hasCompletedQuestionnaire(user.id) : false;
-    const result = user ? getEnneagramResult(user.id) : null;
+  const [forceRunTutorial, setForceRunTutorial] = useState(false);
+  const { user } = useAuth();
 
-    // Data fetching states
-    const [checkIns, setCheckIns] = useState<any[]>([]);
-    const [recentCheckIns, setRecentCheckIns] = useState<any[]>([]);
-    const [taskStats, setTaskStats] = useState<any>(null);
-    const [teamStats, setTeamStats] = useState<any>(null);
+  const localResult = user ? getEnneagramResult(user.id) : null;
+  const typeId = user?.enneagramType ?? localResult?.primaryType ?? null;
 
-    React.useEffect(() => {
-        const loadData = async () => {
-            if (!user) return;
-            const fetchedCheckIns = await getCheckIns(user.id);
-            setCheckIns(fetchedCheckIns || []);
-            const fetchedRecentCheckIns = await getCheckInsFromLastDays(user.id, 30);
-            setRecentCheckIns(fetchedRecentCheckIns || []);
-            const fetchedTaskStats = await getTaskStats(user.id);
-            setTaskStats(fetchedTaskStats || null);
-            // Si getTeamStats es sync pero podría ser async
-            const fetchedTeamStats = await getTeamStats(user.id);
-            setTeamStats(fetchedTeamStats || null);
-        };
-        loadData();
-    }, [user]);
+  const [checkIns, setCheckIns] = useState<any[]>([]);
+  const [recentCheckIns, setRecentCheckIns] = useState<any[]>([]);
+  const [taskStats, setTaskStats] = useState<any>(null);
+  const [goals, setGoals] = useState<Goal[]>([]);
+  const [journal, setJournal] = useState<JournalEntry[]>([]);
 
-    // Calculate metrics
-    const avgMoodScore = getAverageMoodScore(recentCheckIns);
-    const avgEnergy = recentCheckIns.length > 0
-        ? recentCheckIns.reduce((sum: number, c: any) => sum + c.energy, 0) / recentCheckIns.length
-        : 0;
-    const avgStress = recentCheckIns.length > 0
-        ? recentCheckIns.reduce((sum: number, c: any) => sum + c.stress, 0) / recentCheckIns.length
-        : 0;
+  // Forms
+  const [newGoal, setNewGoal] = useState('');
+  const [journalText, setJournalText] = useState('');
+  const [activePrompt, setActivePrompt] = useState<string | undefined>(undefined);
 
-    // Radar chart data
-    const chartData = useMemo(() => {
-        if (!result) return [];
-        const allTypes = getAllEnneagramTypes();
-        const total = Object.values(result.scores).reduce((sum, score) => sum + score, 0);
+  const loadData = useCallback(async () => {
+    if (!user) return;
+    const [ci, rci, ts, g, j] = await Promise.all([
+      getCheckIns(user.id),
+      getCheckInsFromLastDays(user.id, 30),
+      getTaskStats(user.id),
+      getGoals(user.id),
+      getJournalEntries(user.id),
+    ]);
+    setCheckIns(ci || []);
+    setRecentCheckIns(rci || []);
+    setTaskStats(ts || null);
+    setGoals(g || []);
+    setJournal(j || []);
+  }, [user]);
 
-        return allTypes.map(type => ({
-            type: type.id,
-            name: type.name,
-            score: result.scores[type.id] || 0,
-            percentage: total > 0 ? ((result.scores[type.id] || 0) / total) * 100 : 0,
-            color: type.color
-        }));
-    }, [result]);
+  useEffect(() => { loadData(); }, [loadData]);
 
-    const primaryType = result ? ENNEAGRAM_TYPES[result.primaryType] : null;
-
-    if (!hasCompleted || !result || !primaryType) {
-        return (
-            <div className="p-8 flex items-center justify-center min-h-screen">
-                <div className="text-center max-w-md bg-white p-8 rounded-xl shadow-lg">
-                    <Lock size={64} className="mx-auto text-purple-600 mb-4" />
-                    <h2 className="text-2xl font-bold text-slate-900 mb-4">Completa tu Perfil</h2>
-                    <p className="text-slate-600 mb-6">
-                        Para ver tu progreso, primero debes completar el cuestionario de Eneagrama.
-                    </p>
-                    <a
-                        href="/questionnaire"
-                        className="inline-block bg-gradient-to-r from-purple-600 to-blue-600 text-white px-6 py-3 rounded-lg hover:from-purple-700 hover:to-blue-700 transition-all"
-                    >
-                        Completar Cuestionario
-                    </a>
-                </div>
-            </div>
-        );
-    }
-
-    const maxScore = Math.max(...chartData.map(d => d.score)) || 1;
-
-    // Mood timeline chart (last 7 check-ins)
-    const moodTimeline = recentCheckIns.slice(-7).reverse();
-
+  if (!typeId) {
     return (
-        <div className="p-4 md:p-8 max-w-7xl mx-auto bg-slate-50 min-h-screen">
-            {/* Tutorial Onboarding */}
-            <EmployeeProgressTutorial forceRun={forceRunTutorial} onResetComplete={() => setForceRunTutorial(false)} />
-
-            {/* Header con botón de acción rápida */}
-            <div className="mb-8 flex items-center justify-between">
-                <div>
-                    <h1 className="text-3xl md:text-4xl font-bold text-slate-900 mb-2 flex items-center gap-3">
-                        <TrendingUp className="text-purple-600" size={40} />
-                        Mi Proceso
-                    </h1>
-                    <p className="text-slate-600">Tu evolución impulsada por check-ins, tareas y colaboración</p>
-                </div>
-                <div className="flex items-center gap-3">
-                    <button
-                        onClick={() => setForceRunTutorial(true)}
-                        className="flex items-center gap-1 text-xs text-slate-400 hover:text-purple-600 transition-colors"
-                    >
-                        <HelpCircle size={14} />
-                        Ver tutorial
-                    </button>
-                    <Button
-                        id="tour-emp-progress-checkin-btn"
-                        onClick={() => window.location.href = '/dashboard/employee/checkins'}
-                        className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700"
-                    >
-                        <Plus className="mr-2 h-4 w-4" /> Nuevo Check-in
-                    </Button>
-                </div>
-            </div>
-
-            {/* Stats Cards - Métricas Principales */}
-            <div id="tour-emp-progress-stats" className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-                <div className="bg-white rounded-xl p-4 md:p-6 shadow-md hover:shadow-lg transition-shadow">
-                    <div className="flex items-center justify-between mb-2">
-                        <Heart className="text-pink-500" size={24} />
-                    </div>
-                    <p className="text-2xl md:text-3xl font-bold text-slate-900">{checkIns.length}</p>
-                    <p className="text-xs md:text-sm text-slate-500">Check-ins Totales</p>
-                    <div className="mt-2 text-xs text-pink-600 font-medium">
-                        {recentCheckIns.length} este mes
-                    </div>
-                </div>
-
-                <div className="bg-white rounded-xl p-4 md:p-6 shadow-md hover:shadow-lg transition-shadow">
-                    <div className="flex items-center justify-between mb-2">
-                        <CheckCircle2 className="text-green-500" size={24} />
-                    </div>
-                    <p className="text-2xl md:text-3xl font-bold text-slate-900">
-                        {taskStats?.completed || 0}
-                    </p>
-                    <p className="text-xs md:text-sm text-slate-500">Tareas Completadas</p>
-                    <div className="mt-2 text-xs text-green-600 font-medium">
-                        {taskStats?.recentlyCompleted || 0} esta semana
-                    </div>
-                </div>
-
-                <div className="bg-white rounded-xl p-4 md:p-6 shadow-md hover:shadow-lg transition-shadow">
-                    <div className="flex items-center justify-between mb-2">
-                        <Users className="text-blue-500" size={24} />
-                    </div>
-                    <p className="text-2xl md:text-3xl font-bold text-slate-900">
-                        {teamStats?.collaborationScore || 0}%
-                    </p>
-                    <p className="text-xs md:text-sm text-slate-500">Score Colaboración</p>
-                    <div className="mt-2 text-xs text-blue-600 font-medium">
-                        {teamStats?.total || 0} interacciones
-                    </div>
-                </div>
-
-                <div className="bg-white rounded-xl p-4 md:p-6 shadow-md hover:shadow-lg transition-shadow">
-                    <div className="flex items-center justify-between mb-2">
-                        <Zap className="text-amber-500" size={24} />
-                    </div>
-                    <p className="text-2xl md:text-3xl font-bold text-slate-900">
-                        {avgEnergy.toFixed(1)}
-                    </p>
-                    <p className="text-xs md:text-sm text-slate-500">Energía Promedio</p>
-                    <div className="mt-2 text-xs text-amber-600 font-medium">
-                        De 5.0 max
-                    </div>
-                </div>
-            </div>
-
-            <div className="grid lg:grid-cols-2 gap-8 mb-8">
-                {/* Estado Emocional */}
-                <div id="tour-emp-progress-mood" className="bg-white rounded-xl p-6 md:p-8 shadow-lg">
-                    <div className="flex items-center justify-between mb-6">
-                        <div>
-                            <h2 className="text-xl font-bold text-slate-900">Estado Emocional</h2>
-                            <p className="text-sm text-slate-500">Últimos 30 días</p>
-                        </div>
-                        <div className="text-right">
-                            <div className="text-3xl font-bold" style={{ color: avgMoodScore >= 4 ? '#10b981' : avgMoodScore >= 3 ? '#f59e0b' : '#ef4444' }}>
-                                {avgMoodScore.toFixed(1)}
-                            </div>
-                            <div className="text-xs text-slate-500">de 5.0</div>
-                        </div>
-                    </div>
-
-                    {moodTimeline.length > 0 ? (
-                        <div className="space-y-4">
-                            <div className="flex items-center justify-between text-xs text-slate-600 mb-2">
-                                <span>Últimos check-ins</span>
-                                <span>Nivel</span>
-                            </div>
-                            {moodTimeline.map((checkIn) => {
-                                const moodConfig = MOOD_CONFIG[checkIn.mood as keyof typeof MOOD_CONFIG];
-                                return (
-                                    <div key={checkIn.id} className="flex items-center gap-3">
-                                        <div className="text-2xl">{moodConfig.emoji}</div>
-                                        <div className="flex-1">
-                                            <div className="flex items-center justify-between mb-1">
-                                                <span className="text-sm font-medium text-slate-700">
-                                                    {new Date(checkIn.date).toLocaleDateString('es-AR', { month: 'short', day: 'numeric' })}
-                                                </span>
-                                                <span className="text-xs text-slate-500">{moodConfig.label}</span>
-                                            </div>
-                                            <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
-                                                <div
-                                                    className="h-full rounded-full transition-all"
-                                                    style={{
-                                                        width: `${(checkIn.energy / 5) * 100}%`,
-                                                        backgroundColor: moodConfig.color
-                                                    }}
-                                                />
-                                            </div>
-                                        </div>
-                                        <div className="text-sm font-bold text-slate-700 w-8 text-right">
-                                            {checkIn.energy}
-                                        </div>
-                                    </div>
-                                );
-                            })}
-                        </div>
-                    ) : (
-                        <div className="text-center py-12">
-                            <Heart className="mx-auto text-slate-300 mb-4" size={48} />
-                            <p className="text-slate-500 mb-4">Aún no hay check-ins registrados</p>
-                            <Button
-                                onClick={() => window.location.href = '/dashboard/employee/checkins'}
-                                variant="outline"
-                            >
-                                Crear Primer Check-in
-                            </Button>
-                        </div>
-                    )}
-
-                    {/* Wellness Score */}
-                    {recentCheckIns.length > 0 && (
-                        <div className="mt-6 grid grid-cols-2 gap-4">
-                            <div className="bg-blue-50 rounded-lg p-4 border border-blue-200">
-                                <div className="flex items-center justify-between mb-2">
-                                    <span className="text-xs font-medium text-blue-900">Energía</span>
-                                    <Zap size={16} className="text-blue-600" />
-                                </div>
-                                <div className="text-2xl font-bold text-blue-900">{avgEnergy.toFixed(1)}</div>
-                                <div className="text-xs text-blue-700">Promedio mensual</div>
-                            </div>
-
-                            <div className="bg-orange-50 rounded-lg p-4 border border-orange-200">
-                                <div className="flex items-center justify-between mb-2">
-                                    <span className="text-xs font-medium text-orange-900">Estrés</span>
-                                    <BarChart3 size={16} className="text-orange-600" />
-                                </div>
-                                <div className="text-2xl font-bold text-orange-900">{avgStress.toFixed(1)}</div>
-                                <div className="text-xs text-orange-700">Promedio mensual</div>
-                            </div>
-                        </div>
-                    )}
-                </div>
-
-                {/* Productividad - Tareas */}
-                <div id="tour-emp-progress-tasks" className="bg-white rounded-xl p-6 md:p-8 shadow-lg">
-                    <div className="flex items-center justify-between mb-6">
-                        <div>
-                            <h2 className="text-xl font-bold text-slate-900">Productividad</h2>
-                            <p className="text-sm text-slate-500">Gestión de tareas</p>
-                        </div>
-                        <Button
-                            onClick={() => window.location.href = '/dashboard/employee/tareas'}
-                            size="sm"
-                            variant="outline"
-                        >
-                            Ver Tareas
-                        </Button>
-                    </div>
-
-                    {taskStats && taskStats.total > 0 ? (
-                        <div className="space-y-6">
-                            {/* Completion Ring */}
-                            <div className="flex items-center justify-center">
-                                <div className="relative w-40 h-40">
-                                    <svg className="w-full h-full transform -rotate-90">
-                                        <circle
-                                            cx="80"
-                                            cy="80"
-                                            r="70"
-                                            fill="none"
-                                            stroke="#e2e8f0"
-                                            strokeWidth="12"
-                                        />
-                                        <circle
-                                            cx="80"
-                                            cy="80"
-                                            r="70"
-                                            fill="none"
-                                            stroke="#10b981"
-                                            strokeWidth="12"
-                                            strokeDasharray={`${2 * Math.PI * 70 * (taskStats.completionRate / 100)} ${2 * Math.PI * 70}`}
-                                            strokeLinecap="round"
-                                            className="transition-all duration-1000"
-                                        />
-                                    </svg>
-                                    <div className="absolute inset-0 flex flex-col items-center justify-center">
-                                        <div className="text-3xl font-bold text-slate-900">
-                                            {Math.round(taskStats.completionRate)}%
-                                        </div>
-                                        <div className="text-xs text-slate-500">Completitud</div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            {/* Task Breakdown */}
-                            <div className="grid grid-cols-3 gap-3">
-                                <div className="text-center p-3 bg-green-50 rounded-lg">
-                                    <div className="text-2xl font-bold text-green-900">{taskStats.completed}</div>
-                                    <div className="text-xs text-green-700">Completadas</div>
-                                </div>
-                                <div className="text-center p-3 bg-blue-50 rounded-lg">
-                                    <div className="text-2xl font-bold text-blue-900">{taskStats.inProgress}</div>
-                                    <div className="text-xs text-blue-700">En Progreso</div>
-                                </div>
-                                <div className="text-center p-3 bg-slate-50 rounded-lg">
-                                    <div className="text-2xl font-bold text-slate-900">{taskStats.pending}</div>
-                                    <div className="text-xs text-slate-700">Pendientes</div>
-                                </div>
-                            </div>
-
-                            {/* Recent Activity */}
-                            <div className="bg-gradient-to-r from-green-50 to-emerald-50 rounded-lg p-4 border border-green-200">
-                                <div className="flex items-center gap-3">
-                                    <div className="w-10 h-10 bg-green-500 rounded-full flex items-center justify-center">
-                                        <CheckCircle2 className="text-white" size={20} />
-                                    </div>
-                                    <div className="flex-1">
-                                        <p className="text-sm font-medium text-green-900">
-                                            {taskStats.recentlyCompleted} tareas completadas
-                                        </p>
-                                        <p className="text-xs text-green-700">En los últimos 7 días</p>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    ) : (
-                        <div className="text-center py-12">
-                            <Target className="mx-auto text-slate-300 mb-4" size={48} />
-                            <p className="text-slate-500 mb-4">Aún no hay tareas creadas</p>
-                            <Button
-                                onClick={() => window.location.href = '/dashboard/employee/tareas'}
-                                variant="outline"
-                            >
-                                Crear Primera Tarea
-                            </Button>
-                        </div>
-                    )}
-                </div>
-            </div>
-
-            {/* Radar Chart & Team Collaboration */}
-            <div className="grid lg:grid-cols-2 gap-8 mb-8">
-                {/* Radar Chart */}
-                <div id="tour-emp-progress-radar" className="bg-white rounded-xl p-6 md:p-8 shadow-lg">
-                    <h2 className="text-xl font-bold text-slate-900 mb-2">Distribución de Eneatipos</h2>
-                    <p className="text-sm text-slate-500 mb-6">Tu perfil a través de los 9 tipos</p>
-
-                    <div className="h-[350px] w-full flex justify-center -mt-6">
-                        <ResponsiveContainer width="100%" height="100%">
-                            <RadarChart cx="50%" cy="50%" outerRadius="70%" data={chartData}>
-                                <PolarGrid stroke="#e2e8f0" />
-                                <PolarAngleAxis 
-                                    dataKey="type" 
-                                    tick={(props: any) => {
-                                        const { payload, x, y } = props;
-                                        const data = chartData.find(d => d.type === payload.value);
-                                        return (
-                                            <g>
-                                                <circle cx={x} cy={y} r="14" fill={data?.color || "#94a3b8"} opacity="0.9" />
-                                                <text x={x} y={y} textAnchor="middle" dominantBaseline="middle" fill="white" fontSize="12" fontWeight="bold">
-                                                    {payload.value}
-                                                </text>
-                                            </g>
-                                        );
-                                    }} 
-                                />
-                                <PolarRadiusAxis angle={90} domain={[0, maxScore]} tick={false} axisLine={false} />
-                                <Radar 
-                                    name="Puntaje" 
-                                    dataKey="score" 
-                                    stroke={primaryType?.color || "#9333ea"} 
-                                    strokeWidth={2}
-                                    fill={primaryType?.color || "#9333ea"} 
-                                    fillOpacity={0.4} 
-                                    dot={{ r: 4, fill: "white", strokeWidth: 2, stroke: primaryType?.color || "#9333ea" }}
-                                    activeDot={{ r: 6, fill: primaryType?.color || "#9333ea", strokeWidth: 0 }}
-                                />
-                                <RechartsTooltip 
-                                    content={({ active, payload }) => {
-                                        if (active && payload && payload.length) {
-                                            const data = payload[0].payload;
-                                            return (
-                                                <div className="bg-white p-3 border border-slate-200 shadow-xl rounded-lg z-50 relative outline-none ring-0">
-                                                    <div className="flex items-center gap-2 mb-1">
-                                                        <div className="w-3 h-3 rounded-full" style={{ backgroundColor: data.color }}></div>
-                                                        <span className="font-bold text-slate-800">Tipo {data.type}: {data.name}</span>
-                                                    </div>
-                                                    <p className="text-slate-600 text-sm">Puntaje ponderado: <span className="font-semibold text-slate-900">{Number(data.score).toFixed(1)}</span></p>
-                                                    <p className="text-slate-500 text-xs mt-0.5">Compatibilidad con tu estilo: {Number(data.percentage).toFixed(1)}%</p>
-                                                </div>
-                                            );
-                                        }
-                                        return null;
-                                    }}
-                                />
-                            </RadarChart>
-                        </ResponsiveContainer>
-                    </div>
-                </div>
-
-                {/* Team Collaboration */}
-                <div className="bg-white rounded-xl p-6 md:p-8 shadow-lg">
-                    <div className="flex items-center justify-between mb-6">
-                        <div>
-                            <h2 className="text-xl font-bold text-slate-900">Colaboración en Equipo</h2>
-                            <p className="text-sm text-slate-500">Cómo te llevás con tu equipo</p>
-                        </div>
-                        <Button
-                            onClick={() => window.location.href = '/dashboard/employee/equipo'}
-                            size="sm"
-                            variant="outline"
-                        >
-                            Ver Equipo
-                        </Button>
-                    </div>
-
-                    {teamStats && teamStats.total > 0 ? (
-                        <div className="space-y-6">
-                            <div className="text-center">
-                                <div className="text-5xl font-bold text-blue-600 mb-2">
-                                    {teamStats.collaborationScore}%
-                                </div>
-                                <div className="text-sm text-slate-600">Score de Colaboración</div>
-                            </div>
-
-                            <div className="grid grid-cols-3 gap-3">
-                                <div className="text-center p-3 bg-green-50 rounded-lg border border-green-200">
-                                    <div className="text-2xl mb-1">😊</div>
-                                    <div className="text-lg font-bold text-green-900">{teamStats.positive}</div>
-                                    <div className="text-xs text-green-700">Positivas</div>
-                                </div>
-                                <div className="text-center p-3 bg-blue-50 rounded-lg border border-blue-200">
-                                    <div className="text-2xl mb-1">😐</div>
-                                    <div className="text-lg font-bold text-blue-900">{teamStats.neutral}</div>
-                                    <div className="text-xs text-blue-700">Neutrales</div>
-                                </div>
-                                <div className="text-center p-3 bg-red-50 rounded-lg border border-red-200">
-                                    <div className="text-2xl mb-1">😔</div>
-                                    <div className="text-lg font-bold text-red-900">{teamStats.negative}</div>
-                                    <div className="text-xs text-red-700">Negativas</div>
-                                </div>
-                            </div>
-
-                            <div className="bg-gradient-to-br from-blue-50 to-purple-50 rounded-lg p-4 border border-blue-200">
-                                <p className="text-sm text-slate-700">
-                                    💡 <strong>Consejo:</strong> Tu tipo {result.primaryType} trabaja mejor con tipos{' '}
-                                    {primaryType.compatibleWith.join(', ')}
-                                </p>
-                            </div>
-                        </div>
-                    ) : (
-                        <div className="text-center py-12">
-                            <Users className="mx-auto text-slate-300 mb-4" size={48} />
-                            <p className="text-slate-500 mb-2">Sin interacciones registradas</p>
-                            <p className="text-xs text-slate-400 mb-4">Las interacciones se registrarán automáticamente</p>
-                        </div>
-                    )}
-                </div>
-            </div>
+      <div className="p-8 flex items-center justify-center min-h-screen">
+        <div className="text-center max-w-md bg-white p-8 rounded-xl shadow-lg">
+          <Lock size={64} className="mx-auto text-purple-600 mb-4" />
+          <h2 className="text-2xl font-bold text-slate-900 mb-4">Completá tu Perfil</h2>
+          <p className="text-slate-600 mb-6">Para ver tu crecimiento, primero completá el cuestionario de Eneagrama.</p>
+          <a href="/questionnaire" className="inline-block bg-gradient-to-r from-purple-600 to-blue-600 text-white px-6 py-3 rounded-lg">Completar Cuestionario</a>
         </div>
+      </div>
     );
+  }
+
+  const t = ENNEAGRAM_TYPES[typeId];
+  const wp = WORK_PROFILES[typeId];
+
+  // Métricas
+  const avgEnergy = recentCheckIns.length > 0 ? recentCheckIns.reduce((s, c) => s + c.energy, 0) / recentCheckIns.length : 0;
+  const insights: Insight[] = computeInsights(recentCheckIns);
+  const achievements: Achievement[] = computeAchievements(
+    checkIns.length, taskStats?.completed || 0, goals.length, true
+  );
+  const unlockedCount = achievements.filter((a) => a.unlocked).length;
+
+  // Resumen de esta semana
+  const weekAgo = Date.now() - 7 * 86400000;
+  const weekCheckins = checkIns.filter((c) => new Date(c.date).getTime() >= weekAgo);
+  const weekTasksDone = taskStats?.recentlyCompleted || 0;
+
+  // Radar (solo si hay scores en localStorage)
+  const radarData = localResult?.scores
+    ? getAllEnneagramTypes().map((tp) => ({ type: tp.id, score: localResult.scores[tp.id] || 0, color: tp.color }))
+    : [];
+  const maxScore = radarData.length ? Math.max(...radarData.map((d) => d.score)) || 1 : 1;
+
+  // Metas sugeridas según áreas de crecimiento del eneatipo
+  const suggestedGoals = t.growthAreas.filter((a) => !goals.some((g) => g.title.toLowerCase().includes(a.toLowerCase())));
+
+  const handleAddGoal = async (title: string) => {
+    if (!title.trim() || !user) return;
+    await addGoal(user.id, title.trim(), t.name);
+    setNewGoal('');
+    loadData();
+  };
+  const handleToggleGoal = async (g: Goal) => { await toggleGoal(g.id, g.status !== 'done'); loadData(); };
+  const handleDeleteGoal = async (id: string) => { await deleteGoal(id); loadData(); };
+  const handleSaveJournal = async () => {
+    if (!journalText.trim() || !user) return;
+    await addJournalEntry(user.id, journalText.trim(), activePrompt);
+    setJournalText(''); setActivePrompt(undefined);
+    loadData();
+  };
+
+  const prompts = JOURNAL_PROMPTS[typeId] || [];
+
+  return (
+    <div className="p-4 md:p-8 max-w-6xl mx-auto bg-slate-50 min-h-screen">
+      <EmployeeProgressTutorial forceRun={forceRunTutorial} onResetComplete={() => setForceRunTutorial(false)} />
+
+      {/* Header */}
+      <div className="mb-6 flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl md:text-4xl font-bold text-slate-900 mb-1 flex items-center gap-3">
+            <TrendingUp className="text-purple-600" size={36} /> Mi Crecimiento
+          </h1>
+          <p className="text-slate-600">Tu evolución personal, paso a paso</p>
+        </div>
+        <div className="flex items-center gap-3">
+          <button onClick={() => setForceRunTutorial(true)} className="flex items-center gap-1 text-xs text-slate-400 hover:text-purple-600">
+            <HelpCircle size={14} /> Tutorial
+          </button>
+          <Button onClick={() => (window.location.href = '/dashboard/employee/checkins')} className="bg-gradient-to-r from-purple-600 to-blue-600">
+            <Plus className="mr-2 h-4 w-4" /> Check-in
+          </Button>
+        </div>
+      </div>
+
+      {/* Resumen de la semana */}
+      <div className="bg-gradient-to-r from-purple-600 to-indigo-600 rounded-2xl p-6 text-white mb-6 shadow-lg">
+        <div className="flex items-center gap-2 mb-4">
+          <Calendar size={20} /> <h2 className="text-lg font-bold">Tu semana en resumen</h2>
+        </div>
+        <div className="grid grid-cols-3 gap-4">
+          <div><p className="text-3xl font-bold">{weekCheckins.length}</p><p className="text-sm opacity-80">check-ins</p></div>
+          <div><p className="text-3xl font-bold">{weekTasksDone}</p><p className="text-sm opacity-80">tareas hechas</p></div>
+          <div><p className="text-3xl font-bold">{avgEnergy.toFixed(1)}</p><p className="text-sm opacity-80">energía prom.</p></div>
+        </div>
+      </div>
+
+      {/* Métricas rápidas */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+        <MetricCard icon={<Heart className="text-pink-500" size={22} />} value={checkIns.length} label="Check-ins totales" />
+        <MetricCard icon={<CheckCircle2 className="text-green-500" size={22} />} value={taskStats?.completed || 0} label="Tareas completadas" />
+        <MetricCard icon={<Trophy className="text-amber-500" size={22} />} value={`${unlockedCount}/${achievements.length}`} label="Logros" />
+        <MetricCard icon={<Target className="text-blue-500" size={22} />} value={goals.filter((g) => g.status === 'active').length} label="Metas activas" />
+      </div>
+
+      {/* Insights de bienestar */}
+      <Section icon={<Lightbulb className="text-amber-500" size={22} />} title="Insights de tu bienestar" subtitle="Patrones detectados en tus check-ins">
+        <div className="grid sm:grid-cols-2 gap-4">
+          {insights.map((ins, i) => (
+            <div key={i} className={`rounded-xl p-4 border ${ins.tone === 'good' ? 'bg-green-50 border-green-200' : ins.tone === 'warn' ? 'bg-amber-50 border-amber-200' : 'bg-blue-50 border-blue-200'}`}>
+              <div className="flex items-start gap-3">
+                <span className="text-2xl">{ins.icon}</span>
+                <div>
+                  <p className="font-semibold text-slate-900 text-sm mb-0.5">{ins.title}</p>
+                  <p className="text-xs text-slate-600">{ins.detail}</p>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </Section>
+
+      {/* Logros */}
+      <Section icon={<Trophy className="text-amber-500" size={22} />} title="Tus logros" subtitle={`${unlockedCount} de ${achievements.length} desbloqueados`}>
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          {achievements.map((a, i) => (
+            <div key={i} className={`rounded-xl p-4 text-center border transition-all ${a.unlocked ? 'bg-white border-amber-200 shadow-sm' : 'bg-slate-50 border-slate-200 opacity-50'}`}>
+              <div className="text-3xl mb-2" style={{ filter: a.unlocked ? 'none' : 'grayscale(1)' }}>{a.icon}</div>
+              <p className="text-xs font-semibold text-slate-900">{a.title}</p>
+              <p className="text-[11px] text-slate-500 mt-0.5">{a.desc}</p>
+            </div>
+          ))}
+        </div>
+      </Section>
+
+      {/* Metas de desarrollo */}
+      <Section icon={<Target className="text-blue-600" size={22} />} title="Mis metas de desarrollo" subtitle="Objetivos personales según tu eneatipo">
+        {/* Sugerencias */}
+        {suggestedGoals.length > 0 && goals.length < 3 && (
+          <div className="mb-4">
+            <p className="text-xs text-slate-500 mb-2">Sugeridas para Tipo {typeId}:</p>
+            <div className="flex flex-wrap gap-2">
+              {suggestedGoals.slice(0, 4).map((s, i) => (
+                <button key={i} onClick={() => handleAddGoal(`Trabajar mi ${s.toLowerCase()}`)}
+                  className="text-xs px-3 py-1.5 bg-blue-50 text-blue-700 rounded-full border border-blue-200 hover:bg-blue-100">
+                  + {s}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+        {/* Input nueva meta */}
+        <div className="flex gap-2 mb-4">
+          <input value={newGoal} onChange={(e) => setNewGoal(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && handleAddGoal(newGoal)}
+            placeholder="Ej: Practicar escucha activa esta semana"
+            className="flex-1 px-4 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none" />
+          <button onClick={() => handleAddGoal(newGoal)} className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700">Agregar</button>
+        </div>
+        {/* Lista de metas */}
+        {goals.length === 0 ? (
+          <p className="text-sm text-slate-400 text-center py-4">Todavía no tenés metas. Agregá una arriba o elegí una sugerida.</p>
+        ) : (
+          <div className="space-y-2">
+            {goals.map((g) => (
+              <div key={g.id} className="flex items-center gap-3 p-3 bg-white rounded-lg border border-slate-200">
+                <button onClick={() => handleToggleGoal(g)}>
+                  {g.status === 'done' ? <CheckCircle2 className="text-green-600" size={22} /> : <div className="w-[22px] h-[22px] rounded-full border-2 border-slate-300" />}
+                </button>
+                <span className={`flex-1 text-sm ${g.status === 'done' ? 'line-through text-slate-400' : 'text-slate-800'}`}>{g.title}</span>
+                <button onClick={() => handleDeleteGoal(g.id)} className="text-slate-300 hover:text-red-500"><X size={16} /></button>
+              </div>
+            ))}
+          </div>
+        )}
+      </Section>
+
+      {/* Diario de crecimiento */}
+      <Section icon={<BookOpen className="text-purple-600" size={22} />} title="Diario de crecimiento" subtitle="Reflexioná con preguntas pensadas para tu tipo">
+        {prompts.length > 0 && (
+          <div className="flex flex-wrap gap-2 mb-3">
+            {prompts.map((p, i) => (
+              <button key={i} onClick={() => { setActivePrompt(p); setJournalText(p + '\n\n'); }}
+                className="text-xs px-3 py-1.5 bg-purple-50 text-purple-700 rounded-full border border-purple-200 hover:bg-purple-100 text-left">
+                💭 {p}
+              </button>
+            ))}
+          </div>
+        )}
+        <textarea value={journalText} onChange={(e) => setJournalText(e.target.value)} rows={3}
+          placeholder="Escribí lo que quieras reflexionar hoy..."
+          className="w-full p-3 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-purple-500 outline-none resize-none mb-2" />
+        <div className="flex justify-end mb-4">
+          <button onClick={handleSaveJournal} disabled={!journalText.trim()}
+            className="px-4 py-2 bg-purple-600 text-white rounded-lg text-sm font-medium hover:bg-purple-700 disabled:opacity-50">
+            <Check size={15} className="inline mr-1" /> Guardar entrada
+          </button>
+        </div>
+        {journal.length > 0 && (
+          <div className="space-y-2">
+            {journal.slice(0, 5).map((j) => (
+              <div key={j.id} className="p-3 bg-slate-50 rounded-lg border border-slate-100">
+                <p className="text-[11px] text-slate-400 mb-1">{new Date(j.createdAt).toLocaleDateString('es-AR', { day: 'numeric', month: 'long' })}</p>
+                <p className="text-sm text-slate-700 whitespace-pre-wrap line-clamp-3">{j.content}</p>
+              </div>
+            ))}
+          </div>
+        )}
+      </Section>
+
+      {/* Radar (solo si hay datos del test en este dispositivo) */}
+      {radarData.length > 0 && (
+        <Section icon={<Flame className="text-rose-500" size={22} />} title="Tu perfil completo" subtitle="Tu distribución a través de los 9 tipos">
+          <div className="h-[320px] w-full">
+            <ResponsiveContainer width="100%" height="100%">
+              <RadarChart cx="50%" cy="50%" outerRadius="70%" data={radarData}>
+                <PolarGrid stroke="#e2e8f0" />
+                <PolarAngleAxis dataKey="type" tick={(props: any) => {
+                  const { payload, x, y } = props;
+                  const d = radarData.find((r) => r.type === payload.value);
+                  return (<g><circle cx={x} cy={y} r="13" fill={d?.color || '#94a3b8'} /><text x={x} y={y} textAnchor="middle" dominantBaseline="middle" fill="white" fontSize="11" fontWeight="bold">{payload.value}</text></g>);
+                }} />
+                <PolarRadiusAxis angle={90} domain={[0, maxScore]} tick={false} axisLine={false} />
+                <Radar dataKey="score" stroke={t.color} strokeWidth={2} fill={t.color} fillOpacity={0.4} />
+              </RadarChart>
+            </ResponsiveContainer>
+          </div>
+        </Section>
+      )}
+
+      {wp && (
+        <div className="bg-gradient-to-br from-teal-50 to-emerald-50 border border-teal-200 rounded-xl p-5 mt-2">
+          <p className="text-sm text-slate-700"><Heart size={16} className="inline text-teal-600 mr-1" /> <strong>Recordá:</strong> {wp.selfCareTip}</p>
+        </div>
+      )}
+    </div>
+  );
 };
+
+const MetricCard: React.FC<{ icon: React.ReactNode; value: React.ReactNode; label: string }> = ({ icon, value, label }) => (
+  <div className="bg-white rounded-xl p-4 md:p-5 shadow-sm border border-slate-100">
+    <div className="mb-2">{icon}</div>
+    <p className="text-2xl md:text-3xl font-bold text-slate-900">{value}</p>
+    <p className="text-xs text-slate-500">{label}</p>
+  </div>
+);
+
+const Section: React.FC<{ icon: React.ReactNode; title: string; subtitle?: string; children: React.ReactNode }> = ({ icon, title, subtitle, children }) => (
+  <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-100 mb-6">
+    <div className="flex items-center gap-3 mb-1">{icon}<h2 className="text-xl font-bold text-slate-900">{title}</h2></div>
+    {subtitle && <p className="text-sm text-slate-500 mb-4">{subtitle}</p>}
+    {!subtitle && <div className="mb-4" />}
+    {children}
+  </div>
+);
