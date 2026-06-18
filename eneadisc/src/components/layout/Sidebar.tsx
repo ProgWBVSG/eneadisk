@@ -95,9 +95,9 @@ export const Sidebar: React.FC = () => {
                                             navigate(item.path);
                                             setIsMobileOpen(false);
                                         }}
-                                        className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${isActive
-                                                ? 'bg-purple-50 text-purple-600 font-medium'
-                                                : 'text-slate-600 hover:bg-slate-50'
+                                        className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-colors ${isActive
+                                                ? 'bg-[#FCF1EC] text-[#C9624A] font-medium'
+                                                : 'text-slate-600 hover:bg-[#FAF6F1]'
                                             }`}
                                     >
                                         <Icon size={20} />
@@ -115,15 +115,15 @@ export const Sidebar: React.FC = () => {
                         onClick={() => setIsSettingsOpen(true)}
                         className="w-full flex items-center gap-3 mb-3 p-2 rounded-lg hover:bg-slate-50 transition-colors text-left group"
                     >
-                        <div className="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center shrink-0 bg-cover bg-center" style={{ backgroundImage: avatarUrl ? `url(${avatarUrl})` : 'none' }}>
+                        <div className="w-10 h-10 bg-[#FCF1EC] rounded-full flex items-center justify-center shrink-0 bg-cover bg-center" style={{ backgroundImage: avatarUrl ? `url(${avatarUrl})` : 'none' }}>
                             {!avatarUrl && (
-                                <span className="text-purple-600 font-bold text-lg">
+                                <span className="text-[#C9624A] font-bold text-lg">
                                     {user?.name?.charAt(0).toUpperCase() || 'U'}
                                 </span>
                             )}
                         </div>
                         <div className="flex-1 min-w-0">
-                            <p className="text-sm font-medium text-slate-900 truncate group-hover:text-purple-600 transition-colors">{user?.name || 'Usuario'}</p>
+                            <p className="text-sm font-medium text-slate-900 truncate group-hover:text-[#C9624A] transition-colors">{user?.name || 'Usuario'}</p>
                             <p className="text-xs text-slate-500 truncate">{isAdmin ? 'Administrador' : isSupervisor ? 'Supervisor' : 'Colaborador'}</p>
                         </div>
                         <Settings size={16} className="text-slate-400 group-hover:text-purple-600 opacity-0 group-hover:opacity-100 transition-all" />

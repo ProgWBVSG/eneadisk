@@ -301,7 +301,7 @@ const PersonDetail: React.FC<{ person: EmployeeOverview; companyId: string; onBa
           <input value={newNote} onChange={(e) => setNewNote(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && handleAddNote()}
             placeholder="Ej: Hablamos de su carga de trabajo, quiere más proyectos creativos..."
             className="flex-1 px-4 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-purple-500 outline-none" />
-          <button onClick={handleAddNote} className="px-4 py-2 bg-purple-600 text-white rounded-lg text-sm font-medium hover:bg-purple-700 flex items-center gap-1"><Plus size={16} /> Agregar</button>
+          <button onClick={handleAddNote} className="px-4 py-2 bg-[#E07A5F] text-white rounded-lg text-sm font-medium hover:bg-[#C9624A] flex items-center gap-1"><Plus size={16} /> Agregar</button>
         </div>
         {notes.length === 0 ? <p className="text-sm text-slate-400 text-center py-2">Sin notas todavía.</p> : (
           <div className="space-y-2">

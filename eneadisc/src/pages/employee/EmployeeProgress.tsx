@@ -62,7 +62,7 @@ export const EmployeeProgress: React.FC = () => {
           <Lock size={64} className="mx-auto text-purple-600 mb-4" />
           <h2 className="text-2xl font-bold text-slate-900 mb-4">Completá tu Perfil</h2>
           <p className="text-slate-600 mb-6">Para ver tu crecimiento, primero completá el cuestionario de Eneagrama.</p>
-          <a href="/questionnaire" className="inline-block bg-gradient-to-r from-purple-600 to-blue-600 text-white px-6 py-3 rounded-lg">Completar Cuestionario</a>
+          <a href="/questionnaire" className="inline-block bg-gradient-to-r from-[#E07A5F] to-[#C9624A] text-white px-6 py-3 rounded-lg">Completar Cuestionario</a>
         </div>
       </div>
     );
@@ -126,14 +126,14 @@ export const EmployeeProgress: React.FC = () => {
           <button onClick={() => setForceRunTutorial(true)} className="flex items-center gap-1 text-xs text-slate-400 hover:text-purple-600">
             <HelpCircle size={14} /> Tutorial
           </button>
-          <Button onClick={() => (window.location.href = '/dashboard/employee/checkins')} className="bg-gradient-to-r from-purple-600 to-blue-600">
+          <Button onClick={() => (window.location.href = '/dashboard/employee/checkins')} className="bg-gradient-to-r from-[#E07A5F] to-[#C9624A]">
             <Plus className="mr-2 h-4 w-4" /> Check-in
           </Button>
         </div>
       </div>
 
       {/* Resumen de la semana */}
-      <div className="bg-gradient-to-r from-purple-600 to-indigo-600 rounded-2xl p-6 text-white mb-6 shadow-lg">
+      <div className="bg-gradient-to-r from-[#E07A5F] to-[#C9624A] rounded-2xl p-6 text-white mb-6 shadow-lg">
         <div className="flex items-center gap-2 mb-4">
           <Calendar size={20} /> <h2 className="text-lg font-bold">Tu semana en resumen</h2>
         </div>
@@ -203,7 +203,7 @@ export const EmployeeProgress: React.FC = () => {
           <input value={newGoal} onChange={(e) => setNewGoal(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && handleAddGoal(newGoal)}
             placeholder="Ej: Practicar escucha activa esta semana"
             className="flex-1 px-4 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none" />
-          <button onClick={() => handleAddGoal(newGoal)} className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700">Agregar</button>
+          <button onClick={() => handleAddGoal(newGoal)} className="px-4 py-2 bg-[#E07A5F] text-white rounded-lg text-sm font-medium hover:bg-[#C9624A]">Agregar</button>
         </div>
         {/* Lista de metas */}
         {goals.length === 0 ? (
@@ -240,7 +240,7 @@ export const EmployeeProgress: React.FC = () => {
           className="w-full p-3 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-purple-500 outline-none resize-none mb-2" />
         <div className="flex justify-end mb-4">
           <button onClick={handleSaveJournal} disabled={!journalText.trim()}
-            className="px-4 py-2 bg-purple-600 text-white rounded-lg text-sm font-medium hover:bg-purple-700 disabled:opacity-50">
+            className="px-4 py-2 bg-[#E07A5F] text-white rounded-lg text-sm font-medium hover:bg-[#C9624A] disabled:opacity-50">
             <Check size={15} className="inline mr-1" /> Guardar entrada
           </button>
         </div>

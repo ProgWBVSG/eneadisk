@@ -222,7 +222,7 @@ const TeamSuggesterModal: React.FC<{ onClose: () => void }> = ({ onClose }) => {
                             <div className="flex gap-1">
                                 {[2, 3, 4].filter((n) => n <= people.length).map((n) => (
                                     <button key={n} onClick={() => setNumTeams(n)}
-                                        className={`w-9 h-9 rounded-lg text-sm font-medium ${numTeams === n ? 'bg-purple-600 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}>{n}</button>
+                                        className={`w-9 h-9 rounded-lg text-sm font-medium ${numTeams === n ? 'bg-[#E07A5F] text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}>{n}</button>
                                 ))}
                             </div>
                         </div>

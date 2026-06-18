@@ -150,7 +150,7 @@ export const CompanyPanel: React.FC = () => {
             <AdminTutorial forceRun={runTutorial} onResetComplete={() => setRunTutorial(false)} />
 
             {/* Welcome Header */}
-            <div className="bg-gradient-to-r from-blue-600 to-purple-600 rounded-2xl p-8 text-white mb-8 shadow-xl flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+            <div className="bg-gradient-to-r from-[#E07A5F] to-[#C9624A] rounded-2xl p-8 text-white mb-8 shadow-xl flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                 <div>
                     <h1 className="text-3xl md:text-4xl font-bold mb-2">Panel de Administración</h1>
                     <p className="text-lg opacity-90">Gestiona tu equipo, visualiza métricas y toma decisiones informadas basadas en el Eneagrama</p>
@@ -303,7 +303,7 @@ export const CompanyPanel: React.FC = () => {
 
             {/* Recomendaciones proactivas */}
             {recommendations.length > 0 && (
-                <div className="bg-gradient-to-br from-purple-50 to-indigo-50 rounded-2xl p-6 mb-8 border border-purple-200">
+                <div className="bg-gradient-to-br from-[#FCF1EC] to-[#EEF3EE] rounded-2xl p-6 mb-8 border border-purple-200">
                     <div className="flex items-center gap-2 mb-4">
                         <Bell className="text-purple-600" size={20} />
                         <h2 className="text-lg font-bold text-slate-900">Recomendaciones para vos</h2>
@@ -336,7 +336,7 @@ export const CompanyPanel: React.FC = () => {
                         id="tour-invite-btn"
                         onClick={handleInvite}
                         disabled={!inviteCode}
-                        className="w-full bg-blue-600 hover:bg-blue-700"
+                        className="w-full bg-blue-600 hover:bg-[#C9624A]"
                     >
                         {copied ? (
                             <><CheckCircle className="mr-2 h-4 w-4" /> ¡Link Copiado!</>
@@ -361,21 +361,21 @@ export const CompanyPanel: React.FC = () => {
             </div>
 
             {/* Info Section */}
-            <div className="bg-gradient-to-br from-purple-50 to-blue-50 rounded-xl p-8 border border-purple-200">
+            <div className="bg-gradient-to-br from-[#FCF1EC] to-[#EEF3EE] rounded-xl p-8 border border-purple-200">
                 <h3 className="text-2xl font-bold text-slate-900 mb-4">¿Cómo funciona ENEATEAMS?</h3>
                 <div className="grid md:grid-cols-3 gap-6">
                     <div>
-                        <div className="w-12 h-12 bg-purple-600 rounded-lg flex items-center justify-center text-white font-bold text-xl mb-3">1</div>
+                        <div className="w-12 h-12 bg-[#E07A5F] rounded-lg flex items-center justify-center text-white font-bold text-xl mb-3">1</div>
                         <h4 className="font-bold text-slate-900 mb-2">Invita a tu Equipo</h4>
                         <p className="text-sm text-slate-600">Comparte el link de invitación con los miembros de tu organización.</p>
                     </div>
                     <div>
-                        <div className="w-12 h-12 bg-purple-600 rounded-lg flex items-center justify-center text-white font-bold text-xl mb-3">2</div>
+                        <div className="w-12 h-12 bg-[#E07A5F] rounded-lg flex items-center justify-center text-white font-bold text-xl mb-3">2</div>
                         <h4 className="font-bold text-slate-900 mb-2">Test de Eneagrama</h4>
                         <p className="text-sm text-slate-600">Cada miembro completa un cuestionario rápido para descubrir su eneatipo.</p>
                     </div>
                     <div>
-                        <div className="w-12 h-12 bg-purple-600 rounded-lg flex items-center justify-center text-white font-bold text-xl mb-3">3</div>
+                        <div className="w-12 h-12 bg-[#E07A5F] rounded-lg flex items-center justify-center text-white font-bold text-xl mb-3">3</div>
                         <h4 className="font-bold text-slate-900 mb-2">Insights y Reportes</h4>
                         <p className="text-sm text-slate-600">Accede a análisis detallados sobre la dinámica de tu equipo.</p>
                     </div>

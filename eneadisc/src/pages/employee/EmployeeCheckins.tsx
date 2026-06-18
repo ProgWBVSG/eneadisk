@@ -63,7 +63,7 @@ export const EmployeeCheckins: React.FC = () => {
                 {!showForm && (
                     <Button
                         onClick={() => setShowForm(true)}
-                        className="bg-gradient-to-r from-purple-600 to-blue-600 shadow-md"
+                        className="bg-gradient-to-r from-[#E07A5F] to-[#C9624A] shadow-md"
                         disabled={hasCheckedInToday}
                     >
                         {hasCheckedInToday ? (
@@ -162,7 +162,7 @@ export const EmployeeCheckins: React.FC = () => {
                             />
                         </div>
 
-                        <Button type="submit" className="w-full text-lg py-4 bg-gradient-to-r from-purple-600 to-blue-600 shadow-lg hover:shadow-xl">
+                        <Button type="submit" className="w-full text-lg py-4 bg-gradient-to-r from-[#E07A5F] to-[#C9624A] shadow-lg hover:shadow-xl">
                             Guardar Check-in
                         </Button>
                     </form>

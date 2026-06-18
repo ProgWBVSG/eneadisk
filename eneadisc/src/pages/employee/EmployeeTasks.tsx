@@ -158,7 +158,7 @@ export const EmployeeTasks: React.FC = () => {
                         <button
                             id="tour-emp-tasks-new-btn"
                             onClick={handleCreateTask}
-                            className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                            className="flex items-center gap-2 px-4 py-2 bg-[#E07A5F] text-white rounded-lg hover:bg-[#C9624A] transition-colors"
                         >
                             <Plus className="w-5 h-5" />
                             Nueva Tarea
@@ -168,12 +168,12 @@ export const EmployeeTasks: React.FC = () => {
 
                 {/* Consejo de productividad según eneatipo */}
                 {productivityTip && (
-                    <div className="mb-4 bg-gradient-to-r from-purple-50 to-indigo-50 border border-purple-200 rounded-xl p-4 flex items-start gap-3">
-                        <div className="p-2 bg-purple-500 rounded-lg text-white shrink-0">
+                    <div className="mb-4 bg-gradient-to-r from-[#FCF1EC] to-[#EEF3EE] border border-[#F8DDD2] rounded-xl p-4 flex items-start gap-3">
+                        <div className="p-2 bg-[#E07A5F] rounded-lg text-white shrink-0">
                             <Lightbulb size={18} />
                         </div>
                         <div>
-                            <p className="text-xs font-bold text-purple-700 uppercase tracking-wide mb-0.5">Cómo trabajás mejor</p>
+                            <p className="text-xs font-bold text-[#C9624A] uppercase tracking-wide mb-0.5">Cómo trabajás mejor</p>
                             <p className="text-sm text-slate-700">{productivityTip}</p>
                         </div>
                     </div>
@@ -207,7 +207,7 @@ export const EmployeeTasks: React.FC = () => {
                     <button
                         onClick={() => setFilterType('all')}
                         className={`px-4 py-2 rounded-lg transition-colors ${filterType === 'all'
-                            ? 'bg-blue-600 text-white'
+                            ? 'bg-[#E07A5F] text-white'
                             : 'bg-white text-slate-700 border border-slate-200 hover:bg-slate-50'
                             }`}
                     >
@@ -216,7 +216,7 @@ export const EmployeeTasks: React.FC = () => {
                     <button
                         onClick={() => setFilterType('personal')}
                         className={`px-4 py-2 rounded-lg transition-colors flex items-center gap-2 ${filterType === 'personal'
-                            ? 'bg-blue-600 text-white'
+                            ? 'bg-[#E07A5F] text-white'
                             : 'bg-white text-slate-700 border border-slate-200 hover:bg-slate-50'
                             }`}
                     >
@@ -226,7 +226,7 @@ export const EmployeeTasks: React.FC = () => {
                     <button
                         onClick={() => setFilterType('team')}
                         className={`px-4 py-2 rounded-lg transition-colors flex items-center gap-2 ${filterType === 'team'
-                            ? 'bg-blue-600 text-white'
+                            ? 'bg-[#E07A5F] text-white'
                             : 'bg-white text-slate-700 border border-slate-200 hover:bg-slate-50'
                             }`}
                     >
@@ -586,7 +586,7 @@ const TaskModal: React.FC<TaskModalProps> = ({ task, onClose, onSave, userId }) 
                         </button>
                         <button
                             type="submit"
-                            className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                            className="flex-1 px-4 py-2 bg-[#E07A5F] text-white rounded-lg hover:bg-[#C9624A] transition-colors"
                         >
                             {task ? 'Guardar Cambios' : 'Crear Tarea'}
                         </button>

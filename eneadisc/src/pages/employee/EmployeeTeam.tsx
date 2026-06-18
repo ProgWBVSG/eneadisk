@@ -216,12 +216,12 @@ export const EmployeeTeam: React.FC = () => {
           {/* ── Dinámica + compatibilidad ── */}
           {profiled.length > 0 && (
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <div id="tour-emp-team-dynamics" className="bg-gradient-to-br from-purple-50 to-blue-50 border border-purple-200 rounded-xl p-6">
+              <div id="tour-emp-team-dynamics" className="bg-gradient-to-br from-[#FCF1EC] to-[#EEF3EE] border border-[#F8DDD2] rounded-xl p-6">
                 <h3 className="text-xl font-semibold text-slate-900 mb-4 flex items-center gap-2"><TrendingUp className="w-5 h-5 text-purple-600" /> Dinámica del Equipo</h3>
                 <div className="space-y-4">
                   <div>
                     <div className="flex items-center justify-between mb-2"><span className="text-sm font-medium text-slate-700">Diversidad de perfiles</span><span className="text-lg font-bold text-purple-600">{teamDynamics.diversity}%</span></div>
-                    <div className="w-full bg-slate-200 rounded-full h-2"><div className="bg-gradient-to-r from-purple-500 to-blue-500 h-2 rounded-full" style={{ width: `${teamDynamics.diversity}%` }} /></div>
+                    <div className="w-full bg-slate-200 rounded-full h-2"><div className="bg-gradient-to-r from-[#E07A5F] to-[#E89B82] h-2 rounded-full" style={{ width: `${teamDynamics.diversity}%` }} /></div>
                   </div>
                   {teamDynamics.strengths.length > 0 && (
                     <div><h4 className="text-sm font-semibold text-green-700 mb-2">Fortalezas:</h4><ul className="space-y-1">{teamDynamics.strengths.map((s, i) => <li key={i} className="text-sm text-slate-700 flex items-start gap-2"><span className="text-green-600 mt-0.5">✓</span>{s}</li>)}</ul></div>

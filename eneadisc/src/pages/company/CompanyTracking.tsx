@@ -89,7 +89,7 @@ export const CompanyTracking: React.FC = () => {
       <div className="mb-8">
         <div className="flex flex-col md:flex-row md:items-start justify-between gap-4">
           <div className="flex items-center gap-3">
-            <div className="p-3 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-lg">
+            <div className="p-3 bg-gradient-to-br from-[#E07A5F] to-[#C9624A] rounded-lg">
               <Target className="w-8 h-8 text-white" />
             </div>
             <div>

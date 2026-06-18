@@ -190,7 +190,7 @@ Estoy aquí para ayudarte a:
             <div className="max-w-4xl mx-auto">
                 <div className="bg-white rounded-2xl shadow-xl border border-slate-100 overflow-hidden flex flex-col" style={{ height: 'calc(100vh - 120px)', minHeight: '500px' }}>
                     {/* Header */}
-                    <div className="bg-gradient-to-br from-indigo-500 to-purple-600 p-6 text-white flex items-center justify-between shadow-md z-10 relative">
+                    <div className="bg-gradient-to-br from-[#E07A5F] to-[#C9624A] p-6 text-white flex items-center justify-between shadow-md z-10 relative">
                         <div className="flex items-center gap-4">
                             <div className="bg-white/20 p-3 rounded-xl backdrop-blur-sm border border-white/20">
                                 <Bot className="w-8 h-8 text-white" />
@@ -249,7 +249,7 @@ Estoy aquí para ayudarte a:
                             <button
                                 type="submit"
                                 disabled={!input.trim() || isLoading}
-                                className="absolute right-2 bottom-2 p-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg disabled:opacity-50 disabled:bg-slate-300 transition-colors"
+                                className="absolute right-2 bottom-2 p-2 bg-purple-600 hover:bg-[#C9624A] text-white rounded-lg disabled:opacity-50 disabled:bg-slate-300 transition-colors"
                             >
                                 {isLoading ? <Sparkles className="w-5 h-5 animate-spin" /> : <Send className="w-5 h-5" />}
                             </button>

@@ -2,17 +2,57 @@
 @import "tailwindcss";
 
 @theme {
+  /* ── Identidad "Cálida y humana" ──────────────────────────
+     Coral terroso (energía humana) + verde salvia (crecimiento,
+     bienestar) sobre blancos cálidos. */
+  --color-coral-50:  #FCF1EC;
+  --color-coral-100: #F8DDD2;
+  --color-coral-300: #EFA98F;
+  --color-coral-500: #E07A5F;  /* primario */
+  --color-coral-600: #C9624A;
+  --color-coral-700: #A84C37;
+
+  --color-sage-50:   #EEF3EE;
+  --color-sage-100:  #D7E3D8;
+  --color-sage-400:  #9DB6A0;
+  --color-sage-500:  #7C9885;  /* acento crecimiento */
+  --color-sage-600:  #5F7A68;
+  --color-sage-700:  #465C4E;
+
+  --color-warm-bg:      #FAF6F1;  /* fondo de la app */
+  --color-warm-surface: #FFFFFF;  /* tarjetas */
+  --color-warm-border:  #ECE3D8;
+  --color-warm-text:    #3A332E;  /* texto principal (marrón cálido) */
+  --color-warm-muted:   #8A8079;  /* texto secundario */
+
+  /* Marca histórica (se mantiene para compatibilidad) */
   --color-gold: #D4AF37;
-  --color-gold-light: #F4E4C1;
   --color-deep-blue: #1A3A52;
   --color-emerald: #2C7873;
 
-  --font-sans: 'Poppins', ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+  /* ── Tipografía ──────────────────────────────────────────
+     Fraunces (serif cálida, con carácter) para títulos.
+     Hanken Grotesk (sans humanista, redondeada) para el cuerpo. */
+  --font-sans: 'Hanken Grotesk', ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji";
+  --font-display: 'Fraunces', Georgia, 'Times New Roman', serif;
 }
 
 /* Base Styles */
 @layer base {
   html {
     font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  /* Los títulos llevan la serif cálida Fraunces con un toque suave de
+     optical sizing para que se sientan editoriales, no corporativos. */
+  h1, h2, h3, .font-display {
+    font-family: var(--font-display);
+    font-optical-sizing: auto;
+    letter-spacing: -0.01em;
   }
 }
+
+/* Utilidades de la nueva identidad */
+.font-display { font-family: var(--font-display); }

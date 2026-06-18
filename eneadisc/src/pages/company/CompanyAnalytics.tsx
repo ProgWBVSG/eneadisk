@@ -109,7 +109,7 @@ export const CompanyAnalytics: React.FC = () => {
     if (realTeams.length === 0) {
         return (
             <div className="p-8">
-                <div className="bg-gradient-to-br from-blue-600 to-indigo-700 text-white rounded-xl p-8 mb-8">
+                <div className="bg-gradient-to-br from-[#E07A5F] to-[#C9624A] text-white rounded-xl p-8 mb-8">
                     <div className="flex items-center gap-3">
                         <BarChart3 className="w-8 h-8" />
                         <div>
@@ -129,7 +129,7 @@ export const CompanyAnalytics: React.FC = () => {
                     </p>
                     <a
                         href="/dashboard/company/teams"
-                        className="inline-flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
+                        className="inline-flex items-center gap-2 px-6 py-3 bg-[#E07A5F] text-white rounded-lg hover:bg-[#C9624A] transition-colors font-medium"
                     >
                         <Users className="w-5 h-5" />
                         Ir a Gestión de Equipos
@@ -145,7 +145,7 @@ export const CompanyAnalytics: React.FC = () => {
             <div className="mb-8">
                 <div className="flex items-start justify-between gap-4 mb-2">
                     <div className="flex items-center gap-3">
-                        <div className="p-3 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg">
+                        <div className="p-3 bg-gradient-to-br from-[#E07A5F] to-[#C9624A] rounded-lg">
                             <BarChart3 className="w-8 h-8 text-white" />
                         </div>
                         <div>
@@ -182,7 +182,7 @@ export const CompanyAnalytics: React.FC = () => {
                                         key={period}
                                         onClick={() => setSelectedPeriod(period)}
                                         className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${selectedPeriod === period
-                                            ? 'bg-blue-600 text-white'
+                                            ? 'bg-[#E07A5F] text-white'
                                             : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
                                             }`}
                                     >

@@ -96,8 +96,8 @@ const PLANS: Plan[] = [
 
 const COLOR_MAP: Record<string, { bg: string; text: string; border: string; btn: string; badge: string }> = {
   slate:    { bg: 'bg-slate-50',  text: 'text-slate-700', border: 'border-slate-200', btn: 'bg-slate-700 hover:bg-slate-800', badge: 'bg-slate-100 text-slate-700' },
-  blue:     { bg: 'bg-blue-50',   text: 'text-blue-700',  border: 'border-blue-200',  btn: 'bg-blue-600 hover:bg-blue-700',   badge: 'bg-blue-100 text-blue-700' },
-  purple:   { bg: 'bg-purple-50', text: 'text-purple-700',border: 'border-purple-200',btn: 'bg-purple-600 hover:bg-purple-700',badge: 'bg-purple-600 text-white' },
+  blue:     { bg: 'bg-blue-50',   text: 'text-blue-700',  border: 'border-blue-200',  btn: 'bg-blue-600 hover:bg-[#C9624A]',   badge: 'bg-blue-100 text-blue-700' },
+  purple:   { bg: 'bg-purple-50', text: 'text-purple-700',border: 'border-purple-200',btn: 'bg-purple-600 hover:bg-[#C9624A]',badge: 'bg-[#E07A5F] text-white' },
   amber:    { bg: 'bg-amber-50',  text: 'text-amber-700', border: 'border-amber-200', btn: 'bg-amber-500 hover:bg-amber-600',  badge: 'bg-amber-100 text-amber-700' },
 };
 

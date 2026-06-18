@@ -60,7 +60,7 @@ export const QuestionnaireFlow: React.FC = () => {
     };
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-purple-50 to-blue-50 flex items-center justify-center p-4">
+        <div className="min-h-screen bg-gradient-to-br from-[#FCF1EC] to-[#EEF3EE] flex items-center justify-center p-4">
             <div className="w-full max-w-2xl">
                 {/* Progress Bar */}
                 <div className="mb-8">
@@ -70,7 +70,7 @@ export const QuestionnaireFlow: React.FC = () => {
                     </div>
                     <div className="h-2 bg-white rounded-full overflow-hidden shadow-inner">
                         <div
-                            className="h-full bg-gradient-to-r from-purple-500 to-blue-500 transition-all duration-500"
+                            className="h-full bg-gradient-to-r from-[#E07A5F] to-[#E89B82] transition-all duration-500"
                             style={{ width: `${progress}%` }}
                         />
                     </div>
@@ -112,7 +112,7 @@ export const QuestionnaireFlow: React.FC = () => {
                         <Button
                             onClick={handleNext}
                             disabled={selectedOption === null}
-                            className={`${currentQuestion === 0 ? 'w-full' : 'flex-1'} bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700`}
+                            className={`${currentQuestion === 0 ? 'w-full' : 'flex-1'} bg-gradient-to-r from-[#E07A5F] to-[#C9624A] hover:from-[#C9624A] hover:to-[#A84C37]`}
                         >
                             {currentQuestion === QUESTIONNAIRE.length - 1 ? 'Finalizar' : 'Siguiente'}
                             {currentQuestion < QUESTIONNAIRE.length - 1 && <ChevronRight className="ml-2 h-4 w-4" />}

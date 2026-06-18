@@ -34,7 +34,7 @@ export const EmployeeProfile: React.FC = () => {
           </p>
           <a
             href="/questionnaire"
-            className="inline-block bg-gradient-to-r from-purple-600 to-blue-600 text-white px-6 py-3 rounded-lg hover:from-purple-700 hover:to-blue-700 transition-all"
+            className="inline-block bg-gradient-to-r from-[#E07A5F] to-[#C9624A] text-white px-6 py-3 rounded-lg hover:from-[#C9624A] hover:to-[#A84C37] transition-all"
           >
             Completar Cuestionario
           </a>
@@ -122,7 +122,7 @@ export const EmployeeProfile: React.FC = () => {
         <button
           onClick={() => setTab('identity')}
           className={`flex-1 sm:flex-none flex items-center justify-center gap-2 px-5 py-2.5 rounded-lg text-sm font-semibold transition-all ${
-            tab === 'identity' ? 'bg-purple-600 text-white shadow' : 'text-slate-600 hover:bg-slate-50'
+            tab === 'identity' ? 'bg-[#E07A5F] text-white shadow' : 'text-slate-600 hover:bg-slate-50'
           }`}
         >
           <UserCircle size={18} /> Quién soy
@@ -130,7 +130,7 @@ export const EmployeeProfile: React.FC = () => {
         <button
           onClick={() => setTab('manual')}
           className={`flex-1 sm:flex-none flex items-center justify-center gap-2 px-5 py-2.5 rounded-lg text-sm font-semibold transition-all ${
-            tab === 'manual' ? 'bg-purple-600 text-white shadow' : 'text-slate-600 hover:bg-slate-50'
+            tab === 'manual' ? 'bg-[#E07A5F] text-white shadow' : 'text-slate-600 hover:bg-slate-50'
           }`}
         >
           <BookOpen size={18} /> Cómo trabajar conmigo
@@ -264,7 +264,7 @@ export const EmployeeProfile: React.FC = () => {
       {tab === 'manual' && wp && (
         <div className="space-y-6">
           {/* Intro + compartir */}
-          <div className="bg-gradient-to-br from-indigo-50 to-purple-50 border border-indigo-200 rounded-xl p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="bg-gradient-to-br from-[#FCF1EC] to-[#EEF3EE] border border-indigo-200 rounded-xl p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
               <h3 className="text-lg font-bold text-slate-900 mb-1">📋 Tu Manual de Usuario</h3>
               <p className="text-sm text-slate-600">Compartilo con tu equipo para que sepan cómo trabajar mejor con vos.</p>
