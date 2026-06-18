@@ -1,4 +1,6 @@
-import React from 'react';
+import React, { useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../../context/AuthContext';
 import { Navbar } from '../../components/landing/Navbar';
 import { Testimonials } from '../../components/landing/Testimonials';
 import ScrollEnneagram from '../../components/landing/ScrollEnneagram';
@@ -51,6 +53,22 @@ const sections = [
 ];
 
 export const HomeLanding: React.FC = () => {
+  const { user, isLoading } = useAuth();
+  const navigate = useNavigate();
+
+  // Si un usuario ya autenticado cae en la landing (p. ej. tras volver de
+  // Google OAuth), lo mandamos a donde corresponde en vez de dejarlo acá.
+  useEffect(() => {
+    if (isLoading || !user) return;
+    if (user.companyId) {
+      navigate(user.role === 'company_admin' ? '/dashboard/company' : '/dashboard/employee', { replace: true });
+    } else {
+      // Sesión válida pero registro incompleto (típico de Google nuevo) →
+      // el callback decide si completar como empresa o empleado.
+      navigate('/auth/callback', { replace: true });
+    }
+  }, [user, isLoading, navigate]);
+
   return (
     <div className="min-h-screen bg-[#0b132b] font-sans text-white antialiased selection:bg-indigo-600 selection:text-white">
       <Navbar />
