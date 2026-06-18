@@ -5,6 +5,7 @@ export interface EmployeeOverview {
   id: string;
   name: string;
   email: string;
+  role: 'employee' | 'supervisor';
   enneagramType: number | null;
   questionnaireCompleted: boolean;
   avgEnergy: number;
@@ -28,6 +29,7 @@ export const getEmployeesOverview = async (): Promise<EmployeeOverview[]> => {
     id: e.id,
     name: e.full_name || 'Sin nombre',
     email: e.email || '',
+    role: e.role === 'supervisor' ? 'supervisor' : 'employee',
     enneagramType: e.questionnaire_completed ? e.enneagram_type : null,
     questionnaireCompleted: e.questionnaire_completed,
     avgEnergy: Number(e.avg_energy) || 0,

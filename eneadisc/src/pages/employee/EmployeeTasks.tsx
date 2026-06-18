@@ -404,6 +404,21 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onToggleComplete, onToggleInP
                         )}
                     </div>
 
+                    {/* Revisión del supervisor */}
+                    {task.reviewStatus && (
+                        <div className={`mt-3 rounded-lg p-3 text-sm flex items-start gap-2 ${task.reviewStatus === 'confirmed' ? 'bg-green-50 border border-green-200' : 'bg-amber-50 border border-amber-200'}`}>
+                            {task.reviewStatus === 'confirmed'
+                                ? <CheckCircle2 className="w-4 h-4 text-green-600 shrink-0 mt-0.5" />
+                                : <Flag className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />}
+                            <div>
+                                <p className={`font-medium ${task.reviewStatus === 'confirmed' ? 'text-green-800' : 'text-amber-800'}`}>
+                                    {task.reviewStatus === 'confirmed' ? 'Tu supervisor confirmó esta tarea' : 'Tu supervisor marcó que necesita correcciones'}
+                                </p>
+                                {task.reviewNote && <p className="text-slate-600 mt-0.5">"{task.reviewNote}"</p>}
+                            </div>
+                        </div>
+                    )}
+
                     {/* In Progress Toggle (only for personal tasks) */}
                     {!isTeam && task.status !== 'completed' && (
                         <button

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import { Home, TrendingUp, Bot, CheckSquare, Users, ClipboardCheck, BarChart3, BookOpen, CreditCard, LogOut, Menu, X, Settings, UserCircle, Award } from 'lucide-react';
+import { Home, TrendingUp, Bot, CheckSquare, Users, ClipboardCheck, BarChart3, BookOpen, CreditCard, LogOut, Menu, X, Settings, UserCircle, Award, UserCog } from 'lucide-react';
 import { UserSettingsModal } from '../settings/UserSettingsModal';
 export const Sidebar: React.FC = () => {
     const navigate = useNavigate();
@@ -18,7 +18,8 @@ export const Sidebar: React.FC = () => {
         window.addEventListener('avatarChanged', handleAvatarChange);
         return () => window.removeEventListener('avatarChanged', handleAvatarChange);
     }, []);
-    const isEmployee = user?.role === 'employee';
+    const isAdmin = user?.role === 'company_admin';
+    const isSupervisor = user?.role === 'supervisor';
 
     const employeeItems = [
         { icon: Home, label: 'Mi Perfil EneaTeams', path: '/dashboard/employee' },
@@ -28,6 +29,9 @@ export const Sidebar: React.FC = () => {
         { icon: Users, label: 'Mi Equipo', path: '/dashboard/employee/equipo' },
         { icon: ClipboardCheck, label: 'Check-ins', path: '/dashboard/employee/checkins' },
     ];
+
+    // El supervisor suma una sección para gestionar a su gente
+    const supervisorItem = { icon: UserCog, label: 'Mi Equipo a Cargo', path: '/dashboard/employee/supervision' };
 
     const adminItems = [
         { icon: Home, label: 'Panel Principal', path: '/dashboard/company' },
@@ -41,7 +45,11 @@ export const Sidebar: React.FC = () => {
         { icon: CreditCard, label: 'Suscripción', path: '/dashboard/company/suscripcion' },
     ];
 
-    const menuItems = isEmployee ? employeeItems : adminItems;
+    const menuItems = isAdmin
+        ? adminItems
+        : isSupervisor
+            ? [...employeeItems, supervisorItem]
+            : employeeItems;
 
     const handleLogout = () => {
         logout();
@@ -69,7 +77,7 @@ export const Sidebar: React.FC = () => {
                 <div className="p-6 border-b border-slate-200">
                     <img src="/logo.png" alt="EneaTeams" className="h-10 w-auto" />
                     <p className="text-xs text-slate-500 mt-2">
-                        {isEmployee ? 'Panel del Colaborador' : 'Panel de Administrador'}
+                        {isAdmin ? 'Panel de Administrador' : isSupervisor ? 'Panel de Supervisor' : 'Panel del Colaborador'}
                     </p>
                 </div>
 
@@ -116,7 +124,7 @@ export const Sidebar: React.FC = () => {
                         </div>
                         <div className="flex-1 min-w-0">
                             <p className="text-sm font-medium text-slate-900 truncate group-hover:text-purple-600 transition-colors">{user?.name || 'Usuario'}</p>
-                            <p className="text-xs text-slate-500 truncate">{isEmployee ? 'Colaborador' : 'Administrador'}</p>
+                            <p className="text-xs text-slate-500 truncate">{isAdmin ? 'Administrador' : isSupervisor ? 'Supervisor' : 'Colaborador'}</p>
                         </div>
                         <Settings size={16} className="text-slate-400 group-hover:text-purple-600 opacity-0 group-hover:opacity-100 transition-all" />
                     </button>

@@ -15,6 +15,8 @@ export interface Task {
     assignedBy?: string; // ID del usuario que asignó la tarea (empresa)
     assignedByName?: string; // Nombre de quien asignó
     teamId?: string; // ID del equipo si es tarea de equipo
+    reviewStatus?: 'confirmed' | 'needs_fix' | null; // revisión del supervisor
+    reviewNote?: string; // nota/feedback del supervisor
 }
 
 export const PRIORITY_CONFIG = {
@@ -42,7 +44,9 @@ const mapRowToTask = (row: any): Task => ({
     dueDate: row.due_date,
     assignedBy: row.assigned_by,
     assignedByName: row.profiles?.full_name, // If we join profiles
-    teamId: row.team_id
+    teamId: row.team_id,
+    reviewStatus: row.review_status ?? null,
+    reviewNote: row.review_note ?? undefined,
 });
 
 export const getTasks = async (userId: string): Promise<Task[]> => {

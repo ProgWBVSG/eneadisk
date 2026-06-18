@@ -8,7 +8,7 @@ import { supabase, type Profile, type Company } from '../lib/supabase';
 
 export interface AppUser {
   id: string;
-  role: 'company_admin' | 'employee';
+  role: 'company_admin' | 'supervisor' | 'employee';
   companyId: string;
   name: string;
   email: string;

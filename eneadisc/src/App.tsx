@@ -21,6 +21,7 @@ import { EmployeeTasks } from './pages/employee/EmployeeTasks';
 import { EmployeeProgress } from './pages/employee/EmployeeProgress';
 import { EmployeeAssistant } from './pages/employee/EmployeeAssistant';
 import { EmployeeCheckins } from './pages/employee/EmployeeCheckins';
+import { SupervisorPanel } from './pages/employee/SupervisorPanel';
 import { CompanyAnalytics } from './pages/company/CompanyAnalytics';
 import { CompanyTracking } from './pages/company/CompanyTracking';
 import { AIAssistant } from './pages/company/AIAssistant';
@@ -83,6 +84,7 @@ function AppRoutes() {
         <Route path="tareas" element={<EmployeeTasks />} />
         <Route path="equipo" element={<EmployeeTeam />} />
         <Route path="checkins" element={<EmployeeCheckins />} />
+        <Route path="supervision" element={<SupervisorPanel />} />
       </Route>
 
       {/* Company Dashboard */}

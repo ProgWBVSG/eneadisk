@@ -35,7 +35,7 @@ export interface Company {
 
 export interface Profile {
   id: string;
-  role: 'company_admin' | 'employee';
+  role: 'company_admin' | 'supervisor' | 'employee';
   company_id?: string;
   full_name?: string;
   phone?: string;

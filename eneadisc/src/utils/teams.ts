@@ -6,6 +6,7 @@ export interface Team {
     name: string;
     description?: string;
     ownerId: string;
+    leadId?: string | null; // supervisor a cargo del equipo
     memberIds: string[];
     createdAt: string;
     updatedAt?: string;
@@ -47,6 +48,7 @@ export const getTeams = async (companyId: string): Promise<Team[]> => {
             name: row.name,
             description: row.description,
             ownerId: row.owner_id,
+            leadId: row.lead_id ?? null,
             memberIds,
             createdAt: row.created_at,
             updatedAt: row.updated_at
@@ -66,6 +68,7 @@ export const getTeam = async (teamId: string): Promise<Team | null> => {
         name: data.name,
         description: data.description,
         ownerId: data.owner_id,
+        leadId: data.lead_id ?? null,
         memberIds,
         createdAt: data.created_at,
         updatedAt: data.updated_at

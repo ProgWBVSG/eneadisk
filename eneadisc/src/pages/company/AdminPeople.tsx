@@ -8,9 +8,11 @@ import {
   getEmployeesOverview, getEmployeeCheckins, getOneOnOneNotes, addOneOnOneNote, deleteOneOnOneNote,
   type EmployeeOverview, type EmpCheckin, type OneOnOneNote,
 } from '../../utils/adminFeatures';
+import { setEmployeeRole, setTeamLead } from '../../utils/supervisorFeatures';
+import { getTeams, type Team } from '../../utils/teams';
 import {
   Users, ArrowLeft, AlertTriangle, Clock, Compass, MessageCircle, Zap, Flame,
-  Heart, Activity, Plus, Trash2, MessageSquareReply, Search,
+  Heart, Activity, Plus, Trash2, MessageSquareReply, Search, UserCog, Network,
 } from 'lucide-react';
 
 const RISK_CONFIG = {
@@ -97,7 +99,10 @@ export const AdminPeople: React.FC = () => {
                     {p.name.charAt(0).toUpperCase()}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <h4 className="font-semibold text-slate-900 truncate">{p.name}</h4>
+                    <div className="flex items-center gap-2">
+                      <h4 className="font-semibold text-slate-900 truncate">{p.name}</h4>
+                      {p.role === 'supervisor' && <span className="text-[10px] bg-emerald-100 text-emerald-700 px-1.5 py-0.5 rounded font-medium shrink-0">⭐ Supervisor</span>}
+                    </div>
                     {ct ? <p className="text-xs font-medium" style={{ color: ct.color }}>Tipo {p.enneagramType}: {ct.name}</p>
                       : <p className="text-xs text-slate-400 flex items-center gap-1"><Clock size={11} /> Test pendiente</p>}
                   </div>
@@ -125,12 +130,31 @@ const PersonDetail: React.FC<{ person: EmployeeOverview; companyId: string; onBa
   const [checkins, setCheckins] = useState<EmpCheckin[]>([]);
   const [notes, setNotes] = useState<OneOnOneNote[]>([]);
   const [newNote, setNewNote] = useState('');
+  const [role, setRole] = useState<'employee' | 'supervisor'>(person.role);
+  const [teams, setTeams] = useState<Team[]>([]);
+  const [savingRole, setSavingRole] = useState(false);
 
   const loadDetail = useCallback(async () => {
-    const [ci, ns] = await Promise.all([getEmployeeCheckins(person.id), getOneOnOneNotes(person.id)]);
-    setCheckins(ci); setNotes(ns);
-  }, [person.id]);
+    const [ci, ns, tm] = await Promise.all([
+      getEmployeeCheckins(person.id), getOneOnOneNotes(person.id), getTeams(companyId),
+    ]);
+    setCheckins(ci); setNotes(ns); setTeams(tm);
+  }, [person.id, companyId]);
   useEffect(() => { loadDetail(); }, [loadDetail]);
+
+  const toggleRole = async () => {
+    const newRole = role === 'supervisor' ? 'employee' : 'supervisor';
+    setSavingRole(true);
+    const { error } = await setEmployeeRole(person.id, newRole);
+    setSavingRole(false);
+    if (!error) { setRole(newRole); loadDetail(); }
+  };
+
+  const toggleTeamLead = async (team: Team) => {
+    const isLead = team.leadId === person.id;
+    await setTeamLead(team.id, isLead ? null : person.id);
+    loadDetail();
+  };
 
   const ct = person.enneagramType ? ENNEAGRAM_TYPES[person.enneagramType] : null;
   const wp = person.enneagramType ? WORK_PROFILES[person.enneagramType] : null;
@@ -159,6 +183,45 @@ const PersonDetail: React.FC<{ person: EmployeeOverview; companyId: string; onBa
           </div>
         </div>
       </div>
+
+      {/* Rol y liderazgo (organigrama) */}
+      <Card icon={<Network className="text-purple-600" size={22} />} title="Rol y liderazgo" subtitle="Definí la posición de esta persona en el organigrama">
+        <div className="flex items-center justify-between gap-4 mb-4 flex-wrap">
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-slate-600">Rol actual:</span>
+            <span className={`px-3 py-1 rounded-full text-sm font-medium ${role === 'supervisor' ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-700'}`}>
+              {role === 'supervisor' ? '⭐ Supervisor' : 'Empleado'}
+            </span>
+          </div>
+          <button onClick={toggleRole} disabled={savingRole}
+            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium disabled:opacity-50 ${role === 'supervisor' ? 'bg-slate-100 text-slate-700 hover:bg-slate-200' : 'bg-emerald-500 text-white hover:bg-emerald-600'}`}>
+            <UserCog size={15} />
+            {savingRole ? 'Guardando...' : role === 'supervisor' ? 'Quitar rol de supervisor' : 'Promover a supervisor'}
+          </button>
+        </div>
+        {role === 'supervisor' && (
+          <div className="border-t border-slate-100 pt-4">
+            <p className="text-sm font-medium text-slate-700 mb-2">Equipos que lidera:</p>
+            {teams.length === 0 ? (
+              <p className="text-sm text-slate-400">No hay equipos creados. Creá equipos en "Gestión de Equipos".</p>
+            ) : (
+              <div className="space-y-2">
+                {teams.map((tm) => {
+                  const isLead = tm.leadId === person.id;
+                  return (
+                    <label key={tm.id} className="flex items-center gap-3 p-3 bg-slate-50 rounded-lg cursor-pointer hover:bg-slate-100">
+                      <input type="checkbox" checked={isLead} onChange={() => toggleTeamLead(tm)} className="w-4 h-4 accent-emerald-600" />
+                      <span className="text-sm text-slate-800 flex-1">{tm.name}</span>
+                      <span className="text-xs text-slate-400">{tm.memberIds.length} miembros</span>
+                    </label>
+                  );
+                })}
+              </div>
+            )}
+            <p className="text-xs text-slate-400 mt-2">Va a poder ver y gestionar a los miembros de los equipos que marques.</p>
+          </div>
+        )}
+      </Card>
 
       {!ct ? (
         <div className="bg-amber-50 border border-amber-200 rounded-xl p-6 text-center mb-6">
