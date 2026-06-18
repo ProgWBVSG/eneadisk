@@ -1,10 +1,12 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Users, Mail, CheckCircle, Copy, HelpCircle, Bell, UserCheck, UserX } from 'lucide-react';
+import { Users, Mail, CheckCircle, Copy, HelpCircle, Bell, UserCheck, UserX, Activity, Zap, Flame, AlertTriangle, Clock, ArrowRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { Button } from '../../components/ui/Button';
 import { AdminTutorial } from '../../components/tutorial/AdminTutorial';
 import { supabase } from '../../lib/supabase';
+import { getTeamMood, type TeamMood } from '../../utils/employeeFeatures';
+import { getEmployeesOverview } from '../../utils/adminFeatures';
 
 interface JoinRequest {
     id: string;
@@ -26,6 +28,9 @@ export const CompanyPanel: React.FC = () => {
     const [inviteCode, setInviteCode] = useState<string>('');
     const [joinRequests, setJoinRequests] = useState<JoinRequest[]>([]);
     const [processingId, setProcessingId] = useState<string | null>(null);
+    const [mood, setMood] = useState<TeamMood | null>(null);
+    const [atRisk, setAtRisk] = useState(0);
+    const [pendingTest, setPendingTest] = useState(0);
 
     // ── Fetch invite code + employee count from Supabase ──────────────────
     const fetchCompanyData = useCallback(async () => {
@@ -73,10 +78,20 @@ export const CompanyPanel: React.FC = () => {
         }
     }, [user?.companyId]);
 
+    // ── Pulso del equipo: termómetro + alertas ────────────────────────────
+    const fetchPulse = useCallback(async () => {
+        if (!user?.companyId) return;
+        const [tm, overview] = await Promise.all([getTeamMood(), getEmployeesOverview()]);
+        setMood(tm);
+        setAtRisk(overview.filter((e) => e.risk === 'high').length);
+        setPendingTest(overview.filter((e) => !e.questionnaireCompleted).length);
+    }, [user?.companyId]);
+
     useEffect(() => {
         fetchCompanyData();
         fetchJoinRequests();
-    }, [fetchCompanyData, fetchJoinRequests]);
+        fetchPulse();
+    }, [fetchCompanyData, fetchJoinRequests, fetchPulse]);
 
     // ── Approve a request ─────────────────────────────────────────────────
     const handleApprove = async (req: JoinRequest) => {
@@ -111,6 +126,14 @@ export const CompanyPanel: React.FC = () => {
         setProcessingId(null);
         fetchJoinRequests();
     };
+
+    // ── Recomendaciones proactivas (derivadas de los datos) ───────────────
+    const recommendations: { icon: string; text: string; action?: string; path?: string }[] = [];
+    if (atRisk > 0) recommendations.push({ icon: '🚨', text: `Hay ${atRisk} ${atRisk === 1 ? 'persona' : 'personas'} con señales de estrés alto. Agendá un 1-on-1 esta semana.`, action: 'Ver personas', path: '/dashboard/company/personas' });
+    if (pendingTest > 0) recommendations.push({ icon: '📋', text: `${pendingTest} ${pendingTest === 1 ? 'persona' : 'personas'} sin completar el test. Recordáselos para personalizar su experiencia.`, action: 'Ver personas', path: '/dashboard/company/personas' });
+    if (mood && mood.avgStress >= 3.5) recommendations.push({ icon: '🧘', text: 'El estrés promedio del equipo está elevado. Considerá aliviar la carga o proponer una pausa.' });
+    if (mood && mood.avgEnergy >= 4 && mood.avgStress < 3) recommendations.push({ icon: '🚀', text: '¡Tu equipo está con buena energía! Buen momento para encarar proyectos ambiciosos.' });
+    if (employeeCount > 0 && recommendations.length === 0) recommendations.push({ icon: '💛', text: 'Tu equipo está estable. Reconocé el buen trabajo para mantener la motivación alta.', action: 'Dar reconocimiento', path: '/dashboard/company/reconocimientos' });
 
     // ── Generate & copy invite link ───────────────────────────────────────
     const handleInvite = () => {
@@ -239,6 +262,67 @@ export const CompanyPanel: React.FC = () => {
                     <p className="text-xs text-slate-500 mt-1">Comparte con tu equipo</p>
                 </div>
             </div>
+
+            {/* Pulso del equipo: termómetro + alertas */}
+            {(mood?.checkinCount || atRisk > 0 || pendingTest > 0) && (
+                <div className="bg-white rounded-2xl p-6 shadow-md mb-8 border border-slate-100">
+                    <div className="flex items-center gap-2 mb-4">
+                        <Activity className="text-indigo-600" size={22} />
+                        <h2 className="text-xl font-bold text-slate-900">Pulso del equipo</h2>
+                        <button onClick={() => navigate('/dashboard/company/personas')} className="ml-auto text-sm text-purple-600 hover:text-purple-800 flex items-center gap-1">
+                            Ver personas <ArrowRight size={14} />
+                        </button>
+                    </div>
+                    <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                        {mood && mood.checkinCount > 0 && (
+                            <>
+                                <div className="bg-blue-50 rounded-xl p-4 border border-blue-100">
+                                    <div className="flex items-center gap-2 mb-1"><Zap size={16} className="text-blue-600" /><span className="text-xs font-medium text-blue-700">Energía</span></div>
+                                    <p className="text-2xl font-bold text-blue-900">{mood.avgEnergy.toFixed(1)}<span className="text-sm text-blue-500"> /5</span></p>
+                                </div>
+                                <div className="bg-rose-50 rounded-xl p-4 border border-rose-100">
+                                    <div className="flex items-center gap-2 mb-1"><Flame size={16} className="text-rose-600" /><span className="text-xs font-medium text-rose-700">Estrés</span></div>
+                                    <p className="text-2xl font-bold text-rose-900">{mood.avgStress.toFixed(1)}<span className="text-sm text-rose-500"> /5</span></p>
+                                </div>
+                            </>
+                        )}
+                        <button onClick={() => navigate('/dashboard/company/personas')} className={`rounded-xl p-4 border text-left transition-all hover:shadow-sm ${atRisk > 0 ? 'bg-red-50 border-red-200' : 'bg-slate-50 border-slate-200'}`}>
+                            <div className="flex items-center gap-2 mb-1"><AlertTriangle size={16} className={atRisk > 0 ? 'text-red-600' : 'text-slate-400'} /><span className={`text-xs font-medium ${atRisk > 0 ? 'text-red-700' : 'text-slate-500'}`}>En riesgo</span></div>
+                            <p className={`text-2xl font-bold ${atRisk > 0 ? 'text-red-900' : 'text-slate-700'}`}>{atRisk}</p>
+                        </button>
+                        <button onClick={() => navigate('/dashboard/company/personas')} className={`rounded-xl p-4 border text-left transition-all hover:shadow-sm ${pendingTest > 0 ? 'bg-amber-50 border-amber-200' : 'bg-slate-50 border-slate-200'}`}>
+                            <div className="flex items-center gap-2 mb-1"><Clock size={16} className={pendingTest > 0 ? 'text-amber-600' : 'text-slate-400'} /><span className={`text-xs font-medium ${pendingTest > 0 ? 'text-amber-700' : 'text-slate-500'}`}>Test pendiente</span></div>
+                            <p className={`text-2xl font-bold ${pendingTest > 0 ? 'text-amber-900' : 'text-slate-700'}`}>{pendingTest}</p>
+                        </button>
+                    </div>
+                    {mood && mood.checkinCount === 0 && (
+                        <p className="text-xs text-slate-400 mt-3">Cuando tu equipo registre check-ins, vas a ver acá el pulso de energía y estrés.</p>
+                    )}
+                </div>
+            )}
+
+            {/* Recomendaciones proactivas */}
+            {recommendations.length > 0 && (
+                <div className="bg-gradient-to-br from-purple-50 to-indigo-50 rounded-2xl p-6 mb-8 border border-purple-200">
+                    <div className="flex items-center gap-2 mb-4">
+                        <Bell className="text-purple-600" size={20} />
+                        <h2 className="text-lg font-bold text-slate-900">Recomendaciones para vos</h2>
+                    </div>
+                    <div className="space-y-3">
+                        {recommendations.map((rec, i) => (
+                            <div key={i} className="bg-white rounded-xl p-4 border border-purple-100 flex items-center gap-3">
+                                <span className="text-xl shrink-0">{rec.icon}</span>
+                                <p className="text-sm text-slate-700 flex-1">{rec.text}</p>
+                                {rec.action && rec.path && (
+                                    <button onClick={() => navigate(rec.path!)} className="text-sm text-purple-600 hover:text-purple-800 font-medium whitespace-nowrap flex items-center gap-1 shrink-0">
+                                        {rec.action} <ArrowRight size={14} />
+                                    </button>
+                                )}
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            )}
 
             {/* Actions */}
             <div className="grid md:grid-cols-2 gap-6 mb-8">

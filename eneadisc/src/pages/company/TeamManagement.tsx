@@ -1,11 +1,14 @@
 import React, { useState, useEffect } from 'react';
-import { Users, Plus, Edit, Trash2, Eye, HelpCircle } from 'lucide-react';
+import { Users, Plus, Edit, Trash2, Eye, HelpCircle, Sparkles, X } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { getTeams, deleteTeam, type Team } from '../../utils/teams';
 import { Button } from '../../components/ui/Button';
 import { TeamModal } from '../../components/TeamModal';
 import { TeamsTutorial } from '../../components/tutorial/TeamsTutorial';
 import { TeamDetailView } from '../../components/TeamDetailView';
+import { getEmployeesOverview } from '../../utils/adminFeatures';
+import { suggestTeams, analyzeGaps, TRIADS, triadOf, type SuggestablePerson } from '../../utils/teamSuggester';
+import { ENNEAGRAM_TYPES } from '../../data/enneagramData';
 
 export const TeamManagement: React.FC = () => {
     const { user } = useAuth();
@@ -15,6 +18,7 @@ export const TeamManagement: React.FC = () => {
     const [editingTeam, setEditingTeam] = useState<Team | null>(null);
     const [showDetailView, setShowDetailView] = useState(false);
     const [runTutorial, setRunTutorial] = useState(false);
+    const [showSuggester, setShowSuggester] = useState(false);
 
     // Load teams
     useEffect(() => {
@@ -103,14 +107,23 @@ export const TeamManagement: React.FC = () => {
                         Administra tus equipos y visualiza las características del eneagrama
                     </p>
                 </div>
-                <Button
-                    id="tour-create-team"
-                    onClick={() => setShowCreateModal(true)}
-                    className="flex items-center gap-2"
-                >
-                    <Plus className="w-5 h-5" />
-                    Crear Equipo
-                </Button>
+                <div className="flex items-center gap-2">
+                    <button
+                        onClick={() => setShowSuggester(true)}
+                        className="flex items-center gap-2 px-4 py-2 bg-purple-50 text-purple-700 border border-purple-200 rounded-lg hover:bg-purple-100 transition-colors font-medium text-sm"
+                    >
+                        <Sparkles className="w-4 h-4" />
+                        Sugeridor de equipos
+                    </button>
+                    <Button
+                        id="tour-create-team"
+                        onClick={() => setShowCreateModal(true)}
+                        className="flex items-center gap-2"
+                    >
+                        <Plus className="w-5 h-5" />
+                        Crear Equipo
+                    </Button>
+                </div>
             </div>
 
             {/* Stats */}
@@ -166,6 +179,83 @@ export const TeamManagement: React.FC = () => {
                     companyId={user?.companyId || ''}
                 />
             )}
+
+            {/* Sugeridor de equipos */}
+            {showSuggester && <TeamSuggesterModal onClose={() => setShowSuggester(false)} />}
+        </div>
+    );
+};
+
+// ════════════════ SUGERIDOR DE EQUIPOS ════════════════
+const TeamSuggesterModal: React.FC<{ onClose: () => void }> = ({ onClose }) => {
+    const [people, setPeople] = useState<SuggestablePerson[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [numTeams, setNumTeams] = useState(2);
+
+    useEffect(() => {
+        (async () => {
+            const overview = await getEmployeesOverview();
+            setPeople(overview.filter((e) => e.enneagramType).map((e) => ({ id: e.id, name: e.name, enneagramType: e.enneagramType! })));
+            setLoading(false);
+        })();
+    }, []);
+
+    const suggested = people.length > 0 ? suggestTeams(people, numTeams) : [];
+
+    return (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50 overflow-y-auto">
+            <div className="bg-white rounded-2xl max-w-3xl w-full p-6 my-8">
+                <div className="flex items-center justify-between mb-4">
+                    <h2 className="text-xl font-bold text-slate-900 flex items-center gap-2"><Sparkles className="text-purple-600" size={22} /> Sugeridor de equipos equilibrados</h2>
+                    <button onClick={onClose} className="text-slate-400 hover:text-slate-600"><X size={22} /></button>
+                </div>
+                <p className="text-sm text-slate-500 mb-4">Distribuye a tu gente en equipos balanceando los 3 centros del eneagrama: acción, relaciones e ideas.</p>
+
+                {loading ? (
+                    <div className="py-10 text-center"><div className="h-8 w-8 animate-spin rounded-full border-4 border-purple-600 border-t-transparent mx-auto" /></div>
+                ) : people.length < 2 ? (
+                    <div className="py-8 text-center text-slate-500"><Users className="mx-auto mb-3 text-slate-300" size={40} /><p>Necesitás al menos 2 personas con el test completado para sugerir equipos.</p></div>
+                ) : (
+                    <>
+                        <div className="flex items-center gap-3 mb-5">
+                            <label className="text-sm font-medium text-slate-700">Cantidad de equipos:</label>
+                            <div className="flex gap-1">
+                                {[2, 3, 4].filter((n) => n <= people.length).map((n) => (
+                                    <button key={n} onClick={() => setNumTeams(n)}
+                                        className={`w-9 h-9 rounded-lg text-sm font-medium ${numTeams === n ? 'bg-purple-600 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}>{n}</button>
+                                ))}
+                            </div>
+                        </div>
+                        <div className="grid sm:grid-cols-2 gap-4">
+                            {suggested.map((team, i) => {
+                                const gaps = analyzeGaps(team.members.map((m) => m.enneagramType));
+                                return (
+                                    <div key={i} className="border border-slate-200 rounded-xl p-4">
+                                        <div className="flex items-center justify-between mb-3">
+                                            <h3 className="font-bold text-slate-900">Equipo {i + 1}</h3>
+                                            <span className={`text-xs font-medium px-2 py-1 rounded-full ${gaps.balance === 100 ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'}`}>{gaps.balance}% equilibrado</span>
+                                        </div>
+                                        <div className="space-y-2 mb-3">
+                                            {team.members.map((m) => {
+                                                const ct = ENNEAGRAM_TYPES[m.enneagramType];
+                                                return (
+                                                    <div key={m.id} className="flex items-center gap-2 text-sm">
+                                                        <span className="w-6 h-6 rounded-full flex items-center justify-center text-white text-xs font-bold shrink-0" style={{ backgroundColor: ct.color }}>{m.enneagramType}</span>
+                                                        <span className="text-slate-800 truncate">{m.name}</span>
+                                                        <span className="text-xs text-slate-400 ml-auto">{TRIADS[triadOf(m.enneagramType)].emoji}</span>
+                                                    </div>
+                                                );
+                                            })}
+                                        </div>
+                                        <p className="text-xs text-slate-500 border-t border-slate-100 pt-2">{gaps.summary}</p>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                        <p className="text-xs text-slate-400 mt-4">💡 Esta es una sugerencia. Podés crear los equipos manualmente con el botón "Crear Equipo".</p>
+                    </>
+                )}
+            </div>
         </div>
     );
 };

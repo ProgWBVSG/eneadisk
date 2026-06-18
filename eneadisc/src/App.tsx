@@ -25,6 +25,8 @@ import { CompanyAnalytics } from './pages/company/CompanyAnalytics';
 import { CompanyTracking } from './pages/company/CompanyTracking';
 import { AIAssistant } from './pages/company/AIAssistant';
 import { Subscription } from './pages/company/Subscription';
+import { AdminPeople } from './pages/company/AdminPeople';
+import { AdminRecognition } from './pages/company/AdminRecognition';
 
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { isAuthenticated, session, isLoading } = useAuth();
@@ -90,6 +92,8 @@ function AppRoutes() {
         </ProtectedRoute>
       }>
         <Route index element={<CompanyPanel />} />
+        <Route path="personas" element={<AdminPeople />} />
+        <Route path="reconocimientos" element={<AdminRecognition />} />
         <Route path="equipos" element={<TeamManagement />} />
         <Route path="analisis" element={<CompanyAnalytics />} />
         <Route path="asistente" element={<AIAssistant />} />

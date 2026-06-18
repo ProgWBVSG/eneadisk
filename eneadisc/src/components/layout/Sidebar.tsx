@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import { Home, TrendingUp, Bot, CheckSquare, Users, ClipboardCheck, BarChart3, BookOpen, CreditCard, LogOut, Menu, X, Settings } from 'lucide-react';
+import { Home, TrendingUp, Bot, CheckSquare, Users, ClipboardCheck, BarChart3, BookOpen, CreditCard, LogOut, Menu, X, Settings, UserCircle, Award } from 'lucide-react';
 import { UserSettingsModal } from '../settings/UserSettingsModal';
 export const Sidebar: React.FC = () => {
     const navigate = useNavigate();
@@ -31,7 +31,9 @@ export const Sidebar: React.FC = () => {
 
     const adminItems = [
         { icon: Home, label: 'Panel Principal', path: '/dashboard/company' },
+        { icon: UserCircle, label: 'Personas', path: '/dashboard/company/personas' },
         { icon: Users, label: 'Gestión de Equipos', path: '/dashboard/company/equipos' },
+        { icon: Award, label: 'Reconocimientos', path: '/dashboard/company/reconocimientos' },
         { icon: BarChart3, label: 'Análisis y Gráficos', path: '/dashboard/company/analisis' },
         { icon: Bot, label: 'Asistente IA', path: '/dashboard/company/asistente' },
         { icon: BookOpen, label: 'Biblioteca Eneatipos', path: '/dashboard/company/biblioteca' },
