@@ -59,7 +59,7 @@ export const EmployeeProgress: React.FC = () => {
     return (
       <div className="p-8 flex items-center justify-center min-h-screen">
         <div className="text-center max-w-md bg-white p-8 rounded-xl shadow-lg">
-          <Lock size={64} className="mx-auto text-purple-600 mb-4" />
+          <Lock size={64} className="mx-auto text-[#C9624A] mb-4" />
           <h2 className="text-2xl font-bold text-slate-900 mb-4">Completá tu Perfil</h2>
           <p className="text-slate-600 mb-6">Para ver tu crecimiento, primero completá el cuestionario de Eneagrama.</p>
           <a href="/questionnaire" className="inline-block bg-gradient-to-r from-[#E07A5F] to-[#C9624A] text-white px-6 py-3 rounded-lg">Completar Cuestionario</a>
@@ -118,12 +118,12 @@ export const EmployeeProgress: React.FC = () => {
       <div className="mb-6 flex items-center justify-between">
         <div>
           <h1 className="text-3xl md:text-4xl font-bold text-slate-900 mb-1 flex items-center gap-3">
-            <TrendingUp className="text-purple-600" size={36} /> Mi Crecimiento
+            <TrendingUp className="text-[#C9624A]" size={36} /> Mi Crecimiento
           </h1>
           <p className="text-slate-600">Tu evolución personal, paso a paso</p>
         </div>
         <div className="flex items-center gap-3">
-          <button onClick={() => setForceRunTutorial(true)} className="flex items-center gap-1 text-xs text-slate-400 hover:text-purple-600">
+          <button onClick={() => setForceRunTutorial(true)} className="flex items-center gap-1 text-xs text-slate-400 hover:text-[#C9624A]">
             <HelpCircle size={14} /> Tutorial
           </button>
           <Button onClick={() => (window.location.href = '/dashboard/employee/checkins')} className="bg-gradient-to-r from-[#E07A5F] to-[#C9624A]">
@@ -224,12 +224,12 @@ export const EmployeeProgress: React.FC = () => {
       </Section>
 
       {/* Diario de crecimiento */}
-      <Section icon={<BookOpen className="text-purple-600" size={22} />} title="Diario de crecimiento" subtitle="Reflexioná con preguntas pensadas para tu tipo">
+      <Section icon={<BookOpen className="text-[#C9624A]" size={22} />} title="Diario de crecimiento" subtitle="Reflexioná con preguntas pensadas para tu tipo">
         {prompts.length > 0 && (
           <div className="flex flex-wrap gap-2 mb-3">
             {prompts.map((p, i) => (
               <button key={i} onClick={() => { setActivePrompt(p); setJournalText(p + '\n\n'); }}
-                className="text-xs px-3 py-1.5 bg-purple-50 text-purple-700 rounded-full border border-purple-200 hover:bg-purple-100 text-left">
+                className="text-xs px-3 py-1.5 bg-[#FCF1EC] text-[#A84C37] rounded-full border border-[#F8DDD2] hover:bg-[#FCF1EC] text-left">
                 💭 {p}
               </button>
             ))}
@@ -237,7 +237,7 @@ export const EmployeeProgress: React.FC = () => {
         )}
         <textarea value={journalText} onChange={(e) => setJournalText(e.target.value)} rows={3}
           placeholder="Escribí lo que quieras reflexionar hoy..."
-          className="w-full p-3 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-purple-500 outline-none resize-none mb-2" />
+          className="w-full p-3 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-[#E07A5F] outline-none resize-none mb-2" />
         <div className="flex justify-end mb-4">
           <button onClick={handleSaveJournal} disabled={!journalText.trim()}
             className="px-4 py-2 bg-[#E07A5F] text-white rounded-lg text-sm font-medium hover:bg-[#C9624A] disabled:opacity-50">

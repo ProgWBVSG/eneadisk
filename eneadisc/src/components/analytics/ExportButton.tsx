@@ -230,7 +230,7 @@ export const ExportButton: React.FC<ExportButtonProps> = ({
                         onClick={copyToClipboard}
                         className="w-full px-4 py-2 text-left hover:bg-slate-50 transition-colors flex items-center gap-3"
                     >
-                        <CheckCircle2 className="w-4 h-4 text-purple-600" />
+                        <CheckCircle2 className="w-4 h-4 text-[#C9624A]" />
                         <div>
                             <p className="text-sm font-medium text-slate-900">Copiar resumen</p>
                             <p className="text-xs text-slate-500">Al portapapeles</p>

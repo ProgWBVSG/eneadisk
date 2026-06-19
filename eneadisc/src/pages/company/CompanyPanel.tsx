@@ -254,9 +254,9 @@ export const CompanyPanel: React.FC = () => {
                 <div className="bg-white rounded-xl p-6 shadow-md">
                     <div className="flex items-center justify-between mb-2">
                         <h3 className="text-slate-500 text-sm font-medium">Código de Invitación</h3>
-                        <Mail className="text-purple-600" size={24} />
+                        <Mail className="text-[#C9624A]" size={24} />
                     </div>
-                    <p className="text-xl font-bold text-purple-600 font-mono tracking-wider">
+                    <p className="text-xl font-bold text-[#C9624A] font-mono tracking-wider">
                         {inviteCode || '—'}
                     </p>
                     <p className="text-xs text-slate-500 mt-1">Comparte con tu equipo</p>
@@ -269,7 +269,7 @@ export const CompanyPanel: React.FC = () => {
                     <div className="flex items-center gap-2 mb-4">
                         <Activity className="text-indigo-600" size={22} />
                         <h2 className="text-xl font-bold text-slate-900">Pulso del equipo</h2>
-                        <button onClick={() => navigate('/dashboard/company/personas')} className="ml-auto text-sm text-purple-600 hover:text-purple-800 flex items-center gap-1">
+                        <button onClick={() => navigate('/dashboard/company/personas')} className="ml-auto text-sm text-[#C9624A] hover:text-[#A84C37] flex items-center gap-1">
                             Ver personas <ArrowRight size={14} />
                         </button>
                     </div>
@@ -303,18 +303,18 @@ export const CompanyPanel: React.FC = () => {
 
             {/* Recomendaciones proactivas */}
             {recommendations.length > 0 && (
-                <div className="bg-gradient-to-br from-[#FCF1EC] to-[#EEF3EE] rounded-2xl p-6 mb-8 border border-purple-200">
+                <div className="bg-gradient-to-br from-[#FCF1EC] to-[#EEF3EE] rounded-2xl p-6 mb-8 border border-[#F8DDD2]">
                     <div className="flex items-center gap-2 mb-4">
-                        <Bell className="text-purple-600" size={20} />
+                        <Bell className="text-[#C9624A]" size={20} />
                         <h2 className="text-lg font-bold text-slate-900">Recomendaciones para vos</h2>
                     </div>
                     <div className="space-y-3">
                         {recommendations.map((rec, i) => (
-                            <div key={i} className="bg-white rounded-xl p-4 border border-purple-100 flex items-center gap-3">
+                            <div key={i} className="bg-white rounded-xl p-4 border border-[#F8DDD2] flex items-center gap-3">
                                 <span className="text-xl shrink-0">{rec.icon}</span>
                                 <p className="text-sm text-slate-700 flex-1">{rec.text}</p>
                                 {rec.action && rec.path && (
-                                    <button onClick={() => navigate(rec.path!)} className="text-sm text-purple-600 hover:text-purple-800 font-medium whitespace-nowrap flex items-center gap-1 shrink-0">
+                                    <button onClick={() => navigate(rec.path!)} className="text-sm text-[#C9624A] hover:text-[#A84C37] font-medium whitespace-nowrap flex items-center gap-1 shrink-0">
                                         {rec.action} <ArrowRight size={14} />
                                     </button>
                                 )}
@@ -336,7 +336,7 @@ export const CompanyPanel: React.FC = () => {
                         id="tour-invite-btn"
                         onClick={handleInvite}
                         disabled={!inviteCode}
-                        className="w-full bg-blue-600 hover:bg-[#C9624A]"
+                        className="w-full bg-[#E07A5F] hover:bg-[#C9624A]"
                     >
                         {copied ? (
                             <><CheckCircle className="mr-2 h-4 w-4" /> ¡Link Copiado!</>
@@ -361,7 +361,7 @@ export const CompanyPanel: React.FC = () => {
             </div>
 
             {/* Info Section */}
-            <div className="bg-gradient-to-br from-[#FCF1EC] to-[#EEF3EE] rounded-xl p-8 border border-purple-200">
+            <div className="bg-gradient-to-br from-[#FCF1EC] to-[#EEF3EE] rounded-xl p-8 border border-[#F8DDD2]">
                 <h3 className="text-2xl font-bold text-slate-900 mb-4">¿Cómo funciona ENEATEAMS?</h3>
                 <div className="grid md:grid-cols-3 gap-6">
                     <div>

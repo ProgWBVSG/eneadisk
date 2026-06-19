@@ -52,7 +52,7 @@ export const EmployeeTeam: React.FC = () => {
   if (loading) {
     return (
       <div className="p-8 flex flex-col items-center justify-center min-h-[400px]">
-        <div className="h-10 w-10 animate-spin rounded-full border-4 border-purple-600 border-t-transparent mb-4" />
+        <div className="h-10 w-10 animate-spin rounded-full border-4 border-[#E07A5F] border-t-transparent mb-4" />
         <p className="text-slate-500 text-sm">Cargando tu equipo...</p>
       </div>
     );
@@ -71,7 +71,7 @@ export const EmployeeTeam: React.FC = () => {
       <div className="mb-6">
         <div className="flex items-center justify-between">
           <h1 className="text-3xl font-bold text-slate-900 mb-2">Mi Equipo</h1>
-          <button onClick={() => setForceRunTutorial(true)} className="flex items-center gap-1 text-xs text-slate-400 hover:text-purple-600">
+          <button onClick={() => setForceRunTutorial(true)} className="flex items-center gap-1 text-xs text-slate-400 hover:text-[#C9624A]">
             <HelpCircle size={14} /> Ver tutorial
           </button>
         </div>
@@ -217,10 +217,10 @@ export const EmployeeTeam: React.FC = () => {
           {profiled.length > 0 && (
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               <div id="tour-emp-team-dynamics" className="bg-gradient-to-br from-[#FCF1EC] to-[#EEF3EE] border border-[#F8DDD2] rounded-xl p-6">
-                <h3 className="text-xl font-semibold text-slate-900 mb-4 flex items-center gap-2"><TrendingUp className="w-5 h-5 text-purple-600" /> Dinámica del Equipo</h3>
+                <h3 className="text-xl font-semibold text-slate-900 mb-4 flex items-center gap-2"><TrendingUp className="w-5 h-5 text-[#C9624A]" /> Dinámica del Equipo</h3>
                 <div className="space-y-4">
                   <div>
-                    <div className="flex items-center justify-between mb-2"><span className="text-sm font-medium text-slate-700">Diversidad de perfiles</span><span className="text-lg font-bold text-purple-600">{teamDynamics.diversity}%</span></div>
+                    <div className="flex items-center justify-between mb-2"><span className="text-sm font-medium text-slate-700">Diversidad de perfiles</span><span className="text-lg font-bold text-[#C9624A]">{teamDynamics.diversity}%</span></div>
                     <div className="w-full bg-slate-200 rounded-full h-2"><div className="bg-gradient-to-r from-[#E07A5F] to-[#E89B82] h-2 rounded-full" style={{ width: `${teamDynamics.diversity}%` }} /></div>
                   </div>
                   {teamDynamics.strengths.length > 0 && (

@@ -97,7 +97,7 @@ export const TeamManagement: React.FC = () => {
                         <h1 className="text-3xl font-bold text-slate-900">Gestión de Equipos</h1>
                         <button 
                             onClick={() => setRunTutorial(true)}
-                            className="p-1.5 text-slate-400 hover:text-purple-600 hover:bg-purple-50 rounded-full transition-colors"
+                            className="p-1.5 text-slate-400 hover:text-[#C9624A] hover:bg-[#FCF1EC] rounded-full transition-colors"
                             title="Repetir Tutorial"
                         >
                             <HelpCircle size={20} />
@@ -110,7 +110,7 @@ export const TeamManagement: React.FC = () => {
                 <div className="flex items-center gap-2">
                     <button
                         onClick={() => setShowSuggester(true)}
-                        className="flex items-center gap-2 px-4 py-2 bg-purple-50 text-purple-700 border border-purple-200 rounded-lg hover:bg-purple-100 transition-colors font-medium text-sm"
+                        className="flex items-center gap-2 px-4 py-2 bg-[#FCF1EC] text-[#A84C37] border border-[#F8DDD2] rounded-lg hover:bg-[#FCF1EC] transition-colors font-medium text-sm"
                     >
                         <Sparkles className="w-4 h-4" />
                         Sugeridor de equipos
@@ -206,13 +206,13 @@ const TeamSuggesterModal: React.FC<{ onClose: () => void }> = ({ onClose }) => {
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50 overflow-y-auto">
             <div className="bg-white rounded-2xl max-w-3xl w-full p-6 my-8">
                 <div className="flex items-center justify-between mb-4">
-                    <h2 className="text-xl font-bold text-slate-900 flex items-center gap-2"><Sparkles className="text-purple-600" size={22} /> Sugeridor de equipos equilibrados</h2>
+                    <h2 className="text-xl font-bold text-slate-900 flex items-center gap-2"><Sparkles className="text-[#C9624A]" size={22} /> Sugeridor de equipos equilibrados</h2>
                     <button onClick={onClose} className="text-slate-400 hover:text-slate-600"><X size={22} /></button>
                 </div>
                 <p className="text-sm text-slate-500 mb-4">Distribuye a tu gente en equipos balanceando los 3 centros del eneagrama: acción, relaciones e ideas.</p>
 
                 {loading ? (
-                    <div className="py-10 text-center"><div className="h-8 w-8 animate-spin rounded-full border-4 border-purple-600 border-t-transparent mx-auto" /></div>
+                    <div className="py-10 text-center"><div className="h-8 w-8 animate-spin rounded-full border-4 border-[#E07A5F] border-t-transparent mx-auto" /></div>
                 ) : people.length < 2 ? (
                     <div className="py-8 text-center text-slate-500"><Users className="mx-auto mb-3 text-slate-300" size={40} /><p>Necesitás al menos 2 personas con el test completado para sugerir equipos.</p></div>
                 ) : (

@@ -133,9 +133,9 @@ export const SupervisorPanel: React.FC = () => {
           {/* Revisión de tareas */}
           <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-100">
             <div className="flex items-center gap-2 mb-1">
-              <ListChecks className="text-purple-600" size={22} />
+              <ListChecks className="text-[#C9624A]" size={22} />
               <h2 className="text-xl font-bold text-slate-900">Tareas de tu equipo</h2>
-              {pendingReview.length > 0 && <span className="ml-auto text-xs bg-purple-100 text-purple-700 px-2.5 py-1 rounded-full font-medium">{pendingReview.length} por revisar</span>}
+              {pendingReview.length > 0 && <span className="ml-auto text-xs bg-[#FCF1EC] text-[#A84C37] px-2.5 py-1 rounded-full font-medium">{pendingReview.length} por revisar</span>}
             </div>
             <p className="text-sm text-slate-500 mb-4">Confirmá las completadas, marcá errores y dejá notas</p>
             {tasks.length === 0 ? (
@@ -214,7 +214,7 @@ const ReviewModal: React.FC<{ task: SupervisedTask; onClose: () => void; onDone:
     <Modal title="Revisar tarea" onClose={onClose}>
       <p className="text-sm font-medium text-slate-900 mb-1">{task.title}</p>
       {task.description && <p className="text-sm text-slate-500 mb-3">{task.description}</p>}
-      <textarea value={note} onChange={(e) => setNote(e.target.value)} rows={3} placeholder="Nota o feedback (opcional)" className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm mb-3 resize-none focus:ring-2 focus:ring-purple-500 outline-none" />
+      <textarea value={note} onChange={(e) => setNote(e.target.value)} rows={3} placeholder="Nota o feedback (opcional)" className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm mb-3 resize-none focus:ring-2 focus:ring-[#E07A5F] outline-none" />
       <div className="flex gap-2">
         <button onClick={() => doReview('needs_fix')} disabled={saving} className="flex-1 py-2.5 bg-amber-500 text-white rounded-lg font-medium hover:bg-amber-600 disabled:opacity-50 flex items-center justify-center gap-2"><AlertCircle size={16} /> Marcar error</button>
         <button onClick={() => doReview('confirmed')} disabled={saving} className="flex-1 py-2.5 bg-green-600 text-white rounded-lg font-medium hover:bg-green-700 disabled:opacity-50 flex items-center justify-center gap-2"><Check size={16} /> Confirmar</button>

@@ -10,7 +10,7 @@ interface SuggestedPromptsProps {
 
 const categoryColors = {
     summary: 'from-blue-500 to-cyan-500',
-    analysis: 'from-purple-500 to-pink-500',
+    analysis: 'from-[#E07A5F] to-[#E89B82]',
     prediction: 'from-orange-500 to-red-500',
     help: 'from-green-500 to-emerald-500'
 };
@@ -23,7 +23,7 @@ export const SuggestedPrompts: React.FC<SuggestedPromptsProps> = ({
     return (
         <div className="mb-6">
             <div className="flex items-center gap-2 mb-3">
-                <Sparkles className="w-4 h-4 text-purple-600" />
+                <Sparkles className="w-4 h-4 text-[#C9624A]" />
                 <h3 className="text-sm font-semibold text-slate-700">Sugerencias rápidas</h3>
             </div>
 

@@ -37,7 +37,7 @@ export const EvolutionMatrix: React.FC<Props> = ({ matrix }) => {
                 </td>
                 <td className="p-4">
                   {emp.enneagramType ? (
-                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
+                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-[#FCF1EC] text-[#A84C37]">
                       Tipo {emp.enneagramType}
                     </span>
                   ) : (

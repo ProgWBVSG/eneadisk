@@ -34,10 +34,10 @@ const COLOR_MAP = {
         icon: 'text-blue-600'
     },
     recommendation: {
-        bg: 'bg-purple-50',
+        bg: 'bg-[#FCF1EC]',
         border: 'border-purple-500',
-        text: 'text-purple-900',
-        icon: 'text-purple-600'
+        text: 'text-[#7a3627]',
+        icon: 'text-[#C9624A]'
     }
 };
 
@@ -60,7 +60,7 @@ export const InsightsPanel: React.FC<InsightsPanelProps> = ({ insights, maxInsig
         return (
             <div className="bg-white rounded-lg border border-slate-200 p-6">
                 <h3 className="text-lg font-semibold text-slate-900 mb-4 flex items-center gap-2">
-                    <Lightbulb className="w-5 h-5 text-purple-600" />
+                    <Lightbulb className="w-5 h-5 text-[#C9624A]" />
                     Insights Accionables
                 </h3>
                 <div className="text-center py-12 bg-slate-50 rounded-lg border-2 border-dashed border-slate-300">
@@ -84,7 +84,7 @@ export const InsightsPanel: React.FC<InsightsPanelProps> = ({ insights, maxInsig
             <div className="mb-6">
                 <div className="flex items-center justify-between mb-3">
                     <h3 className="text-lg font-semibold text-slate-900 flex items-center gap-2">
-                        <Lightbulb className="w-5 h-5 text-purple-600" />
+                        <Lightbulb className="w-5 h-5 text-[#C9624A]" />
                         Insights Accionables
                     </h3>
                     <div className="flex items-center gap-2 text-xs">
@@ -99,7 +99,7 @@ export const InsightsPanel: React.FC<InsightsPanelProps> = ({ insights, maxInsig
                             </span>
                         )}
                         {insightCounts.recommendation && (
-                            <span className="px-2 py-1 bg-purple-100 text-purple-700 rounded-full font-medium">
+                            <span className="px-2 py-1 bg-[#FCF1EC] text-[#A84C37] rounded-full font-medium">
                                 {insightCounts.recommendation} Recomendaciones
                             </span>
                         )}

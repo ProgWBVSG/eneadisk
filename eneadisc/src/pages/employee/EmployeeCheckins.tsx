@@ -99,7 +99,7 @@ export const EmployeeCheckins: React.FC = () => {
                                             onClick={() => setMood(moodKey)}
                                             className={`flex flex-col items-center p-4 rounded-xl border-2 transition-all min-w-[80px] ${
                                                 mood === moodKey 
-                                                ? 'border-purple-600 bg-purple-50 scale-105' 
+                                                ? 'border-[#E07A5F] bg-[#FCF1EC] scale-105' 
                                                 : 'border-slate-100 bg-white hover:border-slate-300 hover:bg-slate-50'
                                             }`}
                                         >
@@ -171,7 +171,7 @@ export const EmployeeCheckins: React.FC = () => {
 
             {/* History */}
             <h2 className="text-xl font-bold text-slate-900 mb-6 flex items-center gap-2">
-                <Calendar className="w-5 h-5 text-purple-600" />
+                <Calendar className="w-5 h-5 text-[#C9624A]" />
                 Historial Semanal
             </h2>
 

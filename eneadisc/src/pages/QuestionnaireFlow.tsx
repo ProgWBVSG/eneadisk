@@ -89,8 +89,8 @@ export const QuestionnaireFlow: React.FC = () => {
                                 key={index}
                                 onClick={() => setSelectedOption(option.type)}
                                 className={`w-full p-4 rounded-xl border-2 transition-all text-left ${selectedOption === option.type
-                                    ? 'border-purple-500 bg-purple-50 shadow-md'
-                                    : 'border-slate-200 hover:border-purple-300 hover:bg-slate-50'
+                                    ? 'border-purple-500 bg-[#FCF1EC] shadow-md'
+                                    : 'border-slate-200 hover:border-[#EFA98F] hover:bg-slate-50'
                                     }`}
                             >
                                 <span className="text-slate-700 font-medium">{option.text}</span>

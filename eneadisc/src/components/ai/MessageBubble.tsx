@@ -17,10 +17,10 @@ const recommendationConfig = {
     },
     suggestion: {
         icon: Lightbulb,
-        bgColor: 'bg-purple-50',
+        bgColor: 'bg-[#FCF1EC]',
         borderColor: 'border-purple-500',
-        iconColor: 'text-purple-600',
-        textColor: 'text-purple-900'
+        iconColor: 'text-[#C9624A]',
+        textColor: 'text-[#7a3627]'
     },
     insight: {
         icon: Zap,
@@ -50,15 +50,15 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({ message }) => {
     if (message.isLoading) {
         return (
             <div className="flex items-start gap-3 mb-4">
-                <div className="p-2 bg-gradient-to-br from-purple-500 to-pink-500 rounded-lg flex-shrink-0">
+                <div className="p-2 bg-gradient-to-br from-[#E07A5F] to-[#E89B82] rounded-lg flex-shrink-0">
                     <Bot className="w-5 h-5 text-white" />
                 </div>
                 <div className="flex-1 bg-white border border-slate-200 rounded-lg p-4">
                     <div className="flex items-center gap-2">
                         <div className="flex gap-1">
-                            <span className="w-2 h-2 bg-purple-500 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></span>
-                            <span className="w-2 h-2 bg-purple-500 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></span>
-                            <span className="w-2 h-2 bg-purple-500 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></span>
+                            <span className="w-2 h-2 bg-[#FCF1EC]0 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></span>
+                            <span className="w-2 h-2 bg-[#FCF1EC]0 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></span>
+                            <span className="w-2 h-2 bg-[#FCF1EC]0 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></span>
                         </div>
                         <span className="text-sm text-slate-600">Analizando datos...</span>
                     </div>
@@ -74,7 +74,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({ message }) => {
                 p-2 rounded-lg flex-shrink-0
                 ${isUser
                     ? 'bg-gradient-to-br from-blue-500 to-cyan-500'
-                    : 'bg-gradient-to-br from-purple-500 to-pink-500'
+                    : 'bg-gradient-to-br from-[#E07A5F] to-[#E89B82]'
                 }
             `}>
                 {isUser ? (

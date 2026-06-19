@@ -21,7 +21,7 @@ export const EnneagramLibrary: React.FC = () => {
                         <h1 className="text-3xl md:text-4xl font-bold text-slate-900">Biblioteca de Eneatipos</h1>
                         <button 
                             onClick={() => setRunTutorial(true)}
-                            className="p-1.5 text-slate-400 hover:text-purple-600 hover:bg-purple-50 rounded-full transition-colors"
+                            className="p-1.5 text-slate-400 hover:text-[#C9624A] hover:bg-[#FCF1EC] rounded-full transition-colors"
                             title="Repetir Tutorial"
                         >
                             <HelpCircle size={24} />
@@ -36,7 +36,7 @@ export const EnneagramLibrary: React.FC = () => {
                     <div
                         key={type.id}
                         id={`tour-lib-card-${index}`}
-                        className="bg-white rounded-xl shadow-md overflow-hidden border-2 border-transparent hover:border-purple-200 transition-all"
+                        className="bg-white rounded-xl shadow-md overflow-hidden border-2 border-transparent hover:border-[#F8DDD2] transition-all"
                     >
                         {/* Header */}
                         <button
@@ -130,7 +130,7 @@ export const EnneagramLibrary: React.FC = () => {
                                 {/* Mejor compatibilidad */}
                                 <div className="mt-4">
                                     <h4 className="font-bold text-slate-900 mb-3 flex items-center gap-2">
-                                        <svg className="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <svg className="w-5 h-5 text-[#C9624A]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
                                         </svg>
                                         Mejor compatibilidad con

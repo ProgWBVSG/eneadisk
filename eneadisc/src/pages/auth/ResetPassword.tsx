@@ -167,7 +167,7 @@ export const ResetPassword: React.FC = () => {
         {mode === 'reset' && (
           <>
             <div className="mb-8 text-center pt-6">
-              <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-purple-100 text-purple-700">
+              <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-[#FCF1EC] text-[#A84C37]">
                 <KeyRound size={26} />
               </div>
               <h1 className="text-2xl font-bold text-slate-900">Nueva Contraseña</h1>

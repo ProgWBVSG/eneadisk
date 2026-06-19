@@ -189,8 +189,8 @@ export const TeamDetailView: React.FC<TeamDetailViewProps> = ({
                 {/* Analysis Panel - 1/3 width */}
                 <div className="space-y-6">
                     {/* Compatibility Score */}
-                    <div className="bg-gradient-to-br from-purple-50 to-blue-50 border border-purple-200 rounded-lg p-6">
-                        <h3 className="text-lg font-semibold text-purple-900 mb-4 flex items-center gap-2">
+                    <div className="bg-gradient-to-br from-purple-50 to-blue-50 border border-[#F8DDD2] rounded-lg p-6">
+                        <h3 className="text-lg font-semibold text-[#7a3627] mb-4 flex items-center gap-2">
                             <TrendingUp className="w-5 h-5" />
                             Score de Compatibilidad
                         </h3>
@@ -218,12 +218,12 @@ export const TeamDetailView: React.FC<TeamDetailViewProps> = ({
                                     />
                                 </svg>
                                 <div className="absolute inset-0 flex items-center justify-center">
-                                    <span className="text-3xl font-bold text-purple-900">{compatibilityScore}%</span>
+                                    <span className="text-3xl font-bold text-[#7a3627]">{compatibilityScore}%</span>
                                 </div>
                             </div>
                         </div>
 
-                        <p className="text-sm text-purple-700 text-center">
+                        <p className="text-sm text-[#A84C37] text-center">
                             {compatibilityScore >= 70 ? '¡Excelente diversidad!' :
                                 compatibilityScore >= 40 ? 'Buena composición' :
                                     'Considera agregar más diversidad'}

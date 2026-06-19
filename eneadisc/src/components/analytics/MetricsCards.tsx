@@ -70,7 +70,7 @@ export const MetricsCards: React.FC<MetricsCardsProps> = ({ analytics, companyWi
                 value: analytics.avgMoodScore,
                 isPositive: analytics.avgMoodScore >= 3.5
             },
-            color: analytics.avgMoodScore >= 3.5 ? 'text-purple-600 bg-purple-50' : 'text-red-600 bg-red-50'
+            color: analytics.avgMoodScore >= 3.5 ? 'text-[#C9624A] bg-[#FCF1EC]' : 'text-red-600 bg-red-50'
         },
         {
             title: 'Tareas Atrasadas',
@@ -102,7 +102,7 @@ export const MetricsCards: React.FC<MetricsCardsProps> = ({ analytics, companyWi
             subtitle: `${companyWide!.totalCheckIns} check-ins`,
             icon: <Users className="w-6 h-6" />,
             delta: comparison ? <MetricDelta value={comparison.delta.moodScore} unit="" /> : undefined,
-            color: 'text-purple-600 bg-purple-50'
+            color: 'text-[#C9624A] bg-[#FCF1EC]'
         },
         {
             title: 'Check-ins',

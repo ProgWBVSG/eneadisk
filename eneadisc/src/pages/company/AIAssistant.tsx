@@ -164,18 +164,18 @@ Puedo ayudarte con:
                 {/* Header */}
                 <div id="tour-ai-header" className="bg-white rounded-xl shadow-lg p-6 mb-6">
                     <div className="flex items-center gap-4">
-                        <div className="p-3 bg-gradient-to-br from-purple-500 to-pink-500 rounded-xl">
+                        <div className="p-3 bg-gradient-to-br from-[#E07A5F] to-[#E89B82] rounded-xl">
                             <Bot className="w-8 h-8 text-white" />
                         </div>
                         <div className="flex-1">
                             <div className="flex items-center gap-3">
                                 <h1 className="text-2xl font-bold text-slate-900">Asistente de IA</h1>
-                                <span className="px-3 py-1 bg-purple-100 text-purple-700 text-xs font-medium rounded-full">
+                                <span className="px-3 py-1 bg-[#FCF1EC] text-[#A84C37] text-xs font-medium rounded-full">
                                     Beta
                                 </span>
                                 <button 
                                     onClick={() => setRunTutorial(true)}
-                                    className="p-1.5 text-slate-400 hover:text-purple-600 hover:bg-purple-50 rounded-full transition-colors"
+                                    className="p-1.5 text-slate-400 hover:text-[#C9624A] hover:bg-[#FCF1EC] rounded-full transition-colors"
                                     title="Repetir Tutorial"
                                 >
                                     <HelpCircle size={20} />
@@ -201,7 +201,7 @@ Puedo ayudarte con:
                         <div id="tour-ai-prompts" className="p-4 border-b border-slate-200 bg-slate-50">
                             <div className="flex items-center justify-between mb-3">
                                 <div className="flex items-center gap-2">
-                                    <Sparkles className="w-4 h-4 text-purple-600" />
+                                    <Sparkles className="w-4 h-4 text-[#C9624A]" />
                                     <h3 className="text-sm font-semibold text-slate-700">Sugerencias rápidas</h3>
                                 </div>
                                 <button
@@ -227,7 +227,7 @@ Puedo ayudarte con:
                         <div className="absolute top-2 right-2 z-10">
                             <button
                                 onClick={() => setShowSuggestions(true)}
-                                className="flex items-center gap-2 px-3 py-1.5 text-xs font-medium text-purple-600 bg-white/90 backdrop-blur border border-purple-200 shadow-sm hover:shadow hover:bg-white rounded-full transition-all"
+                                className="flex items-center gap-2 px-3 py-1.5 text-xs font-medium text-[#C9624A] bg-white/90 backdrop-blur border border-[#F8DDD2] shadow-sm hover:shadow hover:bg-white rounded-full transition-all"
                             >
                                 <Sparkles className="w-3 h-3" />
                                 <span>Sugerencias</span>
@@ -271,7 +271,7 @@ Puedo ayudarte con:
                                 className="
                                     flex-1 px-4 py-3 rounded-lg
                                     border border-slate-300
-                                    focus:ring-2 focus:ring-purple-500 focus:border-purple-500
+                                    focus:ring-2 focus:ring-[#E07A5F] focus:border-purple-500
                                     disabled:opacity-50 disabled:cursor-not-allowed
                                     resize-none
                                 "
@@ -281,7 +281,7 @@ Puedo ayudarte con:
                                 type="submit"
                                 disabled={!input.trim() || isLoading}
                                 className="
-                                    px-6 py-3 bg-gradient-to-br from-purple-500 to-pink-500
+                                    px-6 py-3 bg-gradient-to-br from-[#E07A5F] to-[#E89B82]
                                     text-white rounded-lg font-medium
                                     hover:from-purple-600 hover:to-pink-600
                                     disabled:opacity-50 disabled:cursor-not-allowed

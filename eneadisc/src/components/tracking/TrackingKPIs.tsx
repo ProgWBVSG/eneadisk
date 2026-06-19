@@ -30,7 +30,7 @@ export const TrackingKPIs: React.FC<Props> = ({ kpis }) => {
       {/* Alineamiento Energético */}
       <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
         <div className="flex items-center justify-between mb-4">
-          <div className="p-3 bg-purple-50 text-purple-600 rounded-lg">
+          <div className="p-3 bg-[#FCF1EC] text-[#C9624A] rounded-lg">
             <HeartPulse className="w-6 h-6" />
           </div>
           <div className="flex items-center space-x-1 text-sm font-medium text-emerald-600 bg-emerald-50 px-2 py-1 rounded-full">

@@ -126,7 +126,7 @@ export const Sidebar: React.FC = () => {
                             <p className="text-sm font-medium text-slate-900 truncate group-hover:text-[#C9624A] transition-colors">{user?.name || 'Usuario'}</p>
                             <p className="text-xs text-slate-500 truncate">{isAdmin ? 'Administrador' : isSupervisor ? 'Supervisor' : 'Colaborador'}</p>
                         </div>
-                        <Settings size={16} className="text-slate-400 group-hover:text-purple-600 opacity-0 group-hover:opacity-100 transition-all" />
+                        <Settings size={16} className="text-slate-400 group-hover:text-[#C9624A] opacity-0 group-hover:opacity-100 transition-all" />
                     </button>
                     <button
                         onClick={handleLogout}

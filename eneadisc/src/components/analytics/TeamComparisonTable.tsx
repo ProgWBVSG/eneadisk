@@ -74,7 +74,7 @@ export const TeamComparisonTable: React.FC<TeamComparisonTableProps> = ({ teams,
     };
 
     const getMoodColor = (mood: number) => {
-        if (mood >= 4) return 'bg-purple-100 text-purple-700 border-purple-300';
+        if (mood >= 4) return 'bg-[#FCF1EC] text-[#A84C37] border-[#EFA98F]';
         if (mood >= 3) return 'bg-blue-100 text-blue-700 border-blue-300';
         if (mood >= 2) return 'bg-orange-100 text-orange-700 border-orange-300';
         return 'bg-red-100 text-red-700 border-red-300';
@@ -215,7 +215,7 @@ export const TeamComparisonTable: React.FC<TeamComparisonTableProps> = ({ teams,
                                                 </div>
                                                 <div className="bg-white p-4 rounded-lg border border-slate-200">
                                                     <p className="text-xs text-slate-600 mb-1">Check-ins</p>
-                                                    <p className="text-2xl font-bold text-purple-600">{team.checkInCount}</p>
+                                                    <p className="text-2xl font-bold text-[#C9624A]">{team.checkInCount}</p>
                                                 </div>
                                             </div>
 

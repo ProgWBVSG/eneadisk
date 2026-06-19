@@ -56,12 +56,12 @@ export const ProjectionsPanel: React.FC<ProjectionsPanelProps> = ({ analytics })
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             {/* Mood Projection */}
-                            <div className="bg-purple-50 rounded-lg p-3">
+                            <div className="bg-[#FCF1EC] rounded-lg p-3">
                                 <div className="flex items-center justify-between mb-2">
                                     <span className="text-sm font-medium text-slate-700">Mood Proyectado</span>
                                     <TrendIndicator trend={trend.moodTrend} />
                                 </div>
-                                <p className="text-2xl font-bold text-purple-700">
+                                <p className="text-2xl font-bold text-[#A84C37]">
                                     {trend.projectedMood.toFixed(1)}/5
                                 </p>
                                 <p className="text-xs text-slate-600 mt-1">

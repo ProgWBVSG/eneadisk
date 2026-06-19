@@ -72,7 +72,7 @@ export const UserSettingsModal: React.FC<UserSettingsModalProps> = ({ isOpen, on
                         <button
                             onClick={() => setActiveTab('account')}
                             className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors ${
-                                activeTab === 'account' ? 'bg-purple-100 text-purple-700' : 'text-slate-600 hover:bg-slate-200/50'
+                                activeTab === 'account' ? 'bg-[#FCF1EC] text-[#A84C37]' : 'text-slate-600 hover:bg-slate-200/50'
                             }`}
                         >
                             <User size={18} />
@@ -81,7 +81,7 @@ export const UserSettingsModal: React.FC<UserSettingsModalProps> = ({ isOpen, on
                         <button
                             onClick={() => setActiveTab('preferences')}
                             className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors ${
-                                activeTab === 'preferences' ? 'bg-purple-100 text-purple-700' : 'text-slate-600 hover:bg-slate-200/50'
+                                activeTab === 'preferences' ? 'bg-[#FCF1EC] text-[#A84C37]' : 'text-slate-600 hover:bg-slate-200/50'
                             }`}
                         >
                             <Settings size={18} />
@@ -93,7 +93,7 @@ export const UserSettingsModal: React.FC<UserSettingsModalProps> = ({ isOpen, on
                         <button
                             onClick={() => setActiveTab('help')}
                             className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors ${
-                                activeTab === 'help' ? 'bg-purple-100 text-purple-700' : 'text-slate-600 hover:bg-slate-200/50'
+                                activeTab === 'help' ? 'bg-[#FCF1EC] text-[#A84C37]' : 'text-slate-600 hover:bg-slate-200/50'
                             }`}
                         >
                             <HelpCircle size={18} />
@@ -102,7 +102,7 @@ export const UserSettingsModal: React.FC<UserSettingsModalProps> = ({ isOpen, on
                         <button
                             onClick={() => setActiveTab('legal')}
                             className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors ${
-                                activeTab === 'legal' ? 'bg-purple-100 text-purple-700' : 'text-slate-600 hover:bg-slate-200/50'
+                                activeTab === 'legal' ? 'bg-[#FCF1EC] text-[#A84C37]' : 'text-slate-600 hover:bg-slate-200/50'
                             }`}
                         >
                             <Shield size={18} />
@@ -132,7 +132,7 @@ export const UserSettingsModal: React.FC<UserSettingsModalProps> = ({ isOpen, on
                                 
                                 <div className="flex items-center gap-6 p-4 border border-slate-200 rounded-xl bg-slate-50/50">
                                     <div className="relative group cursor-pointer" onClick={() => fileInputRef.current?.click()}>
-                                        <div className="w-24 h-24 bg-purple-100 rounded-full flex items-center justify-center text-3xl font-bold text-purple-600 overflow-hidden bg-cover bg-center" style={{ backgroundImage: avatarUrl ? `url(${avatarUrl})` : 'none' }}>
+                                        <div className="w-24 h-24 bg-[#FCF1EC] rounded-full flex items-center justify-center text-3xl font-bold text-[#C9624A] overflow-hidden bg-cover bg-center" style={{ backgroundImage: avatarUrl ? `url(${avatarUrl})` : 'none' }}>
                                             {!avatarUrl && (user?.name?.charAt(0).toUpperCase() || 'U')}
                                         </div>
                                         <div className="absolute inset-0 bg-black/40 rounded-full flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity z-10">
@@ -152,7 +152,7 @@ export const UserSettingsModal: React.FC<UserSettingsModalProps> = ({ isOpen, on
                                         <input 
                                             type="text" 
                                             defaultValue={user?.name || ''} 
-                                            className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none transition-all"
+                                            className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#E07A5F] focus:border-purple-500 outline-none transition-all"
                                         />
                                     </div>
                                 </div>
@@ -165,11 +165,11 @@ export const UserSettingsModal: React.FC<UserSettingsModalProps> = ({ isOpen, on
                                     <div className="space-y-4">
                                         <div>
                                             <label className="block text-sm font-medium text-slate-700 mb-1">Contraseña Actual</label>
-                                            <input type="password" placeholder="••••••••" className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-purple-500 outline-none" />
+                                            <input type="password" placeholder="••••••••" className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#E07A5F] outline-none" />
                                         </div>
                                         <div>
                                             <label className="block text-sm font-medium text-slate-700 mb-1">Nueva Contraseña</label>
-                                            <input type="password" placeholder="Mínimo 8 caracteres" className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-purple-500 outline-none" />
+                                            <input type="password" placeholder="Mínimo 8 caracteres" className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#E07A5F] outline-none" />
                                         </div>
                                         <div className="flex justify-end pt-2">
                                             <Button variant="primary">Actualizar Contraseña</Button>
@@ -216,7 +216,7 @@ export const UserSettingsModal: React.FC<UserSettingsModalProps> = ({ isOpen, on
                                         </div>
                                         <label className="relative inline-flex items-center cursor-pointer">
                                             <input type="checkbox" className="sr-only peer" defaultChecked />
-                                            <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-purple-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-purple-600"></div>
+                                            <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-purple-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#E07A5F]"></div>
                                         </label>
                                     </div>
                                 </div>
@@ -232,15 +232,15 @@ export const UserSettingsModal: React.FC<UserSettingsModalProps> = ({ isOpen, on
                                 </div>
 
                                 <div className="space-y-4">
-                                    <div className="p-5 bg-purple-50 border border-purple-100 rounded-xl flex items-start gap-4">
-                                        <MessageSquare className="text-purple-600 mt-1" size={24} />
+                                    <div className="p-5 bg-[#FCF1EC] border border-[#F8DDD2] rounded-xl flex items-start gap-4">
+                                        <MessageSquare className="text-[#C9624A] mt-1" size={24} />
                                         <div>
-                                            <h4 className="font-semibold text-purple-900 mb-1">Danos tu Feedback</h4>
-                                            <p className="text-sm text-purple-700 mb-3">¿Viste un error o tienes una idea para una nueva funcionalidad? Déjanos tu comentario.</p>
+                                            <h4 className="font-semibold text-[#7a3627] mb-1">Danos tu Feedback</h4>
+                                            <p className="text-sm text-[#A84C37] mb-3">¿Viste un error o tienes una idea para una nueva funcionalidad? Déjanos tu comentario.</p>
                                             <textarea 
                                                 rows={4}
                                                 placeholder="Ej. Me gustaría poder exportar mi informe en PDF..."
-                                                className="w-full p-3 rounded-lg border border-purple-200 focus:ring-2 focus:ring-purple-500 outline-none text-sm resize-none"
+                                                className="w-full p-3 rounded-lg border border-[#F8DDD2] focus:ring-2 focus:ring-[#E07A5F] outline-none text-sm resize-none"
                                             ></textarea>
                                             <div className="mt-3 flex justify-end">
                                                 <Button variant="primary">Enviar Feedback</Button>
@@ -249,13 +249,13 @@ export const UserSettingsModal: React.FC<UserSettingsModalProps> = ({ isOpen, on
                                     </div>
                                     
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4 border-t border-slate-200">
-                                        <button className="p-4 border border-slate-200 rounded-xl text-left hover:border-purple-300 hover:shadow-md transition-all group">
-                                            <FileText className="text-slate-400 group-hover:text-purple-500 mb-2" size={24} />
+                                        <button className="p-4 border border-slate-200 rounded-xl text-left hover:border-[#EFA98F] hover:shadow-md transition-all group">
+                                            <FileText className="text-slate-400 group-hover:text-[#E07A5F] mb-2" size={24} />
                                             <h4 className="font-semibold text-slate-800">Centro de Ayuda</h4>
                                             <p className="text-xs text-slate-500 mt-1">Lee nuestros tutoriales y artículos sobre el Eneagrama.</p>
                                         </button>
-                                        <button className="p-4 border border-slate-200 rounded-xl text-left hover:border-purple-300 hover:shadow-md transition-all group">
-                                            <MessageSquare className="text-slate-400 group-hover:text-purple-500 mb-2" size={24} />
+                                        <button className="p-4 border border-slate-200 rounded-xl text-left hover:border-[#EFA98F] hover:shadow-md transition-all group">
+                                            <MessageSquare className="text-slate-400 group-hover:text-[#E07A5F] mb-2" size={24} />
                                             <h4 className="font-semibold text-slate-800">Contactar Soporte</h4>
                                             <p className="text-xs text-slate-500 mt-1">Escríbenos directamente si tienes problemas con tu cuenta.</p>
                                         </button>

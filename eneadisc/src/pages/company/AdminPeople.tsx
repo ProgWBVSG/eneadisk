@@ -36,7 +36,7 @@ export const AdminPeople: React.FC = () => {
   useEffect(() => { load(); }, [load]);
 
   if (loading) {
-    return <div className="p-8 flex flex-col items-center justify-center min-h-[400px]"><div className="h-10 w-10 animate-spin rounded-full border-4 border-purple-600 border-t-transparent mb-4" /><p className="text-slate-500 text-sm">Cargando tu equipo...</p></div>;
+    return <div className="p-8 flex flex-col items-center justify-center min-h-[400px]"><div className="h-10 w-10 animate-spin rounded-full border-4 border-[#E07A5F] border-t-transparent mb-4" /><p className="text-slate-500 text-sm">Cargando tu equipo...</p></div>;
   }
 
   if (selected) {
@@ -50,7 +50,7 @@ export const AdminPeople: React.FC = () => {
   return (
     <div className="p-4 md:p-8 max-w-6xl mx-auto">
       <div className="mb-6">
-        <h1 className="text-3xl font-bold text-slate-900 mb-1 flex items-center gap-3"><Users className="text-purple-600" size={32} /> Personas</h1>
+        <h1 className="text-3xl font-bold text-slate-900 mb-1 flex items-center gap-3"><Users className="text-[#C9624A]" size={32} /> Personas</h1>
         <p className="text-slate-600">Gestioná a cada persona de tu equipo de forma individual</p>
       </div>
 
@@ -76,7 +76,7 @@ export const AdminPeople: React.FC = () => {
       <div className="relative mb-4">
         <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
         <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Buscar persona..."
-          className="w-full pl-10 pr-4 py-2.5 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-purple-500 outline-none" />
+          className="w-full pl-10 pr-4 py-2.5 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-[#E07A5F] outline-none" />
       </div>
 
       {people.length === 0 ? (
@@ -92,7 +92,7 @@ export const AdminPeople: React.FC = () => {
             const risk = RISK_CONFIG[p.risk];
             return (
               <button key={p.id} onClick={() => setSelected(p)}
-                className="bg-white border border-slate-200 rounded-xl p-5 text-left hover:shadow-md hover:border-purple-300 transition-all">
+                className="bg-white border border-slate-200 rounded-xl p-5 text-left hover:shadow-md hover:border-[#EFA98F] transition-all">
                 <div className="flex items-start gap-3">
                   <div className="w-12 h-12 rounded-full flex items-center justify-center text-white font-bold text-lg shrink-0"
                     style={{ background: ct ? `linear-gradient(135deg, ${ct.color}, ${ct.color}cc)` : 'linear-gradient(135deg,#94a3b8,#64748b)' }}>
@@ -185,7 +185,7 @@ const PersonDetail: React.FC<{ person: EmployeeOverview; companyId: string; onBa
       </div>
 
       {/* Rol y liderazgo (organigrama) */}
-      <Card icon={<Network className="text-purple-600" size={22} />} title="Rol y liderazgo" subtitle="Definí la posición de esta persona en el organigrama">
+      <Card icon={<Network className="text-[#C9624A]" size={22} />} title="Rol y liderazgo" subtitle="Definí la posición de esta persona en el organigrama">
         <div className="flex items-center justify-between gap-4 mb-4 flex-wrap">
           <div className="flex items-center gap-2">
             <span className="text-sm text-slate-600">Rol actual:</span>
@@ -296,11 +296,11 @@ const PersonDetail: React.FC<{ person: EmployeeOverview; companyId: string; onBa
       </Card>
 
       {/* Notas de 1-on-1 */}
-      <Card icon={<Heart className="text-purple-600" size={22} />} title="Notas de 1-on-1" subtitle="Registrá tus reuniones y seguimiento con esta persona">
+      <Card icon={<Heart className="text-[#C9624A]" size={22} />} title="Notas de 1-on-1" subtitle="Registrá tus reuniones y seguimiento con esta persona">
         <div className="flex gap-2 mb-4">
           <input value={newNote} onChange={(e) => setNewNote(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && handleAddNote()}
             placeholder="Ej: Hablamos de su carga de trabajo, quiere más proyectos creativos..."
-            className="flex-1 px-4 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-purple-500 outline-none" />
+            className="flex-1 px-4 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-[#E07A5F] outline-none" />
           <button onClick={handleAddNote} className="px-4 py-2 bg-[#E07A5F] text-white rounded-lg text-sm font-medium hover:bg-[#C9624A] flex items-center gap-1"><Plus size={16} /> Agregar</button>
         </div>
         {notes.length === 0 ? <p className="text-sm text-slate-400 text-center py-2">Sin notas todavía.</p> : (

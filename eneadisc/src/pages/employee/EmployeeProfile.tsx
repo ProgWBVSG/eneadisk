@@ -27,7 +27,7 @@ export const EmployeeProfile: React.FC = () => {
     return (
       <div className="p-8 flex items-center justify-center min-h-screen">
         <div className="text-center max-w-md bg-white p-8 rounded-xl shadow-lg">
-          <Lock size={64} className="mx-auto text-purple-600 mb-4" />
+          <Lock size={64} className="mx-auto text-[#C9624A] mb-4" />
           <h2 className="text-2xl font-bold text-slate-900 mb-4">Completá tu Perfil</h2>
           <p className="text-slate-600 mb-6">
             Para acceder a todas las funcionalidades, primero completá el cuestionario de Eneagrama.
@@ -81,7 +81,7 @@ export const EmployeeProfile: React.FC = () => {
       <div className="flex justify-end mb-2">
         <button
           onClick={() => setForceRunTutorial(true)}
-          className="flex items-center gap-1 text-xs text-slate-400 hover:text-purple-600 transition-colors"
+          className="flex items-center gap-1 text-xs text-slate-400 hover:text-[#C9624A] transition-colors"
         >
           <HelpCircle size={14} /> Ver tutorial
         </button>
@@ -175,14 +175,14 @@ export const EmployeeProfile: React.FC = () => {
           {wp && (
             <div className="bg-white rounded-xl p-6 shadow-md">
               <div className="flex items-center gap-3 mb-4">
-                <Sparkles className="text-purple-600" size={24} />
+                <Sparkles className="text-[#C9624A]" size={24} />
                 <h3 className="text-xl font-bold text-slate-900">Dónde Brillás</h3>
               </div>
               <p className="text-sm text-slate-500 mb-4">Tareas y roles donde tu tipo destaca naturalmente</p>
               <div className="grid sm:grid-cols-2 gap-2">
                 {wp.shinesAt.map((s, i) => (
-                  <div key={i} className="flex items-center gap-2 px-3 py-2 bg-purple-50 rounded-lg text-sm text-purple-800">
-                    <Sparkles size={14} className="text-purple-500 shrink-0" /> {s}
+                  <div key={i} className="flex items-center gap-2 px-3 py-2 bg-[#FCF1EC] rounded-lg text-sm text-[#A84C37]">
+                    <Sparkles size={14} className="text-[#E07A5F] shrink-0" /> {s}
                   </div>
                 ))}
               </div>
@@ -220,7 +220,7 @@ export const EmployeeProfile: React.FC = () => {
           {RESOURCES[typeId] && (
             <div className="bg-white rounded-xl p-6 shadow-md">
               <div className="flex items-center gap-3 mb-1">
-                <Dumbbell className="text-purple-600" size={24} />
+                <Dumbbell className="text-[#C9624A]" size={24} />
                 <h3 className="text-xl font-bold text-slate-900">Ejercicios para crecer</h3>
               </div>
               <p className="text-sm text-slate-500 mb-4">Prácticas concretas pensadas para tu tipo</p>
@@ -239,7 +239,7 @@ export const EmployeeProfile: React.FC = () => {
           {/* Compatibilidad */}
           <div id="tour-emp-profile-compatibility" className="bg-white rounded-xl p-6 shadow-md">
             <div className="flex items-center gap-3 mb-4">
-              <Users className="text-purple-600" size={24} />
+              <Users className="text-[#C9624A]" size={24} />
               <h3 className="text-xl font-bold text-slate-900">Trabajás Mejor Con</h3>
             </div>
             <div className="flex flex-wrap gap-3">

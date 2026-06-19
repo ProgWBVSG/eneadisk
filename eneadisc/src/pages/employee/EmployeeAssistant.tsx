@@ -207,7 +207,7 @@ Estoy aquí para ayudarte a:
                         {showSuggestions && messages.length <= 1 && (
                             <div className="mb-6 fade-in">
                                 <div className="flex items-center gap-2 mb-3 px-2">
-                                    <Sparkles className="w-4 h-4 text-purple-600" />
+                                    <Sparkles className="w-4 h-4 text-[#C9624A]" />
                                     <span className="text-sm font-semibold text-slate-700">Para empezar:</span>
                                 </div>
                                 <SuggestedPrompts
@@ -242,14 +242,14 @@ Estoy aquí para ayudarte a:
                                 onKeyPress={handleKeyPress}
                                 disabled={isLoading}
                                 placeholder="Pídele consejo a tu coach sobre tus interacciones o motivación..."
-                                className="w-full bg-slate-50 border border-slate-200 text-slate-800 rounded-xl px-4 py-3 pr-14 focus:ring-2 focus:ring-purple-500 focus:outline-none resize-none hide-scrollbar transition-all"
+                                className="w-full bg-slate-50 border border-slate-200 text-slate-800 rounded-xl px-4 py-3 pr-14 focus:ring-2 focus:ring-[#E07A5F] focus:outline-none resize-none hide-scrollbar transition-all"
                                 rows={Math.max(1, Math.min(4, input.split('\\n').length))}
                                 style={{ maxHeight: '120px' }}
                             />
                             <button
                                 type="submit"
                                 disabled={!input.trim() || isLoading}
-                                className="absolute right-2 bottom-2 p-2 bg-purple-600 hover:bg-[#C9624A] text-white rounded-lg disabled:opacity-50 disabled:bg-slate-300 transition-colors"
+                                className="absolute right-2 bottom-2 p-2 bg-[#E07A5F] hover:bg-[#C9624A] text-white rounded-lg disabled:opacity-50 disabled:bg-slate-300 transition-colors"
                             >
                                 {isLoading ? <Sparkles className="w-5 h-5 animate-spin" /> : <Send className="w-5 h-5" />}
                             </button>

@@ -150,7 +150,7 @@ export const EmployeeTasks: React.FC = () => {
                     <div className="flex items-center gap-3">
                         <button
                             onClick={() => setForceRunTutorial(true)}
-                            className="flex items-center gap-1 text-xs text-slate-400 hover:text-purple-600 transition-colors"
+                            className="flex items-center gap-1 text-xs text-slate-400 hover:text-[#C9624A] transition-colors"
                         >
                             <HelpCircle size={14} />
                             Ver tutorial
@@ -189,9 +189,9 @@ export const EmployeeTasks: React.FC = () => {
                         <div className="text-sm text-green-700 mb-1">Completadas</div>
                         <div className="text-2xl font-bold text-green-600">{stats.completed}</div>
                     </div>
-                    <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
-                        <div className="text-sm text-purple-700 mb-1">En Progreso</div>
-                        <div className="text-2xl font-bold text-purple-600">{stats.inProgress}</div>
+                    <div className="bg-[#FCF1EC] border border-[#F8DDD2] rounded-lg p-4">
+                        <div className="text-sm text-[#A84C37] mb-1">En Progreso</div>
+                        <div className="text-2xl font-bold text-[#C9624A]">{stats.inProgress}</div>
                     </div>
                     <div className="bg-orange-50 border border-orange-200 rounded-lg p-4">
                         <div className="text-sm text-orange-700 mb-1">Pendientes</div>
@@ -381,7 +381,7 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onToggleComplete, onToggleInP
 
                         {/* Status Badge */}
                         {task.status === 'in_progress' && (
-                            <span className="px-2 py-1 bg-purple-100 text-purple-700 rounded-full flex items-center gap-1">
+                            <span className="px-2 py-1 bg-[#FCF1EC] text-[#A84C37] rounded-full flex items-center gap-1">
                                 <Clock className="w-3 h-3" />
                                 En Progreso
                             </span>
