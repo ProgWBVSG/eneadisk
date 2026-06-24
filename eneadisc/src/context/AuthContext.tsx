@@ -22,7 +22,7 @@ interface AuthContextType {
   session: Session | null;
   isAuthenticated: boolean;
   isLoading: boolean;
-  login: (email: string, password: string) => Promise<{ error: string | null }>;
+  login: (email: string, password: string) => Promise<{ error: string | null; needsConfirmation?: boolean }>;
   logout: () => Promise<void>;
   refreshUser: () => Promise<void>;
   signInWithGoogle: (
@@ -183,7 +183,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     };
   }, []);
 
-  const login = async (email: string, password: string): Promise<{ error: string | null }> => {
+  const login = async (email: string, password: string): Promise<{ error: string | null; needsConfirmation?: boolean }> => {
     // Mini-DB Vercel Intercept
     if (password === 'vercel123') {
       let mockUser: AppUser | null = null;
@@ -202,8 +202,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     const { data, error } = await supabase.auth.signInWithPassword({ email, password });
     if (error) {
-      if (error.message.includes('Invalid login credentials')) {
+      const msg = error.message.toLowerCase();
+      if (msg.includes('invalid login credentials')) {
         return { error: 'Email o contraseña incorrectos' };
+      }
+      // Cuenta creada pero email nunca confirmado → dead-end clásico.
+      // Devolvemos un flag para que la pantalla ofrezca reenviar el código.
+      if (msg.includes('email not confirmed') || msg.includes('not confirmed')) {
+        return {
+          error: 'Tu cuenta todavía no está confirmada. Te reenviamos un código a tu email.',
+          needsConfirmation: true,
+        };
       }
       return { error: error.message };
     }

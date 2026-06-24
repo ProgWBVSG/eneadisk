@@ -7,6 +7,7 @@ import { Button } from '../../../components/ui/Button';
 import { Input } from '../../../components/ui/Input';
 import { Building2, ChevronLeft } from 'lucide-react';
 import { useAuth } from '../../../context/AuthContext';
+import { supabase } from '../../../lib/supabase';
 
 const GoogleIcon = () => (
   <svg viewBox="0 0 24 24" width="18" height="18" className="mr-2 shrink-0">
@@ -29,6 +30,8 @@ export const CompanyLogin: React.FC = () => {
   const { login, signInWithGoogle } = useAuth();
   const [serverError, setServerError] = useState<string | null>(null);
   const [googleLoading, setGoogleLoading] = useState(false);
+  const [unconfirmedEmail, setUnconfirmedEmail] = useState<string | null>(null);
+  const [resendMsg, setResendMsg] = useState<string | null>(null);
 
   const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm<LoginData>({
     resolver: zodResolver(loginSchema),
@@ -36,12 +39,22 @@ export const CompanyLogin: React.FC = () => {
 
   const onSubmit = async (data: LoginData) => {
     setServerError(null);
-    const { error } = await login(data.email, data.password);
+    setResendMsg(null);
+    setUnconfirmedEmail(null);
+    const { error, needsConfirmation } = await login(data.email, data.password);
     if (error) {
       setServerError(error);
+      if (needsConfirmation) setUnconfirmedEmail(data.email);
       return;
     }
     navigate('/dashboard/company');
+  };
+
+  const handleResendConfirmation = async () => {
+    if (!unconfirmedEmail) return;
+    setResendMsg('Enviando...');
+    const { error } = await supabase.auth.resend({ type: 'signup', email: unconfirmedEmail });
+    setResendMsg(error ? 'No se pudo reenviar. Intentá en unos minutos.' : '✓ Código reenviado. Revisá tu email (y la carpeta de spam).');
   };
 
   const handleGoogle = async () => {
@@ -85,6 +98,18 @@ export const CompanyLogin: React.FC = () => {
             </button>
           </div>
           {serverError && <p className="text-sm text-red-500 text-center">{serverError}</p>}
+          {unconfirmedEmail && (
+            <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 text-center space-y-2">
+              <button
+                type="button"
+                onClick={handleResendConfirmation}
+                className="text-sm font-medium text-amber-700 hover:text-amber-900 underline"
+              >
+                Reenviar email de confirmación
+              </button>
+              {resendMsg && <p className="text-xs text-amber-700">{resendMsg}</p>}
+            </div>
+          )}
           <Button type="submit" className="w-full" size="lg" isLoading={isSubmitting}>
             Ingresar
           </Button>
