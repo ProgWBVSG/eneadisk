@@ -1,8 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import { Home, TrendingUp, Bot, CheckSquare, Users, ClipboardCheck, BarChart3, BookOpen, CreditCard, LogOut, Menu, X, Settings, UserCircle, Award, UserCog } from 'lucide-react';
+import { Home, TrendingUp, Bot, CheckSquare, Users, ClipboardCheck, BarChart3, BookOpen, CreditCard, LogOut, Menu, X, Settings, UserCircle, Award, UserCog, MessageSquare } from 'lucide-react';
 import { UserSettingsModal } from '../settings/UserSettingsModal';
+import { getTotalUnread, subscribeToAllMessages } from '../../utils/chat';
+
+const EMPLOYEE_CHAT = '/dashboard/employee/chat';
+const ADMIN_CHAT = '/dashboard/company/chat';
+
 export const Sidebar: React.FC = () => {
     const navigate = useNavigate();
     const location = useLocation();
@@ -10,6 +15,7 @@ export const Sidebar: React.FC = () => {
     const [isMobileOpen, setIsMobileOpen] = useState(false);
     const [isSettingsOpen, setIsSettingsOpen] = useState(false);
     const [avatarUrl, setAvatarUrl] = useState<string | null>(localStorage.getItem('userAvatar'));
+    const [unread, setUnread] = useState(0);
 
     useEffect(() => {
         const handleAvatarChange = () => {
@@ -18,6 +24,28 @@ export const Sidebar: React.FC = () => {
         window.addEventListener('avatarChanged', handleAvatarChange);
         return () => window.removeEventListener('avatarChanged', handleAvatarChange);
     }, []);
+
+    // Badge de mensajes no leídos (en vivo)
+    useEffect(() => {
+        if (!user) return;
+        let active = true;
+        const refresh = () => getTotalUnread().then((n) => { if (active) setUnread(n); }).catch(() => {});
+        refresh();
+        const unsub = subscribeToAllMessages(refresh);
+        // refrescar también al volver a la pestaña / navegar
+        const onFocus = () => refresh();
+        window.addEventListener('focus', onFocus);
+        return () => { active = false; unsub(); window.removeEventListener('focus', onFocus); };
+    }, [user]);
+
+    // Al entrar a la página de chat, bajamos el badge (la propia página marca leído)
+    useEffect(() => {
+        if (location.pathname === EMPLOYEE_CHAT || location.pathname === ADMIN_CHAT) {
+            const t = setTimeout(() => getTotalUnread().then(setUnread).catch(() => {}), 800);
+            return () => clearTimeout(t);
+        }
+    }, [location.pathname]);
+
     const isAdmin = user?.role === 'company_admin';
     const isSupervisor = user?.role === 'supervisor';
 
@@ -26,6 +54,7 @@ export const Sidebar: React.FC = () => {
         { icon: TrendingUp, label: 'Mi Progreso', path: '/dashboard/employee/progreso' },
         { icon: Bot, label: 'Mi Asistente Personal', path: '/dashboard/employee/asistente' },
         { icon: CheckSquare, label: 'Mis Tareas', path: '/dashboard/employee/tareas' },
+        { icon: MessageSquare, label: 'Mensajes', path: EMPLOYEE_CHAT },
         { icon: Users, label: 'Mi Equipo', path: '/dashboard/employee/equipo' },
         { icon: ClipboardCheck, label: 'Check-ins', path: '/dashboard/employee/checkins' },
     ];
@@ -36,6 +65,7 @@ export const Sidebar: React.FC = () => {
     const adminItems = [
         { icon: Home, label: 'Panel Principal', path: '/dashboard/company' },
         { icon: UserCircle, label: 'Personas', path: '/dashboard/company/personas' },
+        { icon: MessageSquare, label: 'Mensajes', path: ADMIN_CHAT },
         { icon: Users, label: 'Gestión de Equipos', path: '/dashboard/company/equipos' },
         { icon: Award, label: 'Reconocimientos', path: '/dashboard/company/reconocimientos' },
         { icon: BarChart3, label: 'Análisis y Gráficos', path: '/dashboard/company/analisis' },
@@ -87,6 +117,8 @@ export const Sidebar: React.FC = () => {
                         {menuItems.map((item) => {
                             const Icon = item.icon;
                             const isActive = location.pathname === item.path;
+                            const isChat = item.path === EMPLOYEE_CHAT || item.path === ADMIN_CHAT;
+                            const showBadge = isChat && unread > 0 && !isActive;
 
                             return (
                                 <li key={item.path}>
@@ -102,6 +134,11 @@ export const Sidebar: React.FC = () => {
                                     >
                                         <Icon size={20} />
                                         <span className="text-sm">{item.label}</span>
+                                        {showBadge && (
+                                            <span className="ml-auto min-w-[20px] h-5 px-1.5 rounded-full bg-[#E07A5F] text-white text-[11px] font-bold flex items-center justify-center">
+                                                {unread > 9 ? '9+' : unread}
+                                            </span>
+                                        )}
                                     </button>
                                 </li>
                             );
