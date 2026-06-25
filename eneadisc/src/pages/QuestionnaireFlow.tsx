@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { QUESTIONNAIRE } from '../data/questionnaireData';
+import { QUICK_QUESTIONS, DEEP_QUESTIONS } from '../data/questionnaireData';
 import {
     calculateEnneagram, persistEnneagramType, saveLocalResult,
     type QuestionnaireResponse, type EnneagramResult,
@@ -14,6 +14,7 @@ export const QuestionnaireFlow: React.FC = () => {
     const navigate = useNavigate();
     const { user, refreshUser } = useAuth();
 
+    const [mode, setMode] = useState<'quick' | 'deep'>('quick');
     const [phase, setPhase] = useState<'quiz' | 'result'>('quiz');
     const [currentIndex, setCurrentIndex] = useState(0);
     const [answers, setAnswers] = useState<Record<number, number>>({});
@@ -22,10 +23,11 @@ export const QuestionnaireFlow: React.FC = () => {
     const [saving, setSaving] = useState(false);
     const [saveError, setSaveError] = useState<string | null>(null);
 
-    const question = QUESTIONNAIRE[currentIndex];
+    const questions = mode === 'deep' ? DEEP_QUESTIONS : QUICK_QUESTIONS;
+    const question = questions[currentIndex];
     const selectedType = answers[question.id] ?? null;
-    const progress = ((currentIndex + 1) / QUESTIONNAIRE.length) * 100;
-    const isLast = currentIndex === QUESTIONNAIRE.length - 1;
+    const progress = ((currentIndex + 1) / questions.length) * 100;
+    const isLast = currentIndex === questions.length - 1;
 
     const pick = (type: number) => setAnswers((prev) => ({ ...prev, [question.id]: type }));
 
@@ -36,9 +38,10 @@ export const QuestionnaireFlow: React.FC = () => {
             return;
         }
         // Finalizar → calcular
-        const responses: QuestionnaireResponse[] = QUESTIONNAIRE.map((q) => ({
+        const responses: QuestionnaireResponse[] = questions.map((q) => ({
             questionId: q.id,
             selectedType: answers[q.id],
+            weight: q.weight,
         }));
         const res = calculateEnneagram(responses);
         if (user) saveLocalResult(user.id, res);
@@ -51,7 +54,10 @@ export const QuestionnaireFlow: React.FC = () => {
         if (currentIndex > 0) setCurrentIndex((i) => i - 1);
     };
 
-    const restart = () => {
+    // Rehacer: si venías del test rápido, pasás al PROFUNDO (20) para más
+    // certeza; si ya estabas en el profundo, lo repetís.
+    const restart = (nextMode: 'quick' | 'deep') => {
+        setMode(nextMode);
         setAnswers({});
         setCurrentIndex(0);
         setResult(null);
@@ -143,10 +149,11 @@ export const QuestionnaireFlow: React.FC = () => {
                         <div className="flex flex-col sm:flex-row gap-3">
                             <Button
                                 variant="outline"
-                                onClick={restart}
+                                onClick={() => restart('deep')}
                                 className="sm:flex-1"
                             >
-                                <RotateCcw className="mr-2 h-4 w-4" /> No me identifico, rehacer
+                                <RotateCcw className="mr-2 h-4 w-4" />
+                                {mode === 'quick' ? 'No me identifico · test completo (20)' : 'Rehacer test completo'}
                             </Button>
                             <Button
                                 onClick={confirm}
@@ -172,8 +179,10 @@ export const QuestionnaireFlow: React.FC = () => {
                 {/* Progreso */}
                 <div className="mb-8">
                     <div className="flex justify-between items-center mb-2">
-                        <h2 className="text-sm font-medium text-[#8A8079]">Descubrí tu Eneatipo</h2>
-                        <span className="text-sm text-[#8A8079]">{currentIndex + 1} de {QUESTIONNAIRE.length}</span>
+                        <h2 className="text-sm font-medium text-[#8A8079]">
+                            {mode === 'deep' ? 'Test completo · Eneatipo' : 'Descubrí tu Eneatipo'}
+                        </h2>
+                        <span className="text-sm text-[#8A8079]">{currentIndex + 1} de {questions.length}</span>
                     </div>
                     <div className="h-2 bg-white rounded-full overflow-hidden shadow-inner">
                         <div

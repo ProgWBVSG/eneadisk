@@ -1,11 +1,13 @@
 // ============================================================
-// Cuestionario de identificación de eneatipo — 10 preguntas
+// Cuestionario de identificación de eneatipo
 // ============================================================
 // Afirmaciones AUTÉNTICAS del instrumento de eneascoaching
 // (banco de 270, 30 por tipo). Cada pregunta presenta 9 frases
 // — una por eneatipo — y la persona elige la que más la representa.
+//   • QUICK_QUESTIONS  → test rápido (10) al crear la cuenta.
+//   • DEEP_QUESTIONS   → test profundo (20) al rehacer, más certero.
 // Opciones mezcladas (seed fija) para evitar sesgo de posición.
-// Metodología y curado: skill `enneagram-expert`.
+// Generado desde el Excel + curado de la skill `enneagram-expert`.
 // ============================================================
 
 export interface QuestionOption { text: string; type: number; }
@@ -17,7 +19,7 @@ export interface Question {
     options: QuestionOption[];
 }
 
-export const QUESTIONNAIRE: Question[] = [
+export const QUICK_QUESTIONS: Question[] = [
     {
         id: 1,
         text: "Elegí la frase con la que MÁS te identificás:",
@@ -179,3 +181,329 @@ export const QUESTIONNAIRE: Question[] = [
         ],
     },
 ];
+
+export const DEEP_QUESTIONS: Question[] = [
+    {
+        id: 1,
+        text: "Elegí la frase con la que MÁS te identificás:",
+        weight: 1.0,
+        options: [
+            { text: "Prefiero aislarme para pensar lo que siento.", type: 5 },
+            { text: "Me gusta intimar, servir, entregar.", type: 2 },
+            { text: "Me gusta proyectar, lograr éxito, triunfar.", type: 3 },
+            { text: "Me cuesta relajarme y estar alegre.", type: 1 },
+            { text: "No grito, mi tono de voz es fuerte.", type: 8 },
+            { text: "Me precio de ser una persona estable.", type: 9 },
+            { text: "Me gusta casi todo lo que encuentro.", type: 7 },
+            { text: "Con frecuencia las dudas me invaden.", type: 6 },
+            { text: "Necesito mi tiempo para estar conmigo.", type: 4 },
+        ],
+    },
+    {
+        id: 2,
+        text: "¿Cuál de estas te describe mejor?",
+        weight: 1.0,
+        options: [
+            { text: "Me gusta que la gente necesite de mí.", type: 2 },
+            { text: "Me molesta el fracaso, eso es para los débiles.", type: 3 },
+            { text: "Me gusta crear, soñar, vibrar la vida.", type: 4 },
+            { text: "Me gusta ordenar, organizar, planificar.", type: 1 },
+            { text: "Soy una persona libre, nada me detiene.", type: 8 },
+            { text: "Puedo conciliar para que reine la armonía.", type: 9 },
+            { text: "Suelo proyectar mis miedos a los demás.", type: 6 },
+            { text: "Me gusta disfrutar y que todos disfrutemos.", type: 7 },
+            { text: "Me fastidian las personas que no son lógicas.", type: 5 },
+        ],
+    },
+    {
+        id: 3,
+        text: "¿Con cuál te sentís más identificado/a?",
+        weight: 1.0,
+        options: [
+            { text: "Soy sumamente competente, mi vida es interesante.", type: 3 },
+            { text: "Puedo encontrar lo positivo de cada situación.", type: 7 },
+            { text: "A veces soy una persona demasiado generosa.", type: 2 },
+            { text: "Me gusta acompañar, sostener, colaborar.", type: 6 },
+            { text: "No me gusta pensar que yo pueda ser vulgar.", type: 4 },
+            { text: "Me encanta disponer de tiempo libre para descansar.", type: 9 },
+            { text: "Me resulta fácil expresar mi insatisfacción.", type: 8 },
+            { text: "Me esfuerzo mucho por corregir mis faltas.", type: 1 },
+            { text: "Me gusta sintetizar y reunir ideas diferentes.", type: 5 },
+        ],
+    },
+    {
+        id: 4,
+        text: "Elegí la que más va con vos:",
+        weight: 1.0,
+        options: [
+            { text: "Me siento bien teniendo todo bajo control.", type: 1 },
+            { text: "Puedo percibir fácilmente lo que la gente necesita.", type: 2 },
+            { text: "No me asusta enfrentarme con otros y lo hago.", type: 8 },
+            { text: "Es muy importante para mi la lealtad al grupo.", type: 6 },
+            { text: "Tiendo a ser sensible y a permanecer en mi mundo.", type: 4 },
+            { text: "Siento orgullo de ser una persona objetiva y clara.", type: 5 },
+            { text: "Me considero una persona simple, serena, equilibrada.", type: 9 },
+            { text: "Mi teoría es que si algo es bueno, más es mejor.", type: 7 },
+            { text: "Me gusta tener libertad para poder hacer más cosas.", type: 3 },
+        ],
+    },
+    {
+        id: 5,
+        text: "¿Cuál refleja mejor cómo sos?",
+        weight: 1.0,
+        options: [
+            { text: "Si algo no está bien, realmente me molesta.", type: 1 },
+            { text: "La gente suele pensar que soy el alma de las reuniones.", type: 7 },
+            { text: "Me gusta que me respeten y me quieran tal como soy.", type: 4 },
+            { text: "Me gusta que me digan que mi ayuda fue muy importante.", type: 2 },
+            { text: "Soy una persona tranquila y pacífica, estoy bien así.", type: 9 },
+            { text: "Me gusta liderar, defender, luchar y proteger.", type: 8 },
+            { text: "Suelo juzgar a las personas por su capacidad de triunfar.", type: 3 },
+            { text: "Me molesta no entender algo, me hace sentir ignorante.", type: 5 },
+            { text: "Me identifico con mi grupo y desconfío de los demás.", type: 6 },
+        ],
+    },
+    {
+        id: 6,
+        text: "Marcá la frase que más te representa:",
+        weight: 1.0,
+        options: [
+            { text: "A veces soy una persona dispersa y curiosa, todo me interesa.", type: 7 },
+            { text: "No puedo dejar de pensar en las metas que me he propuesto.", type: 3 },
+            { text: "Puedo cumplir fielmente, soy leal, obediente y responsable.", type: 6 },
+            { text: "Necesito contar con información, entender de lo que se habla.", type: 5 },
+            { text: "Protejo a quienes se encuentran bajo mi autoridad.", type: 8 },
+            { text: "Me gusta que las personas me compartan lo que sienten.", type: 2 },
+            { text: "Tiendo a cuidar los detalles, el orden y la precisión.", type: 1 },
+            { text: "Soy una persona que casi siempre está calmada y tranquila.", type: 9 },
+            { text: "Aun en la rutina diaria, me gusta poner mi impronta personal.", type: 4 },
+        ],
+    },
+    {
+        id: 7,
+        text: "¿Cuál sentís más tuya?",
+        weight: 1.0,
+        options: [
+            { text: "Necesito vivir intensamente, sentir la adrenalina.", type: 8 },
+            { text: "Me considero una persona sensible, auténtica, especial y profunda.", type: 4 },
+            { text: "Suelo pasar de una cosa a otra, en vez de profundizar en una sola.", type: 7 },
+            { text: "Hay muchas personas que dependen de mi ayuda y generosidad.", type: 2 },
+            { text: "Tiendo a ser una persona solitaria, me cuesta expresar mis emociones.", type: 5 },
+            { text: "Me gusta colaborar con los demás, ellos pueden fiarse de mí.", type: 6 },
+            { text: "Me enojo cuando los demás no escuchan lo que tengo para decirles.", type: 1 },
+            { text: "Prefiero hablar suavemente, sin exaltarme ni levantar la voz.", type: 9 },
+            { text: "Soy una persona buena para persuadir y movilizar a los demás.", type: 3 },
+        ],
+    },
+    {
+        id: 8,
+        text: "Elegí la que mejor te describe:",
+        weight: 1.0,
+        options: [
+            { text: "Me he inclinado a ser una persona muy emotiva y poco disciplinada.", type: 4 },
+            { text: "Me molesta equivocarme, no me gustan que me vean cometiendo errores.", type: 1 },
+            { text: "No puedo negar mi atención a alguien sin tener una buena excusa.", type: 2 },
+            { text: "Necesito estar motivado por algo trascendente para entrar en acción.", type: 9 },
+            { text: "Me gustaría que los demás estuviesen mejor dispuestos respecto a todo.", type: 7 },
+            { text: "No me gusta que me digan que me adapte o me conforme.", type: 8 },
+            { text: "Por naturaleza soy una persona reservada, introvertida, independiente.", type: 5 },
+            { text: "Soy consciente de las contradicciones y muy sensible a ellas.", type: 6 },
+            { text: "Vivo con cierta tensión porque me propongo demasiados objetivos.", type: 3 },
+        ],
+    },
+    {
+        id: 9,
+        text: "¿Con cuál te identificás más?",
+        weight: 1.0,
+        options: [
+            { text: "Me molesta lo rutinario y repetitivo, prefiero lo distinto y único.", type: 4 },
+            { text: "Me considero una persona inteligente, objetiva, racional, sabia y profunda.", type: 5 },
+            { text: "Se puede decir que soy una persona paciente, diplomática, conciliadora.", type: 9 },
+            { text: "Cuando me presentan a alguien, soy una persona entretenida y afectuosa.", type: 7 },
+            { text: "Me gusta cuidar a los demás, prestar atención a sus necesidades.", type: 2 },
+            { text: "Cuando se me pasa el enojo, ni me acuerdo lo que dije.", type: 8 },
+            { text: "No creo que yo haga algo extraordinario, soy una persona común.", type: 6 },
+            { text: "Otras personas me envidian por mi capacidad de hacer muchas cosas.", type: 3 },
+            { text: "No me gustan las improvisaciones, las considero una irresponsabilidad.", type: 1 },
+        ],
+    },
+    {
+        id: 10,
+        text: "¿Cuál va más con vos?",
+        weight: 1.0,
+        options: [
+            { text: "Me parece que el fin de una relación me afecta más que a la mayoría.", type: 4 },
+            { text: "Me gusta sentirme una persona juguetona, infantil, que se me vea alegre.", type: 7 },
+            { text: "Con frecuencia mis propias críticas y las de otros pululan en mi cabeza.", type: 1 },
+            { text: "Soy visto por los demás como una persona que logra lo que se propone.", type: 3 },
+            { text: "Me he dado cuenta que, frecuentemente, me catalogan como demasiado racional.", type: 5 },
+            { text: "Me duele mucho cuando mis amistades se reúnen y no me participan.", type: 2 },
+            { text: "Con frecuencia el parecer de los demás no me interesa.", type: 8 },
+            { text: "Me importa mucho lo que los otros puedan llegar a pensar de mí.", type: 6 },
+            { text: "No me gusta que me pidan una opinión cuando no estoy dispuesto a darla.", type: 9 },
+        ],
+    },
+    {
+        id: 11,
+        text: "Seguimos: ¿cuál te representa más?",
+        weight: 1.0,
+        options: [
+            { text: "Me doy cuenta fácilmente donde reside el poder en un grupo.", type: 8 },
+            { text: "Me encanta compartir mis anécdotas de los buenos momentos que he pasado.", type: 7 },
+            { text: "Necesito estar siempre en actividad, me hace sentir realmente con vida.", type: 3 },
+            { text: "Me es muy difícil ir en contra de lo dispuesto por la autoridad.", type: 6 },
+            { text: "A veces soy complaciente, aunque piensen que no me juego por una posición.", type: 9 },
+            { text: "A veces siento que no soy libre porque tengo que atender a los otros.", type: 2 },
+            { text: "Se puede decir que soy una persona cálida, introspectiva, intuitiva.", type: 4 },
+            { text: "Necesito que las cosas salgan como las había pensado, que se hagan bien.", type: 1 },
+            { text: "Cuando me enojo, pienso que las personas son ignorantes, poco profundas, etc.", type: 5 },
+        ],
+    },
+    {
+        id: 12,
+        text: "¿Con cuál te sentís más reflejado/a?",
+        weight: 1.0,
+        options: [
+            { text: "No me importa sacrificarme por los demás, con tal de hacerlos felices.", type: 2 },
+            { text: "A veces soy una persona muy impulsiva, impongo mis verdades.", type: 8 },
+            { text: "Soy una persona permisiva conmigo misma, hay pocas cosas que no disfrute.", type: 7 },
+            { text: "Me he inclinado a no imponerme ante los demás, evito entrar en conflictos.", type: 9 },
+            { text: "Necesito estar seguro, no me gustan los cambios, lo desconocido.", type: 6 },
+            { text: "Me gusta que las personas aprendan de mi y sepan agradecer mis consejos.", type: 1 },
+            { text: "Aunque deba tomar una decisión sencilla, necesito contar con toda la información.", type: 5 },
+            { text: "Me gusta que estén atentos a mis necesidades, pero cuando yo lo quiero.", type: 3 },
+            { text: "Me cuesta pensar sólo en las cosas positivas y alegres que he vivido.", type: 4 },
+        ],
+    },
+    {
+        id: 13,
+        text: "Elegí la frase más tuya:",
+        weight: 1.0,
+        options: [
+            { text: "Puedo luchar con convicción por lo que entiendo que es justo.", type: 8 },
+            { text: "Me han apreciado por mi inquebrantable espíritu y mi gran sentido del humor.", type: 7 },
+            { text: "Muchas veces no tengo palabras suficientes para poder expresar lo que siento.", type: 4 },
+            { text: "Yo se bien dónde tengo cada cosa, me molesta que las toquen o desacomoden.", type: 1 },
+            { text: "Me gusta estar en familia, que los míos estén cerca y protegidos.", type: 6 },
+            { text: "No me gusta estar en medio del baile, prefiero mirar desde un extremo de la barra.", type: 5 },
+            { text: "Siento que soy una persona apreciada por los demás a través de mis logros.", type: 3 },
+            { text: "Tiendo a quitar importancia a las cosas para que los demás se tranquilicen.", type: 9 },
+            { text: "Me comunico con mis amistades más a menudo de lo que ellas se comunican conmigo.", type: 2 },
+        ],
+    },
+    {
+        id: 14,
+        text: "¿Cuál describe mejor tu forma de ser?",
+        weight: 1.0,
+        options: [
+            { text: "Con frecuencia me enfado porque ni yo ni los demás hacemos mejor las cosas.", type: 1 },
+            { text: "Si tengo que elegir entre algo nuevo y algo conocido, tiendo a escoger lo nuevo.", type: 7 },
+            { text: "Mi entrega a los demás muchas veces ha repercutido en mi propia salud o bienestar.", type: 2 },
+            { text: "En cualquier juego, aunque sea sólo por diversión, siempre me gusta ganar.", type: 3 },
+            { text: "Me parece que siento el peligro y la amenaza más que otras personas.", type: 6 },
+            { text: "Muchas veces siento que no hay nadie como yo, otras que los demás son mejores.", type: 4 },
+            { text: "Me molestan que me presionen, prefiero gozar de la tranquilidad y comodidad.", type: 9 },
+            { text: "Me considero una persona fuerte, justa, independiente y enérgica.", type: 8 },
+            { text: "Se puede decir que soy una persona perceptiva, analítica, estudiosa y perseverante.", type: 5 },
+        ],
+    },
+    {
+        id: 15,
+        text: "¿Cuál sentís más cercana a vos?",
+        weight: 1.0,
+        options: [
+            { text: "Parece que me preocupo más que otros para que todo esté prolijo y ordenado.", type: 1 },
+            { text: "Necesito gran cantidad de espacio y de tiempos privados para estudiar y reflexionar.", type: 5 },
+            { text: "Necesito nuevas experiencias, nuevas sensaciones, no me gusta la rutina ni los problemas.", type: 7 },
+            { text: "A menudo hay personas que se me acercan pidiéndome que las conforte y las aconseje.", type: 2 },
+            { text: "Puedo arbitrar desapasionadamente, porque para mí las dos partes son iguales.", type: 9 },
+            { text: "Me gusta que me valoren y confíen en mí, que me digan qué esperan de mí.", type: 6 },
+            { text: "Me molesta cuando no puedo imponerme, son situaciones que me desbordan.", type: 8 },
+            { text: "Soy una persona propensa a la nostalgia, a la melancolía y a revivir el pasado.", type: 4 },
+            { text: "Me identifico tanto con mi trabajo o rol que hasta a veces me olvido de quién soy.", type: 3 },
+        ],
+    },
+    {
+        id: 16,
+        text: "Marcá la que más te identifica:",
+        weight: 1.0,
+        options: [
+            { text: "Se puede decir que soy una persona afectuosa, perceptiva, generosa, empática, atenta.", type: 2 },
+            { text: "A veces necesito dejar de lado alguna norma si ésta me impide llegar a mis objetivos.", type: 3 },
+            { text: "Generalmente, y hasta tener todo pensado, me lleva bastante tiempo empezar o hacer algo.", type: 5 },
+            { text: "Necesito tranquilidad, que nadie me apure, aunque mi calma pueda irritar a los demás.", type: 9 },
+            { text: "Mi deseo de atender mis necesidades personales ha repercutido negativamente en mis relaciones.", type: 4 },
+            { text: "Normalmente soy una persona demasiado intransigente y exigente con los demás.", type: 1 },
+            { text: "Suelo fijarme en el lado bueno de las cosas y dejar de lado el aspecto negativo de la vida.", type: 7 },
+            { text: "Si me conocen como soy, no entiendo por qué me provocan y me hacen enojar.", type: 8 },
+            { text: "Me pregunto a menudo si tengo suficiente valor para hacer lo que hay que hacer.", type: 6 },
+        ],
+    },
+    {
+        id: 17,
+        text: "¿Cuál de estas va más con vos?",
+        weight: 1.0,
+        options: [
+            { text: "Me gusta estar alegre, evitar las penas y el aburrimiento, aunque piensen que soy superficial.", type: 7 },
+            { text: "Me gusta dar para que me acepten, aunque tenga que postergar mis propias necesidades.", type: 2 },
+            { text: "Me doy cuenta de los puntos débiles de los demás y los ataco si me provocan.", type: 8 },
+            { text: "Se puede decir que soy una persona ética, confiable, productiva, ordenada y honesta.", type: 1 },
+            { text: "Me gusta expresar lo que siento en el arte, la originalidad, lo diferente y que de esa manera me reconozcan.", type: 4 },
+            { text: "Frecuentemente me encuentro evaluando a los demás como posibles amenazas para mí.", type: 6 },
+            { text: "Me gusta que me den tiempo para terminar las cosas que tengo que hacer y para tomar mis decisiones.", type: 9 },
+            { text: "Si surge un problema, primero lo estudio por mi cuenta y luego lo discuto con los demás.", type: 5 },
+            { text: "La vida es una oportunidad para alcanzar aquello que me propongo, aspiro a hacer mejor.", type: 3 },
+        ],
+    },
+    {
+        id: 18,
+        text: "Elegí la que mejor refleja cómo sos:",
+        weight: 1.0,
+        options: [
+            { text: "Me siento una persona impulsada a ayudar a otras personas, aunque ellas no me lo pidan.", type: 2 },
+            { text: "A menudo me siento atrás para observar a los demás, en lugar de involucrarme en la acción.", type: 5 },
+            { text: "Aunque me guste sostener la armonía, si veo que no puedo mediar en el conflicto me retiro de la escena.", type: 9 },
+            { text: "Me olvido fácilmente de lo que me produce dolor, no creo que sea bueno estar mucho tiempo triste.", type: 7 },
+            { text: "Me gusta demostrar que puedo hacer lo que me propongo, aunque me consuma todo el tiempo.", type: 3 },
+            { text: "Me gustan que me sigan cuando asumo retos en situaciones críticas, o están conmigo o en mi contra.", type: 8 },
+            { text: "Hacer lo correcto me lleva a sacrificar el tiempo que tendría para el ocio y al descanso.", type: 1 },
+            { text: "Mi vida es como una montaña rusa: a veces estoy en la cima y otras en un pozo, me cuesta equilibrar mis emociones.", type: 4 },
+            { text: "Me molesta cometer alguna transgresión, prefiero que esté claro lo que debo hacer.", type: 6 },
+        ],
+    },
+    {
+        id: 19,
+        text: "Casi terminamos: ¿cuál es más tuya?",
+        weight: 1.0,
+        options: [
+            { text: "Me gusta ser quien decide y defender a los que están conmigo, aunque tenga que enfrentar cualquier situación.", type: 8 },
+            { text: "Se puede decir que soy una persona entusiasta, curiosa, divertida, simpática, alegre y optimista.", type: 7 },
+            { text: "Aunque haya tomado una decisión, con frecuencia me replanteo si habrá sido la correcta.", type: 6 },
+            { text: "Me fastidia que me perturben.", type: 9 },
+            { text: "Me gusta hacer las cosas, aunque tenga que sobre exigirme, porque nadie las hace tan bien como yo.", type: 1 },
+            { text: "Me gusta que respeten mi soledad y mi distancia para poder procesar mis emociones y pensamientos.", type: 5 },
+            { text: "Se puede decir que soy una persona eficiente, enérgica, emprendedora, efectiva, exitosa.", type: 3 },
+            { text: "Me gusta crear cosas nuevas y obtener reconocimiento por mi originalidad, aunque tenga que superarme permanentemente.", type: 4 },
+            { text: "Necesito que se den cuenta de mis necesidades, así como yo estoy pendiente de los demás.", type: 2 },
+        ],
+    },
+    {
+        id: 20,
+        text: "Última: ¿con cuál te identificás más?",
+        weight: 1.0,
+        options: [
+            { text: "Me gusta rescatar a las personas que veo que están en apuros o en situaciones embarazosas.", type: 2 },
+            { text: "Me gusta tener objetivos claros y saber en qué punto del camino hacia ellos me encuentro.", type: 3 },
+            { text: "No me gusta perder tiempo con los demás cuando puedo estar leyendo un buen libro o navegando por Internet.", type: 5 },
+            { text: "Me molesta que me manden.", type: 8 },
+            { text: "Me gusta la buena compañía, el afecto, la independencia y las conversaciones estimulantes y graciosas.", type: 7 },
+            { text: "A veces tengo mucho temor, me da la sensación que siempre estoy luchando con mis miedos.", type: 6 },
+            { text: "Tiendo a no juzgar a las personas.", type: 9 },
+            { text: "Aunque generalmente no lo exprese, me irrito fácilmente cuando los demás no hacen lo que corresponde.", type: 1 },
+            { text: "Amo la libertad, me permite ser.", type: 4 },
+        ],
+    },
+];
+
+// Compat: el test por defecto es el rápido.
+export const QUESTIONNAIRE = QUICK_QUESTIONS;

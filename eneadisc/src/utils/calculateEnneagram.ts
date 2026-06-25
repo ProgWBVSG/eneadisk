@@ -10,11 +10,11 @@
 //     cuando el resultado es ambiguo ("no me siento identificado").
 // ============================================================
 import { supabase } from '../lib/supabase';
-import { QUESTIONNAIRE } from '../data/questionnaireData';
 
 export interface QuestionnaireResponse {
     questionId: number;
     selectedType: number;
+    weight?: number; // peso de la pregunta (default 1.0); permite test rápido o profundo
 }
 
 export interface RankedType {
@@ -26,37 +26,25 @@ export interface EnneagramResult {
     primaryType: number;
     ranking: RankedType[];      // ordenado de mayor a menor puntaje
     scores: Record<number, number>;
-    coreFearType: number | null; // tipo elegido en la pregunta de miedo
     ambiguous: boolean;          // true si 1º y 2º están muy cerca
     completedAt: string;
 }
 
-const WEIGHTS: Record<number, number> = Object.fromEntries(
-    QUESTIONNAIRE.map((q) => [q.id, q.weight])
-);
-const CORE_FEAR_QID = QUESTIONNAIRE.find((q) => q.isCoreFear)?.id ?? null;
-
 export const calculateEnneagram = (responses: QuestionnaireResponse[]): EnneagramResult => {
     const scores: Record<number, number> = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0, 7: 0, 8: 0, 9: 0 };
 
-    let coreFearType: number | null = null;
     responses.forEach((r) => {
         if (r.selectedType >= 1 && r.selectedType <= 9) {
-            scores[r.selectedType] += WEIGHTS[r.questionId] || 1.0;
-            if (CORE_FEAR_QID !== null && r.questionId === CORE_FEAR_QID) {
-                coreFearType = r.selectedType;
-            }
+            scores[r.selectedType] += r.weight ?? 1.0;
         }
     });
 
-    // Ranking determinístico: por puntaje desc; ante empate, el miedo
-    // central manda; si no, el tipo de menor número.
+    // Ranking determinístico: por puntaje desc; ante empate, el tipo de
+    // menor número (criterio estable y reproducible, nunca al azar).
     const ranking: RankedType[] = (Object.keys(scores).map(Number)).map((type) => ({ type, score: scores[type] }));
     ranking.sort((a, b) => {
         const diff = b.score - a.score;
         if (Math.abs(diff) > 0.001) return diff;
-        if (coreFearType === a.type) return -1;
-        if (coreFearType === b.type) return 1;
         return a.type - b.type;
     });
 
@@ -70,7 +58,6 @@ export const calculateEnneagram = (responses: QuestionnaireResponse[]): Enneagra
         primaryType,
         ranking,
         scores,
-        coreFearType,
         ambiguous,
         completedAt: new Date().toISOString(),
     };
