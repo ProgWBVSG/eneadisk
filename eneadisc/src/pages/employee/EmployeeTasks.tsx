@@ -14,6 +14,7 @@ import {
     CATEGORY_CONFIG
 } from '../../utils/tasks';
 import { EmployeeTasksTutorial } from '../../components/tutorial/EmployeeTasksTutorial';
+import { TaskCheckInModal } from '../../components/TaskCheckInModal';
 import { Lightbulb } from 'lucide-react';
 
 type FilterType = 'all' | 'personal' | 'team';
@@ -40,6 +41,7 @@ export const EmployeeTasks: React.FC = () => {
     const [showModal, setShowModal] = useState(false);
     const [editingTask, setEditingTask] = useState<Task | null>(null);
     const [forceRunTutorial, setForceRunTutorial] = useState(false);
+    const [checkInTask, setCheckInTask] = useState<Task | null>(null);
 
     // Demo team ID - in production this would come from user data
     const teamId = 'demo-team-marketing';
@@ -106,22 +108,29 @@ export const EmployeeTasks: React.FC = () => {
     const handleToggleComplete = async (task: Task) => {
         if (!user) return;
 
+        const wasCompleted = task.status === 'completed';
+
         if (isTeamTask(task)) {
             // Team tasks can be completed by employees
-            if (task.status === 'completed') {
+            if (wasCompleted) {
                 await updateTeamTask(task.teamId!, task.id, { status: 'pending', completedAt: undefined });
             } else {
                 await updateTeamTask(task.teamId!, task.id, { status: 'completed', completedAt: new Date().toISOString() });
             }
         } else {
             // Personal
-            if (task.status === 'completed') {
+            if (wasCompleted) {
                 await updateTask(user.id, task.id, { status: 'pending', completedAt: undefined });
             } else {
                 await completeTask(user.id, task.id);
             }
         }
         await loadTasks();
+
+        // Al COMPLETAR (no al desmarcar), ofrecer un mini check-in del clima.
+        if (!wasCompleted) {
+            setCheckInTask(task);
+        }
     };
 
     const handleToggleInProgress = async (task: Task) => {
@@ -296,6 +305,14 @@ export const EmployeeTasks: React.FC = () => {
                         loadTasks();
                     }}
                     userId={user!.id}
+                />
+            )}
+
+            {checkInTask && user && (
+                <TaskCheckInModal
+                    userId={user.id}
+                    taskTitle={checkInTask.title}
+                    onClose={() => setCheckInTask(null)}
                 />
             )}
         </div>
