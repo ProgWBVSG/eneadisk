@@ -6,7 +6,7 @@ import {
 import { useAuth } from '../../context/AuthContext';
 import {
   getDirectory, getConversations, openDirect, getMessages, sendText, sendTask,
-  reviewTaskInChat, markRead, subscribeToConversation,
+  reviewTaskInChat, markRead, subscribeToConversation, subscribeToPresence,
   type DirectoryPerson, type Conversation, type ChatMessage,
 } from '../../utils/chat';
 
@@ -47,6 +47,14 @@ export const Chat: React.FC = () => {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [loadingConvs, setLoadingConvs] = useState(true);
   const [showDirectory, setShowDirectory] = useState(false);
+  const [online, setOnline] = useState<Set<string>>(new Set());
+
+  // Presencia "en línea" (scopeada por empresa)
+  useEffect(() => {
+    if (!user?.companyId || !myId) return;
+    const unsub = subscribeToPresence(user.companyId, myId, setOnline);
+    return unsub;
+  }, [user?.companyId, myId]);
 
   const loadConversations = useCallback(async () => {
     try {
@@ -152,7 +160,7 @@ export const Chat: React.FC = () => {
                   activeId === c.conversationId ? 'bg-[#FCF1EC]' : 'hover:bg-[#FAF6F1]'
                 }`}
               >
-                <Avatar name={c.otherName} />
+                <Avatar name={c.otherName} online={online.has(c.otherId)} />
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center justify-between gap-2">
                     <span className="font-medium text-[#3A332E] truncate">{c.otherName}</span>
@@ -180,6 +188,7 @@ export const Chat: React.FC = () => {
             key={activeId}
             myId={myId}
             conversation={activeOther}
+            online={online.has(activeOther.otherId)}
             messages={messages}
             onBack={() => { setActiveId(null); setActiveOther(null); }}
             onLocalSend={handleLocalSend}
@@ -200,19 +209,28 @@ export const Chat: React.FC = () => {
 
       {/* ── Modal de directorio (nuevo chat) ── */}
       {showDirectory && (
-        <DirectoryModal onClose={() => setShowDirectory(false)} onPick={startChatWith} />
+        <DirectoryModal online={online} onClose={() => setShowDirectory(false)} onPick={startChatWith} />
       )}
     </div>
   );
 };
 
 // ════════════════════════════════════════════════════════════
-const Avatar: React.FC<{ name: string; size?: number }> = ({ name, size = 44 }) => (
-  <div
-    className="rounded-full bg-[#FCF1EC] text-[#C9624A] font-bold flex items-center justify-center shrink-0"
-    style={{ width: size, height: size, fontSize: size * 0.36 }}
-  >
-    {initials(name)}
+const Avatar: React.FC<{ name: string; size?: number; online?: boolean }> = ({ name, size = 44, online }) => (
+  <div className="relative shrink-0" style={{ width: size, height: size }}>
+    <div
+      className="rounded-full bg-[#FCF1EC] text-[#C9624A] font-bold flex items-center justify-center w-full h-full"
+      style={{ fontSize: size * 0.36 }}
+    >
+      {initials(name)}
+    </div>
+    {online !== undefined && (
+      <span
+        title={online ? 'En línea' : 'Desconectado'}
+        className={`absolute bottom-0 right-0 rounded-full ring-2 ring-white ${online ? 'bg-[#5FBF77]' : 'bg-slate-300'}`}
+        style={{ width: size * 0.28, height: size * 0.28 }}
+      />
+    )}
   </div>
 );
 
@@ -220,11 +238,12 @@ const Avatar: React.FC<{ name: string; size?: number }> = ({ name, size = 44 }) 
 const ChatThread: React.FC<{
   myId: string;
   conversation: Conversation;
+  online: boolean;
   messages: ChatMessage[];
   onBack: () => void;
   onLocalSend: (m: ChatMessage) => void;
   onTaskAction: () => void;
-}> = ({ myId, conversation, messages, onBack, onLocalSend, onTaskAction }) => {
+}> = ({ myId, conversation, online, messages, onBack, onLocalSend, onTaskAction }) => {
   const [text, setText] = useState('');
   const [sending, setSending] = useState(false);
   const [showTaskForm, setShowTaskForm] = useState(false);
@@ -257,10 +276,12 @@ const ChatThread: React.FC<{
         <button onClick={onBack} className="md:hidden text-[#8A8079] hover:text-[#3A332E]">
           <ArrowLeft size={22} />
         </button>
-        <Avatar name={conversation.otherName} size={40} />
+        <Avatar name={conversation.otherName} size={40} online={online} />
         <div className="min-w-0">
           <p className="font-medium text-[#3A332E] truncate">{conversation.otherName}</p>
-          <p className="text-xs text-[#8A8079]">{ROLE_LABEL[conversation.otherRole] || 'Colaborador'}</p>
+          <p className="text-xs text-[#8A8079]">
+            {online ? <span className="text-[#5FBF77] font-medium">● En línea</span> : ROLE_LABEL[conversation.otherRole] || 'Colaborador'}
+          </p>
         </div>
       </div>
 
@@ -532,9 +553,10 @@ const TaskFormModal: React.FC<{
 
 // ════════════════════════════════════════════════════════════
 const DirectoryModal: React.FC<{
+  online: Set<string>;
   onClose: () => void;
   onPick: (p: DirectoryPerson) => void;
-}> = ({ onClose, onPick }) => {
+}> = ({ online, onClose, onPick }) => {
   const [people, setPeople] = useState<DirectoryPerson[]>([]);
   const [loading, setLoading] = useState(true);
   const [q, setQ] = useState('');
@@ -573,7 +595,7 @@ const DirectoryModal: React.FC<{
             filtered.map((p) => (
               <button key={p.id} onClick={() => onPick(p)}
                 className="w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-[#FAF6F1] border-b border-[#F2EAE0]">
-                <Avatar name={p.fullName} size={40} />
+                <Avatar name={p.fullName} size={40} online={online.has(p.id)} />
                 <div className="min-w-0">
                   <p className="font-medium text-[#3A332E] truncate">{p.fullName}</p>
                   <p className="text-xs text-[#8A8079]">{ROLE_LABEL[p.role] || 'Colaborador'}</p>

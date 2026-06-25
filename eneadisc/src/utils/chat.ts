@@ -176,3 +176,26 @@ export const subscribeToAllMessages = (onAny: () => void): (() => void) => {
     .subscribe();
   return () => { supabase.removeChannel(channel); };
 };
+
+// ── Presencia "en línea" (Realtime Presence, por empresa) ───
+// Cada usuario se "trackea" con su id como clave. El canal está
+// scopeado por empresa para no exponer presencia entre compañías.
+export const subscribeToPresence = (
+  companyId: string,
+  userId: string,
+  onChange: (online: Set<string>) => void
+): (() => void) => {
+  const channel = supabase.channel(`presence:company:${companyId}`, {
+    config: { presence: { key: userId } },
+  });
+  channel.on('presence', { event: 'sync' }, () => {
+    const state = channel.presenceState();
+    onChange(new Set(Object.keys(state)));
+  });
+  channel.subscribe(async (status) => {
+    if (status === 'SUBSCRIBED') {
+      await channel.track({ online_at: new Date().toISOString() });
+    }
+  });
+  return () => { supabase.removeChannel(channel); };
+};

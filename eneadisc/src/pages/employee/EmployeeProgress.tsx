@@ -85,8 +85,9 @@ export const EmployeeProgress: React.FC = () => {
   const weekTasksDone = taskStats?.recentlyCompleted || 0;
 
   // Radar (solo si hay scores en localStorage)
-  const radarData = localResult?.scores
-    ? getAllEnneagramTypes().map((tp) => ({ type: tp.id, score: localResult.scores[tp.id] || 0, color: tp.color }))
+  const radarScores = localResult?.scores;
+  const radarData = radarScores
+    ? getAllEnneagramTypes().map((tp) => ({ type: tp.id, score: radarScores[tp.id] || 0, color: tp.color }))
     : [];
   const maxScore = radarData.length ? Math.max(...radarData.map((d) => d.score)) || 1 : 1;
 
