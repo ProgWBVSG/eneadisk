@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { ENNEAGRAM_TYPES } from '../../data/enneagramData';
 import { LEADERSHIP_GUIDE } from '../../data/enneagramLeadership';
+import { FeedbackToolkit } from '../../components/FeedbackToolkit';
 import { KUDOS_CATEGORIES } from '../../data/enneagramResources';
 import { sendKudo } from '../../utils/employeeFeatures';
 import {
@@ -28,6 +29,7 @@ export const SupervisorPanel: React.FC = () => {
   const [assignTo, setAssignTo] = useState<SupervisedPerson | null>(null);
   const [kudoTo, setKudoTo] = useState<SupervisedPerson | null>(null);
   const [reviewing, setReviewing] = useState<SupervisedTask | null>(null);
+  const [guideFor, setGuideFor] = useState<SupervisedPerson | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -124,6 +126,11 @@ export const SupervisorPanel: React.FC = () => {
                       <button onClick={() => setAssignTo(p)} className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 bg-emerald-500 text-white rounded-lg text-sm font-medium hover:bg-emerald-600"><Plus size={14} /> Tarea</button>
                       <button onClick={() => setKudoTo(p)} className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 bg-amber-500 text-white rounded-lg text-sm font-medium hover:bg-amber-600"><Award size={14} /> Reconocer</button>
                     </div>
+                    {p.enneagramType && (
+                      <button onClick={() => setGuideFor(p)} className="mt-2 w-full text-xs text-[#C9624A] hover:text-[#A84C37] font-medium">
+                        Cómo darle feedback y guion de 1:1 →
+                      </button>
+                    )}
                   </div>
                 );
               })}
@@ -171,6 +178,17 @@ export const SupervisorPanel: React.FC = () => {
       {assignTo && <AssignTaskModal person={assignTo} onClose={() => setAssignTo(null)} onDone={() => { setAssignTo(null); load(); }} />}
       {kudoTo && <KudoModal person={kudoTo} companyId={user?.companyId || ''} onClose={() => setKudoTo(null)} onDone={() => { setKudoTo(null); }} />}
       {reviewing && <ReviewModal task={reviewing} onClose={() => setReviewing(null)} onDone={() => { setReviewing(null); load(); }} />}
+      {guideFor && guideFor.enneagramType && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4" onClick={() => setGuideFor(null)}>
+          <div className="bg-[#FAF6F1] rounded-2xl shadow-2xl max-w-3xl w-full max-h-[85vh] overflow-y-auto p-6" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-display font-bold text-[#3A332E]">Guía para {guideFor.name.split(' ')[0]}</h3>
+              <button onClick={() => setGuideFor(null)} className="text-[#8A8079] hover:text-[#3A332E]"><X size={20} /></button>
+            </div>
+            <FeedbackToolkit type={guideFor.enneagramType} firstName={guideFor.name.split(' ')[0]} />
+          </div>
+        </div>
+      )}
     </div>
   );
 };

@@ -3,6 +3,7 @@ import { useAuth } from '../../context/AuthContext';
 import { ENNEAGRAM_TYPES } from '../../data/enneagramData';
 import { WORK_PROFILES } from '../../data/enneagramWorkData';
 import { LEADERSHIP_GUIDE } from '../../data/enneagramLeadership';
+import { FeedbackToolkit } from '../../components/FeedbackToolkit';
 import { MOOD_CONFIG } from '../../utils/checkIns';
 import {
   getEmployeesOverview, getEmployeeCheckins, getOneOnOneNotes, addOneOnOneNote, deleteOneOnOneNote,
@@ -240,6 +241,11 @@ const PersonDetail: React.FC<{ person: EmployeeOverview; companyId: string; onBa
                 <LeadBlock color="amber" label="Señal a vigilar" text={lead.watchFor} />
               </div>
             </Card>
+          )}
+
+          {/* Plantillas de feedback + guion de 1:1 según el eneatipo */}
+          {person.enneagramType && (
+            <FeedbackToolkit type={person.enneagramType} firstName={person.name.split(' ')[0]} />
           )}
 
           {/* Comunicación + feedback (del manual de usuario) */}
