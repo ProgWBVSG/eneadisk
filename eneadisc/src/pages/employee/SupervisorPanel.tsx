@@ -7,11 +7,12 @@ import { KUDOS_CATEGORIES } from '../../data/enneagramResources';
 import { sendKudo } from '../../utils/employeeFeatures';
 import {
   getSupervisedPeople, getSupervisedMood, getTeamMemberTasks, reviewTask, assignTask,
+  suggestDailyActions,
   type SupervisedPerson, type SupervisedMood, type SupervisedTask,
 } from '../../utils/supervisorFeatures';
 import {
   UserCog, Activity, Zap, Flame, Clock, ClipboardCheck, Plus, X,
-  Check, AlertCircle, Award, Compass, Send, ListChecks,
+  Check, AlertCircle, Award, Compass, Send, ListChecks, Sparkles,
 } from 'lucide-react';
 
 const RISK = {
@@ -64,6 +65,39 @@ export const SupervisorPanel: React.FC = () => {
         </div>
       ) : (
         <>
+          {/* Qué hacer hoy — acciones sugeridas */}
+          {(() => {
+            const actions = suggestDailyActions(people, tasks, mood);
+            const dot = { high: '#dc2626', medium: '#d97706', low: '#16a34a' };
+            return (
+              <div className="bg-gradient-to-br from-[#FCF1EC] to-[#FAF6F1] rounded-2xl p-6 border border-[#F2D9CE] mb-6">
+                <div className="flex items-center gap-2 mb-3">
+                  <Sparkles className="text-[#C9624A]" size={22} />
+                  <h2 className="text-xl font-bold text-slate-900">Qué hacer hoy</h2>
+                  <span className="text-xs text-slate-400 ml-auto">acciones sugeridas para tu equipo</span>
+                </div>
+                <ul className="space-y-2">
+                  {actions.map((a) => {
+                    const person = a.personId ? people.find((p) => p.id === a.personId) : null;
+                    const clickable = !!(person && person.enneagramType);
+                    return (
+                      <li key={a.id}>
+                        <button
+                          onClick={clickable ? () => setGuideFor(person!) : undefined}
+                          className={`w-full text-left flex items-start gap-3 bg-white rounded-xl p-3 border border-[#ECE3D8] ${clickable ? 'hover:border-[#EFA98F] cursor-pointer' : 'cursor-default'}`}
+                        >
+                          <span className="mt-1.5 h-2.5 w-2.5 rounded-full shrink-0" style={{ backgroundColor: dot[a.priority] }} />
+                          <span className="text-sm text-[#3A332E]">{a.text}</span>
+                          {clickable && <span className="ml-auto text-xs text-[#C9624A] shrink-0 mt-0.5">Ver guía →</span>}
+                        </button>
+                      </li>
+                    );
+                  })}
+                </ul>
+              </div>
+            );
+          })()}
+
           {/* Pulso del equipo */}
           {mood && mood.checkinCount > 0 && (
             <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-100 mb-6">

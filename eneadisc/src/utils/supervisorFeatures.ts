@@ -106,3 +106,89 @@ export const setTeamLead = async (teamId: string, leadId: string | null): Promis
   const { error } = await supabase.rpc('admin_set_team_lead', { p_team: teamId, p_lead: leadId });
   return { error: error ? error.message : null };
 };
+
+// ── "QUÉ HACER HOY": acciones sugeridas para el supervisor ──
+// Convierte señales que ya existen (estrés, tareas por revisar, test
+// pendiente, clima) en acciones concretas y priorizadas. Sin IA externa:
+// reglas claras y explicables.
+export interface SuggestedAction {
+  id: string;
+  priority: 'high' | 'medium' | 'low';
+  text: string;
+  personId?: string;
+}
+
+export const suggestDailyActions = (
+  people: SupervisedPerson[],
+  tasks: SupervisedTask[],
+  mood: SupervisedMood | null
+): SuggestedAction[] => {
+  const out: SuggestedAction[] = [];
+
+  // 1) Personas en riesgo alto → 1:1
+  people
+    .filter((p) => p.risk === 'high')
+    .forEach((p) =>
+      out.push({
+        id: `risk-${p.id}`,
+        priority: 'high',
+        text: `Agendá un 1:1 con ${p.name.split(' ')[0]}: viene con estrés alto o energía baja.`,
+        personId: p.id,
+      })
+    );
+
+  // 2) Tareas completadas sin revisar
+  const pendingReview = tasks.filter((t) => t.status === 'completed' && !t.reviewStatus);
+  if (pendingReview.length > 0) {
+    out.push({
+      id: 'review',
+      priority: 'high',
+      text: `Tenés ${pendingReview.length} tarea${pendingReview.length > 1 ? 's' : ''} completada${pendingReview.length > 1 ? 's' : ''} sin revisar: confirmá o marcá correcciones.`,
+    });
+  }
+
+  // 3) Clima del equipo tenso
+  if (mood && mood.checkinCount > 0 && mood.avgStress >= 3.5) {
+    out.push({
+      id: 'team-stress',
+      priority: 'medium',
+      text: 'El estrés del equipo está alto esta semana: considerá aflojar la carga o proponer un check-in grupal.',
+    });
+  }
+
+  // 4) Test pendiente (no se puede liderar a ciegas)
+  people
+    .filter((p) => p.enneagramType === null)
+    .forEach((p) =>
+      out.push({
+        id: `test-${p.id}`,
+        priority: 'medium',
+        text: `Recordale a ${p.name.split(' ')[0]} completar el test: sin su perfil no podés acompañarlo bien.`,
+        personId: p.id,
+      })
+    );
+
+  // 5) Sin check-ins → poca visibilidad
+  people
+    .filter((p) => p.checkinCount === 0 && p.enneagramType !== null)
+    .forEach((p) =>
+      out.push({
+        id: `nocheckin-${p.id}`,
+        priority: 'low',
+        text: `${p.name.split(' ')[0]} todavía no hizo check-ins: invitalo a registrar cómo viene.`,
+        personId: p.id,
+      })
+    );
+
+  // 6) Todo bien → reconocer
+  if (out.length === 0 && people.length > 0) {
+    out.push({
+      id: 'all-good',
+      priority: 'low',
+      text: 'Tu equipo viene bien 👏 Buen momento para reconocer a alguien por su trabajo.',
+    });
+  }
+
+  const order = { high: 0, medium: 1, low: 2 };
+  return out.sort((a, b) => order[a.priority] - order[b.priority]).slice(0, 5);
+};
