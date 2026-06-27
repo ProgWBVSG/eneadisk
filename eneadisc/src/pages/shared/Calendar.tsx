@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import { CalendarDays, Plus, X, MapPin, CheckSquare, Clock, Trash2 } from 'lucide-react';
+import { CalendarDays, Plus, X, MapPin, CheckSquare, Clock, Trash2, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import {
   getEvents, createEvent, deleteEvent, getMyDueTasks, buildAgenda, type AgendaItem,
@@ -20,16 +20,15 @@ export const Calendar: React.FC = () => {
   const [items, setItems] = useState<AgendaItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
+  const [monthDate, setMonthDate] = useState(() => { const d = new Date(); return new Date(d.getFullYear(), d.getMonth(), 1); });
+  const [selectedDay, setSelectedDay] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     if (!user) return;
     setLoading(true);
     try {
       const [events, tasks] = await Promise.all([getEvents(), getMyDueTasks(user.id)]);
-      // desde el inicio de hoy en adelante
-      const from = new Date(); from.setHours(0, 0, 0, 0);
-      const all = buildAgenda(events, tasks, user.id).filter((i) => new Date(i.at) >= from);
-      setItems(all);
+      setItems(buildAgenda(events, tasks, user.id));
     } catch (e) { console.error('[Calendar]', e); }
     finally { setLoading(false); }
   }, [user]);
@@ -40,14 +39,32 @@ export const Calendar: React.FC = () => {
     load();
   };
 
+  // Items por día (para marcadores de la grilla)
+  const byDay: Record<string, AgendaItem[]> = {};
+  items.forEach((it) => { const k = dayKey(it.at); (byDay[k] ||= []).push(it); });
+
+  // Qué mostramos en la agenda: el día seleccionado, o desde hoy en adelante
+  const todayStart = new Date(); todayStart.setHours(0, 0, 0, 0);
+  const visible = selectedDay
+    ? (byDay[selectedDay] || [])
+    : items.filter((i) => new Date(i.at) >= todayStart);
+
   // agrupar por día
   const groups: { key: string; label: string; items: AgendaItem[] }[] = [];
-  items.forEach((it) => {
+  visible.forEach((it) => {
     const k = dayKey(it.at);
     let g = groups.find((x) => x.key === k);
     if (!g) { g = { key: k, label: dayLabel(it.at), items: [] }; groups.push(g); }
     g.items.push(it);
   });
+
+  // Grilla del mes
+  const year = monthDate.getFullYear(), month = monthDate.getMonth();
+  const firstWeekday = (new Date(year, month, 1).getDay() + 6) % 7; // lunes=0
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+  const monthLabel = monthDate.toLocaleDateString('es', { month: 'long', year: 'numeric' });
+  const cells: (number | null)[] = [...Array(firstWeekday).fill(null), ...Array.from({ length: daysInMonth }, (_, i) => i + 1)];
+  const todayKey = new Date().toDateString();
 
   return (
     <div className="p-4 md:p-8 max-w-3xl mx-auto">
@@ -59,6 +76,44 @@ export const Calendar: React.FC = () => {
           className="flex items-center gap-1.5 bg-[#E07A5F] hover:bg-[#C9624A] text-white px-4 py-2 rounded-xl text-sm font-medium">
           <Plus size={16} /> Nuevo evento
         </button>
+      </div>
+
+      {/* Grilla del mes */}
+      <div className="bg-white rounded-2xl border border-[#ECE3D8] p-4 mb-6">
+        <div className="flex items-center justify-between mb-3">
+          <button onClick={() => setMonthDate(new Date(year, month - 1, 1))} className="p-1.5 rounded-lg hover:bg-[#FAF6F1] text-[#8A8079]"><ChevronLeft size={18} /></button>
+          <span className="font-display font-semibold text-[#3A332E] capitalize">{monthLabel}</span>
+          <button onClick={() => setMonthDate(new Date(year, month + 1, 1))} className="p-1.5 rounded-lg hover:bg-[#FAF6F1] text-[#8A8079]"><ChevronRight size={18} /></button>
+        </div>
+        <div className="grid grid-cols-7 gap-1 text-center text-[11px] text-[#8A8079] mb-1">
+          {['L', 'M', 'M', 'J', 'V', 'S', 'D'].map((d, i) => <div key={i}>{d}</div>)}
+        </div>
+        <div className="grid grid-cols-7 gap-1">
+          {cells.map((day, i) => {
+            if (day === null) return <div key={i} />;
+            const date = new Date(year, month, day);
+            const k = date.toDateString();
+            const dayItems = byDay[k] || [];
+            const isToday = k === todayKey;
+            const isSel = selectedDay === k;
+            return (
+              <button key={i} onClick={() => setSelectedDay(isSel ? null : k)}
+                className={`aspect-square rounded-lg flex flex-col items-center justify-center text-sm relative transition-colors ${
+                  isSel ? 'bg-[#E07A5F] text-white' : isToday ? 'bg-[#FCF1EC] text-[#C9624A] font-semibold' : 'hover:bg-[#FAF6F1] text-[#3A332E]'
+                }`}>
+                {day}
+                {dayItems.length > 0 && (
+                  <span className={`absolute bottom-1 h-1.5 w-1.5 rounded-full ${isSel ? 'bg-white' : 'bg-[#E07A5F]'}`} />
+                )}
+              </button>
+            );
+          })}
+        </div>
+        {selectedDay && (
+          <button onClick={() => setSelectedDay(null)} className="mt-3 text-xs text-[#C9624A] hover:text-[#A84C37] font-medium">
+            ← Ver todo lo próximo
+          </button>
+        )}
       </div>
 
       {loading ? (
