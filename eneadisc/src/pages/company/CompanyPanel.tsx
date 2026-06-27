@@ -1,12 +1,12 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Users, Mail, CheckCircle, Copy, HelpCircle, Bell, UserCheck, UserX, Activity, Zap, Flame, AlertTriangle, Clock, ArrowRight } from 'lucide-react';
+import { Users, Mail, CheckCircle, Copy, HelpCircle, Bell, UserCheck, UserX, Activity, Zap, Flame, AlertTriangle, Clock, ArrowRight, Sparkles } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { Button } from '../../components/ui/Button';
 import { AdminTutorial } from '../../components/tutorial/AdminTutorial';
 import { supabase } from '../../lib/supabase';
 import { getTeamMood, type TeamMood } from '../../utils/employeeFeatures';
-import { getEmployeesOverview } from '../../utils/adminFeatures';
+import { getEmployeesOverview, suggestAdminActions, type AdminAction } from '../../utils/adminFeatures';
 
 interface JoinRequest {
     id: string;
@@ -31,6 +31,7 @@ export const CompanyPanel: React.FC = () => {
     const [mood, setMood] = useState<TeamMood | null>(null);
     const [atRisk, setAtRisk] = useState(0);
     const [pendingTest, setPendingTest] = useState(0);
+    const [adminActions, setAdminActions] = useState<AdminAction[]>([]);
 
     // ── Fetch invite code + employee count from Supabase ──────────────────
     const fetchCompanyData = useCallback(async () => {
@@ -85,6 +86,7 @@ export const CompanyPanel: React.FC = () => {
         setMood(tm);
         setAtRisk(overview.filter((e) => e.risk === 'high').length);
         setPendingTest(overview.filter((e) => !e.questionnaireCompleted).length);
+        setAdminActions(suggestAdminActions(overview, tm));
     }, [user?.companyId]);
 
     useEffect(() => {
@@ -262,6 +264,34 @@ export const CompanyPanel: React.FC = () => {
                     <p className="text-xs text-slate-500 mt-1">Comparte con tu equipo</p>
                 </div>
             </div>
+
+            {/* Qué hacer hoy: acciones sugeridas para el admin */}
+            {adminActions.length > 0 && (
+                <div className="bg-gradient-to-br from-[#FCF1EC] to-[#FAF6F1] rounded-2xl p-6 mb-8 border border-[#F2D9CE]">
+                    <div className="flex items-center gap-2 mb-3">
+                        <Sparkles className="text-[#C9624A]" size={22} />
+                        <h2 className="text-xl font-bold text-slate-900">Qué hacer hoy</h2>
+                        <span className="text-xs text-slate-400 ml-auto">acciones sugeridas</span>
+                    </div>
+                    <ul className="space-y-2">
+                        {adminActions.map((a) => {
+                            const dot = { high: '#dc2626', medium: '#d97706', low: '#16a34a' };
+                            return (
+                                <li key={a.id}>
+                                    <button
+                                        onClick={a.to ? () => navigate(a.to!) : undefined}
+                                        className={`w-full text-left flex items-start gap-3 bg-white rounded-xl p-3 border border-[#ECE3D8] ${a.to ? 'hover:border-[#EFA98F] cursor-pointer' : 'cursor-default'}`}
+                                    >
+                                        <span className="mt-1.5 h-2.5 w-2.5 rounded-full shrink-0" style={{ backgroundColor: dot[a.priority] }} />
+                                        <span className="text-sm text-[#3A332E]">{a.text}</span>
+                                        {a.to && <ArrowRight size={14} className="ml-auto text-[#C9624A] shrink-0 mt-0.5" />}
+                                    </button>
+                                </li>
+                            );
+                        })}
+                    </ul>
+                </div>
+            )}
 
             {/* Pulso del equipo: termómetro + alertas */}
             {(mood?.checkinCount || atRisk > 0 || pendingTest > 0) && (

@@ -119,3 +119,75 @@ export const getKudosRanking = async (companyId: string): Promise<KudoRank[]> =>
     .map(([userId, v]) => ({ userId, name: v.name, count: v.count }))
     .sort((a, b) => b.count - a.count);
 };
+
+// ── "QUÉ HACER HOY" PARA EL ADMIN ──────────────────────────
+// Convierte el overview del equipo en acciones concretas y priorizadas.
+// Reglas claras y explicables (sin IA externa).
+export interface AdminAction {
+  id: string;
+  priority: 'high' | 'medium' | 'low';
+  text: string;
+  to?: string; // ruta sugerida (para un botón "Ir →")
+}
+
+export const suggestAdminActions = (
+  overview: EmployeeOverview[],
+  mood: { avgStress: number; checkinCount: number } | null
+): AdminAction[] => {
+  const out: AdminAction[] = [];
+  const atRisk = overview.filter((e) => e.risk === 'high');
+  const pendingTest = overview.filter((e) => !e.questionnaireCompleted);
+  const noCheckin = overview.filter((e) => e.questionnaireCompleted && e.checkinCount === 0);
+  const supervisors = overview.filter((e) => e.role === 'supervisor');
+
+  if (atRisk.length > 0) {
+    out.push({
+      id: 'risk',
+      priority: 'high',
+      text: `${atRisk.length} persona${atRisk.length > 1 ? 's' : ''} con señales de desgaste (${atRisk.map((e) => e.name.split(' ')[0]).slice(0, 3).join(', ')}). Revisá su ficha y considerá un 1:1.`,
+      to: '/dashboard/company/personas',
+    });
+  }
+  if (mood && mood.checkinCount > 0 && mood.avgStress >= 3.5) {
+    out.push({
+      id: 'climate',
+      priority: 'high',
+      text: 'El clima general está tenso esta semana. Mirá el análisis y evaluá redistribuir carga.',
+      to: '/dashboard/company/analisis',
+    });
+  }
+  if (pendingTest.length > 0) {
+    out.push({
+      id: 'pending-test',
+      priority: 'medium',
+      text: `${pendingTest.length} persona${pendingTest.length > 1 ? 's' : ''} no completó el test. Sin su perfil, la app no puede ayudarte con esa persona.`,
+      to: '/dashboard/company/personas',
+    });
+  }
+  if (overview.length >= 6 && supervisors.length === 0) {
+    out.push({
+      id: 'need-supervisor',
+      priority: 'medium',
+      text: 'Tu equipo creció y no hay supervisores. Considerá nombrar uno para delegar el seguimiento.',
+      to: '/dashboard/company/personas',
+    });
+  }
+  if (noCheckin.length > 0) {
+    out.push({
+      id: 'adoption',
+      priority: 'low',
+      text: `${noCheckin.length} persona${noCheckin.length > 1 ? 's' : ''} todavía no hizo check-ins. Invitá al equipo a registrar su pulso para tener visibilidad.`,
+    });
+  }
+  if (out.length === 0 && overview.length > 0) {
+    out.push({
+      id: 'all-good',
+      priority: 'low',
+      text: 'El equipo viene bien 👏 Buen momento para reconocer logros en la sección de Reconocimientos.',
+      to: '/dashboard/company/reconocimientos',
+    });
+  }
+
+  const order = { high: 0, medium: 1, low: 2 };
+  return out.sort((a, b) => order[a.priority] - order[b.priority]).slice(0, 5);
+};
