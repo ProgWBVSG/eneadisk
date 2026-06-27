@@ -11,6 +11,8 @@ import {
     getTeamCompatibilityScore,
 } from '../utils/teams';
 import { getEnneagramBadge } from '../utils/enneagramColors';
+import { detectFrictions } from '../utils/frictionEngine';
+import { AlertTriangle } from 'lucide-react';
 import { Button } from './ui/Button';
 import type { Task } from '../utils/tasks';
 import { getTeamTasks, deleteTeamTask } from '../utils/tasks';
@@ -183,6 +185,34 @@ export const TeamDetailView: React.FC<TeamDetailViewProps> = ({
                                 ))}
                             </div>
                         )}
+
+                        {/* Posibles fricciones del equipo */}
+                        {(() => {
+                            const frictions = detectFrictions(members.map(m => ({ id: m.id, name: m.name, type: m.enneagramType ?? null })));
+                            if (frictions.length === 0) return null;
+                            return (
+                                <div className="mt-6 bg-white rounded-2xl p-5 border border-[#F2D9CE]">
+                                    <h3 className="text-lg font-semibold text-[#3A332E] mb-1 flex items-center gap-2">
+                                        <AlertTriangle className="text-[#C9624A]" size={20} /> Posibles fricciones
+                                    </h3>
+                                    <p className="text-xs text-[#8A8079] mb-3">Combinaciones a acompañar para evitar choques. No es un problema: es dónde poner atención.</p>
+                                    <div className="space-y-2.5">
+                                        {frictions.map((f, i) => (
+                                            <div key={i} className="rounded-xl border border-[#ECE3D8] p-3">
+                                                <div className="flex items-center gap-2 mb-1">
+                                                    <span className="font-medium text-[#3A332E] text-sm">{f.aName} ↔ {f.bName}</span>
+                                                    <span className={`ml-auto text-[10px] font-semibold px-2 py-0.5 rounded-full ${f.level === 'alta' ? 'bg-[#FCF1EC] text-[#A84C37]' : 'bg-amber-50 text-amber-700'}`}>
+                                                        Fricción {f.level} · {f.score}%
+                                                    </span>
+                                                </div>
+                                                <p className="text-xs text-[#8A8079]">⚠️ {f.challenge}</p>
+                                                <p className="text-xs text-[#5F7A68] mt-0.5">✓ {f.tip}</p>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            );
+                        })()}
                     </div>
                 </div>
 
