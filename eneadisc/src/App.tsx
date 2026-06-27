@@ -29,6 +29,7 @@ import { Subscription } from './pages/company/Subscription';
 import { AdminPeople } from './pages/company/AdminPeople';
 import { AdminRecognition } from './pages/company/AdminRecognition';
 import { Chat } from './pages/shared/Chat';
+import { Calendar } from './pages/shared/Calendar';
 
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { isAuthenticated, session, isLoading } = useAuth();
@@ -86,6 +87,7 @@ function AppRoutes() {
         <Route path="equipo" element={<EmployeeTeam />} />
         <Route path="checkins" element={<EmployeeCheckins />} />
         <Route path="chat" element={<Chat />} />
+        <Route path="calendario" element={<Calendar />} />
         <Route path="supervision" element={<SupervisorPanel />} />
       </Route>
 
@@ -99,6 +101,7 @@ function AppRoutes() {
         <Route path="personas" element={<AdminPeople />} />
         <Route path="reconocimientos" element={<AdminRecognition />} />
         <Route path="chat" element={<Chat />} />
+        <Route path="calendario" element={<Calendar />} />
         <Route path="equipos" element={<TeamManagement />} />
         <Route path="analisis" element={<CompanyAnalytics />} />
         <Route path="asistente" element={<AIAssistant />} />

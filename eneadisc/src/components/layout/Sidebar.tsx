@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import { Home, TrendingUp, Bot, CheckSquare, Users, ClipboardCheck, BarChart3, BookOpen, CreditCard, LogOut, Menu, X, Settings, UserCircle, Award, UserCog, MessageSquare } from 'lucide-react';
+import { Home, TrendingUp, Bot, CheckSquare, Users, ClipboardCheck, BarChart3, BookOpen, CreditCard, LogOut, Menu, X, Settings, UserCircle, Award, UserCog, MessageSquare, CalendarDays } from 'lucide-react';
 import { UserSettingsModal } from '../settings/UserSettingsModal';
 import { getTotalUnread, subscribeToAllMessages } from '../../utils/chat';
 
@@ -55,6 +55,7 @@ export const Sidebar: React.FC = () => {
         { icon: Bot, label: 'Mi Asistente Personal', path: '/dashboard/employee/asistente' },
         { icon: CheckSquare, label: 'Mis Tareas', path: '/dashboard/employee/tareas' },
         { icon: MessageSquare, label: 'Mensajes', path: EMPLOYEE_CHAT },
+        { icon: CalendarDays, label: 'Calendario', path: '/dashboard/employee/calendario' },
         { icon: Users, label: 'Mi Equipo', path: '/dashboard/employee/equipo' },
         { icon: ClipboardCheck, label: 'Check-ins', path: '/dashboard/employee/checkins' },
     ];
@@ -66,6 +67,7 @@ export const Sidebar: React.FC = () => {
         { icon: Home, label: 'Panel Principal', path: '/dashboard/company' },
         { icon: UserCircle, label: 'Personas', path: '/dashboard/company/personas' },
         { icon: MessageSquare, label: 'Mensajes', path: ADMIN_CHAT },
+        { icon: CalendarDays, label: 'Calendario', path: '/dashboard/company/calendario' },
         { icon: Users, label: 'Gestión de Equipos', path: '/dashboard/company/equipos' },
         { icon: Award, label: 'Reconocimientos', path: '/dashboard/company/reconocimientos' },
         { icon: BarChart3, label: 'Análisis y Gráficos', path: '/dashboard/company/analisis' },
