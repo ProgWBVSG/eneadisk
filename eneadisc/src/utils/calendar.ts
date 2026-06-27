@@ -53,6 +53,13 @@ export const deleteEvent = async (id: string): Promise<void> => {
   if (error) throw error;
 };
 
+// URL .ics para suscribir el calendario en Google/Outlook/Apple
+export const getIcsUrl = async (): Promise<string> => {
+  const { data, error } = await supabase.rpc('get_or_create_ics_token');
+  if (error) throw error;
+  return `${window.location.origin}/api/calendar?token=${data}`;
+};
+
 // Tareas del usuario con fecha de vencimiento
 export const getMyDueTasks = async (userId: string): Promise<{ id: string; title: string; dueDate: string; done: boolean }[]> => {
   const { data, error } = await supabase

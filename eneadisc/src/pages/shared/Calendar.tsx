@@ -2,8 +2,9 @@ import React, { useEffect, useState, useCallback } from 'react';
 import { CalendarDays, Plus, X, MapPin, CheckSquare, Clock, Trash2, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import {
-  getEvents, createEvent, deleteEvent, getMyDueTasks, buildAgenda, type AgendaItem,
+  getEvents, createEvent, deleteEvent, getMyDueTasks, buildAgenda, getIcsUrl, type AgendaItem,
 } from '../../utils/calendar';
+import { Link2, Copy, Check } from 'lucide-react';
 
 const dayKey = (iso: string) => new Date(iso).toDateString();
 const dayLabel = (iso: string) => {
@@ -20,6 +21,7 @@ export const Calendar: React.FC = () => {
   const [items, setItems] = useState<AgendaItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
+  const [showSub, setShowSub] = useState(false);
   const [monthDate, setMonthDate] = useState(() => { const d = new Date(); return new Date(d.getFullYear(), d.getMonth(), 1); });
   const [selectedDay, setSelectedDay] = useState<string | null>(null);
 
@@ -72,11 +74,18 @@ export const Calendar: React.FC = () => {
         <h1 className="text-3xl font-display font-bold text-[#3A332E] flex items-center gap-3">
           <CalendarDays className="text-[#C9624A]" size={30} /> Calendario
         </h1>
-        <button onClick={() => setShowForm(true)}
-          className="flex items-center gap-1.5 bg-[#E07A5F] hover:bg-[#C9624A] text-white px-4 py-2 rounded-xl text-sm font-medium">
-          <Plus size={16} /> Nuevo evento
-        </button>
+        <div className="flex gap-2">
+          <button onClick={() => setShowSub(true)}
+            className="flex items-center gap-1.5 border border-[#ECE3D8] text-[#3A332E] hover:bg-[#FAF6F1] px-3 py-2 rounded-xl text-sm font-medium">
+            <Link2 size={16} /> Sincronizar
+          </button>
+          <button onClick={() => setShowForm(true)}
+            className="flex items-center gap-1.5 bg-[#E07A5F] hover:bg-[#C9624A] text-white px-4 py-2 rounded-xl text-sm font-medium">
+            <Plus size={16} /> Nuevo evento
+          </button>
+        </div>
       </div>
+      {showSub && <SubscribeModal onClose={() => setShowSub(false)} />}
 
       {/* Grilla del mes */}
       <div className="bg-white rounded-2xl border border-[#ECE3D8] p-4 mb-6">
@@ -211,6 +220,48 @@ const EventForm: React.FC<{
           <button onClick={submit} disabled={busy} className="flex-1 py-2.5 rounded-xl bg-[#E07A5F] text-white font-medium hover:bg-[#C9624A] disabled:opacity-50 text-sm">
             {busy ? 'Creando...' : 'Crear'}
           </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const SubscribeModal: React.FC<{ onClose: () => void }> = ({ onClose }) => {
+  const [url, setUrl] = useState('');
+  const [loading, setLoading] = useState(true);
+  const [copied, setCopied] = useState(false);
+
+  useEffect(() => {
+    getIcsUrl().then((u) => { setUrl(u); setLoading(false); }).catch((e) => { console.error('[ics]', e); setLoading(false); });
+  }, []);
+
+  const copy = () => { navigator.clipboard.writeText(url); setCopied(true); setTimeout(() => setCopied(false), 2000); };
+
+  return (
+    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full">
+        <div className="flex items-center justify-between p-5 border-b border-[#ECE3D8]">
+          <h3 className="text-lg font-display font-bold text-[#3A332E] flex items-center gap-2"><Link2 className="text-[#C9624A]" size={20} /> Sincronizar con tu calendario</h3>
+          <button onClick={onClose} className="text-[#8A8079] hover:text-[#3A332E]"><X size={20} /></button>
+        </div>
+        <div className="p-5 space-y-4">
+          <p className="text-sm text-[#8A8079]">Copiá este link y suscribilo en tu calendario (Google, Outlook o Apple). Tus tareas y reuniones de EneaTeams van a aparecer ahí y se actualizan solas.</p>
+          {loading ? (
+            <div className="py-4 flex justify-center"><div className="h-6 w-6 animate-spin rounded-full border-4 border-[#E07A5F] border-t-transparent" /></div>
+          ) : (
+            <div className="flex items-center gap-2 rounded-lg border border-[#ECE3D8] bg-[#FAF6F1] px-3 py-2">
+              <span className="flex-1 text-xs text-[#3A332E] truncate font-mono">{url}</span>
+              <button onClick={copy} className="text-[#C9624A] hover:text-[#A84C37] shrink-0 flex items-center gap-1 text-xs font-medium">
+                {copied ? <><Check size={14} /> Copiado</> : <><Copy size={14} /> Copiar</>}
+              </button>
+            </div>
+          )}
+          <div className="text-xs text-[#8A8079] space-y-1">
+            <p className="font-medium text-[#3A332E]">Cómo agregarlo en Google Calendar:</p>
+            <p>1. Abrí calendar.google.com → engranaje → "Configuración"</p>
+            <p>2. "Añadir calendario" → "Desde URL" → pegá el link → "Añadir"</p>
+            <p className="text-[#C9624A]">⚠️ Es un link privado y tuyo: no lo compartas.</p>
+          </div>
         </div>
       </div>
     </div>
