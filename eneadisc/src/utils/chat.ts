@@ -15,12 +15,19 @@ export interface Conversation {
   conversationId: string;
   otherId: string;
   otherName: string;
-  otherRole: 'company_admin' | 'supervisor' | 'employee';
+  otherRole: 'company_admin' | 'supervisor' | 'employee' | 'group';
   otherEnneagram: number | null;
   lastBody: string | null;
   lastKind: 'text' | 'task' | 'task_review' | null;
   lastAt: string | null;
   unread: number;
+  isGroup: boolean;
+}
+
+export interface ChatTeam {
+  teamId: string;
+  name: string;
+  memberCount: number;
 }
 
 export interface ChatMessage {
@@ -72,7 +79,21 @@ export const getConversations = async (): Promise<Conversation[]> => {
     lastKind: r.last_kind,
     lastAt: r.last_at,
     unread: Number(r.unread || 0),
+    isGroup: !!r.is_group,
   }));
+};
+
+// ── Equipos para chat grupal + abrir su canal ────────────
+export const getChatTeams = async (): Promise<ChatTeam[]> => {
+  const { data, error } = await supabase.rpc('get_my_chat_teams');
+  if (error) throw error;
+  return (data || []).map((r: any) => ({ teamId: r.team_id, name: r.name, memberCount: Number(r.member_count || 0) }));
+};
+
+export const openTeamConversation = async (teamId: string): Promise<string> => {
+  const { data, error } = await supabase.rpc('get_or_create_team_conversation', { p_team: teamId });
+  if (error) throw error;
+  return data as string;
 };
 
 // ── Suma total de no leídos (para el badge del sidebar) ──

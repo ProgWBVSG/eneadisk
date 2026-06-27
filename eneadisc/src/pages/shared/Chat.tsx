@@ -1,19 +1,21 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import {
   MessageSquare, Send, Plus, Search, ArrowLeft, ClipboardList, X,
-  CheckCircle2, AlertTriangle,
+  CheckCircle2, AlertTriangle, Users,
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import {
   getDirectory, getConversations, openDirect, getMessages, sendText, sendTask,
   reviewTaskInChat, markRead, subscribeToConversation, subscribeToPresence,
-  type DirectoryPerson, type Conversation, type ChatMessage,
+  getChatTeams, openTeamConversation,
+  type DirectoryPerson, type Conversation, type ChatMessage, type ChatTeam,
 } from '../../utils/chat';
 
 const ROLE_LABEL: Record<string, string> = {
   company_admin: 'Admin',
   supervisor: 'Supervisor',
   employee: 'Colaborador',
+  group: 'Canal de equipo',
 };
 
 const initials = (name: string) =>
@@ -102,12 +104,29 @@ export const Chat: React.FC = () => {
       const conv: Conversation = existing || {
         conversationId: convId, otherId: person.id, otherName: person.fullName,
         otherRole: person.role, otherEnneagram: person.enneagramType,
-        lastBody: null, lastKind: null, lastAt: null, unread: 0,
+        lastBody: null, lastKind: null, lastAt: null, unread: 0, isGroup: false,
       };
       if (!existing) setConversations((prev) => [conv, ...prev]);
       await openConversation(conv);
     } catch (e) {
       console.error('[Chat] abrir DM:', e);
+    }
+  }, [conversations, openConversation]);
+
+  // Iniciar / abrir el canal de un equipo
+  const startTeamChat = useCallback(async (team: ChatTeam) => {
+    try {
+      const convId = await openTeamConversation(team.teamId);
+      const existing = conversations.find((c) => c.conversationId === convId);
+      const conv: Conversation = existing || {
+        conversationId: convId, otherId: '', otherName: team.name,
+        otherRole: 'group', otherEnneagram: null,
+        lastBody: null, lastKind: null, lastAt: null, unread: 0, isGroup: true,
+      };
+      if (!existing) setConversations((prev) => [conv, ...prev]);
+      await openConversation(conv);
+    } catch (e) {
+      console.error('[Chat] abrir canal de equipo:', e);
     }
   }, [conversations, openConversation]);
 
@@ -160,7 +179,7 @@ export const Chat: React.FC = () => {
                   activeId === c.conversationId ? 'bg-[#FCF1EC]' : 'hover:bg-[#FAF6F1]'
                 }`}
               >
-                <Avatar name={c.otherName} online={online.has(c.otherId)} />
+                <Avatar name={c.otherName} isGroup={c.isGroup} online={c.isGroup ? undefined : online.has(c.otherId)} />
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center justify-between gap-2">
                     <span className="font-medium text-[#3A332E] truncate">{c.otherName}</span>
@@ -209,20 +228,20 @@ export const Chat: React.FC = () => {
 
       {/* ── Modal de directorio (nuevo chat) ── */}
       {showDirectory && (
-        <DirectoryModal online={online} onClose={() => setShowDirectory(false)} onPick={startChatWith} />
+        <DirectoryModal online={online} onClose={() => setShowDirectory(false)} onPick={startChatWith} onPickTeam={startTeamChat} />
       )}
     </div>
   );
 };
 
 // ════════════════════════════════════════════════════════════
-const Avatar: React.FC<{ name: string; size?: number; online?: boolean }> = ({ name, size = 44, online }) => (
+const Avatar: React.FC<{ name: string; size?: number; online?: boolean; isGroup?: boolean }> = ({ name, size = 44, online, isGroup }) => (
   <div className="relative shrink-0" style={{ width: size, height: size }}>
     <div
-      className="rounded-full bg-[#FCF1EC] text-[#C9624A] font-bold flex items-center justify-center w-full h-full"
+      className={`rounded-full font-bold flex items-center justify-center w-full h-full ${isGroup ? 'bg-[#EEF3EE] text-[#5F7A68]' : 'bg-[#FCF1EC] text-[#C9624A]'}`}
       style={{ fontSize: size * 0.36 }}
     >
-      {initials(name)}
+      {isGroup ? <Users size={size * 0.5} /> : initials(name)}
     </div>
     {online !== undefined && (
       <span
@@ -276,11 +295,13 @@ const ChatThread: React.FC<{
         <button onClick={onBack} className="md:hidden text-[#8A8079] hover:text-[#3A332E]">
           <ArrowLeft size={22} />
         </button>
-        <Avatar name={conversation.otherName} size={40} online={online} />
+        <Avatar name={conversation.otherName} size={40} isGroup={conversation.isGroup} online={conversation.isGroup ? undefined : online} />
         <div className="min-w-0">
           <p className="font-medium text-[#3A332E] truncate">{conversation.otherName}</p>
           <p className="text-xs text-[#8A8079]">
-            {online ? <span className="text-[#5FBF77] font-medium">● En línea</span> : ROLE_LABEL[conversation.otherRole] || 'Colaborador'}
+            {conversation.isGroup
+              ? 'Canal de equipo'
+              : online ? <span className="text-[#5FBF77] font-medium">● En línea</span> : ROLE_LABEL[conversation.otherRole] || 'Colaborador'}
           </p>
         </div>
       </div>
@@ -307,13 +328,15 @@ const ChatThread: React.FC<{
       {/* Composer */}
       <div className="border-t border-[#ECE3D8] bg-white p-3 shrink-0">
         <div className="flex items-end gap-2">
-          <button
-            onClick={() => setShowTaskForm(true)}
-            title="Enviar una tarea"
-            className="shrink-0 h-11 w-11 flex items-center justify-center rounded-xl border border-[#ECE3D8] text-[#C9624A] hover:bg-[#FCF1EC] transition-colors"
-          >
-            <ClipboardList size={20} />
-          </button>
+          {!conversation.isGroup && (
+            <button
+              onClick={() => setShowTaskForm(true)}
+              title="Enviar una tarea"
+              className="shrink-0 h-11 w-11 flex items-center justify-center rounded-xl border border-[#ECE3D8] text-[#C9624A] hover:bg-[#FCF1EC] transition-colors"
+            >
+              <ClipboardList size={20} />
+            </button>
+          )}
           <textarea
             value={text}
             onChange={(e) => setText(e.target.value)}
@@ -556,18 +579,21 @@ const DirectoryModal: React.FC<{
   online: Set<string>;
   onClose: () => void;
   onPick: (p: DirectoryPerson) => void;
-}> = ({ online, onClose, onPick }) => {
+  onPickTeam: (t: ChatTeam) => void;
+}> = ({ online, onClose, onPick, onPickTeam }) => {
   const [people, setPeople] = useState<DirectoryPerson[]>([]);
+  const [teams, setTeams] = useState<ChatTeam[]>([]);
   const [loading, setLoading] = useState(true);
   const [q, setQ] = useState('');
 
   useEffect(() => {
-    getDirectory().then((p) => { setPeople(p); setLoading(false); }).catch((e) => {
-      console.error('[Chat] directorio:', e); setLoading(false);
-    });
+    Promise.all([getDirectory(), getChatTeams().catch(() => [])])
+      .then(([p, t]) => { setPeople(p); setTeams(t); setLoading(false); })
+      .catch((e) => { console.error('[Chat] directorio:', e); setLoading(false); });
   }, []);
 
   const filtered = people.filter((p) => p.fullName.toLowerCase().includes(q.toLowerCase()));
+  const filteredTeams = teams.filter((t) => t.name.toLowerCase().includes(q.toLowerCase()));
 
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
@@ -589,10 +615,27 @@ const DirectoryModal: React.FC<{
             <div className="p-8 flex justify-center">
               <div className="h-7 w-7 animate-spin rounded-full border-4 border-[#E07A5F] border-t-transparent" />
             </div>
-          ) : filtered.length === 0 ? (
-            <p className="p-8 text-center text-sm text-[#8A8079]">No hay compañeros para mostrar.</p>
+          ) : (filtered.length === 0 && filteredTeams.length === 0) ? (
+            <p className="p-8 text-center text-sm text-[#8A8079]">No hay compañeros ni equipos para mostrar.</p>
           ) : (
-            filtered.map((p) => (
+            <>
+            {filteredTeams.length > 0 && (
+              <>
+                <p className="px-4 pt-3 pb-1 text-[11px] font-semibold text-[#8A8079] uppercase tracking-wide">Canales de equipo</p>
+                {filteredTeams.map((t) => (
+                  <button key={t.teamId} onClick={() => onPickTeam(t)}
+                    className="w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-[#FAF6F1] border-b border-[#F2EAE0]">
+                    <Avatar name={t.name} size={40} isGroup />
+                    <div className="min-w-0">
+                      <p className="font-medium text-[#3A332E] truncate">{t.name}</p>
+                      <p className="text-xs text-[#8A8079]">{t.memberCount} miembro{t.memberCount !== 1 ? 's' : ''}</p>
+                    </div>
+                  </button>
+                ))}
+                {filtered.length > 0 && <p className="px-4 pt-3 pb-1 text-[11px] font-semibold text-[#8A8079] uppercase tracking-wide">Compañeros</p>}
+              </>
+            )}
+            {filtered.map((p) => (
               <button key={p.id} onClick={() => onPick(p)}
                 className="w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-[#FAF6F1] border-b border-[#F2EAE0]">
                 <Avatar name={p.fullName} size={40} online={online.has(p.id)} />
@@ -601,7 +644,8 @@ const DirectoryModal: React.FC<{
                   <p className="text-xs text-[#8A8079]">{ROLE_LABEL[p.role] || 'Colaborador'}</p>
                 </div>
               </button>
-            ))
+            ))}
+            </>
           )}
         </div>
       </div>
