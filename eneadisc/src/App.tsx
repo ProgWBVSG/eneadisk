@@ -31,8 +31,12 @@ import { AdminRecognition } from './pages/company/AdminRecognition';
 import { Chat } from './pages/shared/Chat';
 import { Calendar } from './pages/shared/Calendar';
 
-const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { isAuthenticated, session, isLoading } = useAuth();
+type Role = 'company_admin' | 'supervisor' | 'employee';
+
+const homeFor = (role?: Role) => (role === 'company_admin' ? '/dashboard/company' : '/dashboard/employee');
+
+const ProtectedRoute: React.FC<{ children: React.ReactNode; allow?: Role[] }> = ({ children, allow }) => {
+  const { user, isAuthenticated, session, isLoading } = useAuth();
 
   // Si hay una sesión activa pero el usuario todavía se está construyendo
   // (o la auth aún está cargando), mostramos un loader en vez de rebotar
@@ -47,6 +51,14 @@ const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) =
   }
 
   if (!isAuthenticated) return <Navigate to="/" replace />;
+
+  // Control de acceso por ROL: si el usuario entra (p. ej. cambiando la URL)
+  // a un panel que no le corresponde, lo mandamos a SU panel. Evita que un
+  // operario caiga en el panel de administración o viceversa.
+  if (allow && user && !allow.includes(user.role)) {
+    return <Navigate to={homeFor(user.role)} replace />;
+  }
+
   return <>{children}</>;
 };
 
@@ -76,7 +88,7 @@ function AppRoutes() {
 
       {/* Employee Dashboard */}
       <Route path="/dashboard/employee" element={
-        <ProtectedRoute>
+        <ProtectedRoute allow={['employee', 'supervisor']}>
           <DashboardLayout />
         </ProtectedRoute>
       }>
@@ -93,7 +105,7 @@ function AppRoutes() {
 
       {/* Company Dashboard */}
       <Route path="/dashboard/company" element={
-        <ProtectedRoute>
+        <ProtectedRoute allow={['company_admin']}>
           <DashboardLayout />
         </ProtectedRoute>
       }>
