@@ -180,7 +180,28 @@ export const suggestDailyActions = (
       })
     );
 
-  // 6) Todo bien → reconocer
+  // 6) Reasignación sugerida: balancear carga de alguien cargado+tensionado
+  const pendingBy: Record<string, number> = {};
+  tasks.filter((t) => t.status !== 'completed').forEach((t) => { pendingBy[t.userId] = (pendingBy[t.userId] || 0) + 1; });
+  const loaded = people
+    .filter((p) => p.risk !== 'ok')
+    .map((p) => ({ p, n: pendingBy[p.id] || 0 }))
+    .filter((x) => x.n >= 3)
+    .sort((a, b) => b.n - a.n)[0];
+  const free = people
+    .filter((p) => p.risk === 'ok')
+    .map((p) => ({ p, n: pendingBy[p.id] || 0 }))
+    .sort((a, b) => a.n - b.n)[0];
+  if (loaded && free && loaded.p.id !== free.p.id && loaded.n - free.n >= 2) {
+    out.push({
+      id: 'reassign',
+      priority: 'medium',
+      text: `${loaded.p.name.split(' ')[0]} viene cargado/a (${loaded.n} tareas) y tensionado/a. Considerá pasarle alguna a ${free.p.name.split(' ')[0]}, que tiene más margen.`,
+      personId: loaded.p.id,
+    });
+  }
+
+  // 7) Todo bien → reconocer
   if (out.length === 0 && people.length > 0) {
     out.push({
       id: 'all-good',
