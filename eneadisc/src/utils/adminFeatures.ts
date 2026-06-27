@@ -191,3 +191,49 @@ export const suggestAdminActions = (
   const order = { high: 0, medium: 1, low: 2 };
   return out.sort((a, b) => order[a.priority] - order[b.priority]).slice(0, 5);
 };
+
+// ── RESUMEN SEMANAL AUTOMÁTICO ─────────────────────────────
+// Sintetiza el overview + clima en un resumen leíble de un vistazo.
+export interface WeeklySummary {
+  headline: string;
+  tone: 'good' | 'watch' | 'alert';
+  points: string[];
+}
+
+export const buildWeeklySummary = (
+  overview: EmployeeOverview[],
+  mood: { avgEnergy: number; avgStress: number; checkinCount: number } | null
+): WeeklySummary => {
+  const total = overview.length;
+  const done = overview.filter((e) => e.questionnaireCompleted).length;
+  const atRisk = overview.filter((e) => e.risk === 'high').length;
+  const watch = overview.filter((e) => e.risk === 'watch').length;
+  const stress = mood?.avgStress ?? 0;
+  const energy = mood?.avgEnergy ?? 0;
+  const checkins = mood?.checkinCount ?? 0;
+
+  const tone: WeeklySummary['tone'] = atRisk > 0 || stress >= 3.7 ? 'alert' : (watch > 0 || stress >= 3.2) ? 'watch' : 'good';
+  const headline =
+    tone === 'alert' ? 'Hay señales de tensión para atender esta semana.'
+    : tone === 'watch' ? 'El equipo viene bien, con algunos puntos a vigilar.'
+    : 'El equipo viene estable y con buen clima.';
+
+  const points: string[] = [];
+  // Clima
+  if (checkins > 0) {
+    points.push(`Clima: energía ${energy.toFixed(1)}/5 y estrés ${stress.toFixed(1)}/5 (${checkins} check-ins esta semana).`);
+  } else {
+    points.push('Clima: todavía sin check-ins esta semana — falta visibilidad del ánimo del equipo.');
+  }
+  // Riesgos
+  if (atRisk > 0) points.push(`${atRisk} persona${atRisk > 1 ? 's' : ''} con riesgo de desgaste: conviene un 1:1 esta semana.`);
+  else if (watch > 0) points.push(`${watch} persona${watch > 1 ? 's' : ''} para vigilar de cerca.`);
+  else points.push('Sin personas en riesgo de desgaste. 👍');
+  // Adopción
+  points.push(`Adopción del test: ${done}/${total} completaron su perfil.`);
+  // Recomendación
+  if (tone === 'alert') points.push('Recomendado: aflojar carga donde haga falta y abrir conversaciones 1:1.');
+  else if (tone === 'good') points.push('Buen momento para reconocer logros y consolidar lo que funciona.');
+
+  return { headline, tone, points };
+};

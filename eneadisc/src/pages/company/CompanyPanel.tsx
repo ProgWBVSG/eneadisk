@@ -6,7 +6,7 @@ import { Button } from '../../components/ui/Button';
 import { AdminTutorial } from '../../components/tutorial/AdminTutorial';
 import { supabase } from '../../lib/supabase';
 import { getTeamMood, type TeamMood } from '../../utils/employeeFeatures';
-import { getEmployeesOverview, suggestAdminActions, type AdminAction } from '../../utils/adminFeatures';
+import { getEmployeesOverview, suggestAdminActions, buildWeeklySummary, type AdminAction, type WeeklySummary } from '../../utils/adminFeatures';
 
 interface JoinRequest {
     id: string;
@@ -32,6 +32,7 @@ export const CompanyPanel: React.FC = () => {
     const [atRisk, setAtRisk] = useState(0);
     const [pendingTest, setPendingTest] = useState(0);
     const [adminActions, setAdminActions] = useState<AdminAction[]>([]);
+    const [weekly, setWeekly] = useState<WeeklySummary | null>(null);
 
     // ── Fetch invite code + employee count from Supabase ──────────────────
     const fetchCompanyData = useCallback(async () => {
@@ -87,6 +88,7 @@ export const CompanyPanel: React.FC = () => {
         setAtRisk(overview.filter((e) => e.risk === 'high').length);
         setPendingTest(overview.filter((e) => !e.questionnaireCompleted).length);
         setAdminActions(suggestAdminActions(overview, tm));
+        setWeekly(buildWeeklySummary(overview, tm));
     }, [user?.companyId]);
 
     useEffect(() => {
@@ -264,6 +266,26 @@ export const CompanyPanel: React.FC = () => {
                     <p className="text-xs text-slate-500 mt-1">Comparte con tu equipo</p>
                 </div>
             </div>
+
+            {/* Resumen semanal automático */}
+            {weekly && (
+                <div className={`rounded-2xl p-6 mb-8 border ${
+                    weekly.tone === 'alert' ? 'bg-[#FCF1EC] border-[#F2D9CE]'
+                    : weekly.tone === 'watch' ? 'bg-amber-50 border-amber-200'
+                    : 'bg-[#EEF3EE] border-[#D7E3D8]'
+                }`}>
+                    <div className="flex items-center gap-2 mb-2">
+                        <Activity className={weekly.tone === 'alert' ? 'text-[#C9624A]' : weekly.tone === 'watch' ? 'text-amber-600' : 'text-[#5F7A68]'} size={22} />
+                        <h2 className="text-xl font-bold text-slate-900">Resumen de la semana</h2>
+                    </div>
+                    <p className="text-[#3A332E] font-medium mb-3">{weekly.headline}</p>
+                    <ul className="space-y-1.5">
+                        {weekly.points.map((p, i) => (
+                            <li key={i} className="text-sm text-[#3A332E] flex gap-2"><span className="text-[#8A8079] mt-0.5">•</span>{p}</li>
+                        ))}
+                    </ul>
+                </div>
+            )}
 
             {/* Qué hacer hoy: acciones sugeridas para el admin */}
             {adminActions.length > 0 && (
