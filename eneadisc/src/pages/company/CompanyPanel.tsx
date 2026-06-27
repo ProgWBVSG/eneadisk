@@ -7,6 +7,7 @@ import { AdminTutorial } from '../../components/tutorial/AdminTutorial';
 import { supabase } from '../../lib/supabase';
 import { getTeamMood, type TeamMood } from '../../utils/employeeFeatures';
 import { getEmployeesOverview, suggestAdminActions, buildWeeklySummary, type AdminAction, type WeeklySummary } from '../../utils/adminFeatures';
+import { setWebhook, isWebhookConfigured, sendToChannel } from '../../utils/notify';
 
 interface JoinRequest {
     id: string;
@@ -33,6 +34,10 @@ export const CompanyPanel: React.FC = () => {
     const [pendingTest, setPendingTest] = useState(0);
     const [adminActions, setAdminActions] = useState<AdminAction[]>([]);
     const [weekly, setWeekly] = useState<WeeklySummary | null>(null);
+    const [hookOn, setHookOn] = useState<boolean | null>(null);
+    const [hookEditing, setHookEditing] = useState(false);
+    const [hookUrl, setHookUrl] = useState('');
+    const [hookMsg, setHookMsg] = useState<string | null>(null);
 
     // ── Fetch invite code + employee count from Supabase ──────────────────
     const fetchCompanyData = useCallback(async () => {
@@ -89,7 +94,20 @@ export const CompanyPanel: React.FC = () => {
         setPendingTest(overview.filter((e) => !e.questionnaireCompleted).length);
         setAdminActions(suggestAdminActions(overview, tm));
         setWeekly(buildWeeklySummary(overview, tm));
+        isWebhookConfigured().then(setHookOn).catch(() => setHookOn(false));
     }, [user?.companyId]);
+
+    const saveHook = async () => {
+        try { await setWebhook(hookUrl.trim()); setHookOn(true); setHookEditing(false); setHookMsg('✓ Webhook guardado.'); }
+        catch (e: any) { setHookMsg(e?.message || 'No se pudo guardar'); }
+    };
+    const sendSummary = async () => {
+        if (!weekly) return;
+        setHookMsg('Enviando...');
+        const text = `📊 *EneaTeams · Resumen de la semana*\n${weekly.headline}\n` + weekly.points.map((p) => `• ${p}`).join('\n');
+        const r = await sendToChannel(text);
+        setHookMsg(r.ok ? '✓ Enviado al canal.' : `No se pudo enviar (${r.error || 'error'}).`);
+    };
 
     useEffect(() => {
         fetchCompanyData();
@@ -286,6 +304,30 @@ export const CompanyPanel: React.FC = () => {
                     </ul>
                 </div>
             )}
+
+            {/* Notificaciones a Slack/Discord */}
+            <div className="bg-white rounded-2xl p-6 mb-8 border border-slate-100">
+                <div className="flex items-center gap-2 mb-1">
+                    <Bell className="text-[#C9624A]" size={20} />
+                    <h2 className="text-lg font-bold text-slate-900">Notificaciones al canal (Slack / Discord)</h2>
+                </div>
+                <p className="text-sm text-[#8A8079] mb-3">Enviá el resumen y las alertas del equipo a tu canal. Pegá la "Incoming Webhook URL" de Slack o Discord.</p>
+                {hookOn && !hookEditing ? (
+                    <div className="flex flex-wrap gap-2 items-center">
+                        <span className="text-sm text-[#5F7A68] font-medium">● Conectado</span>
+                        <button onClick={sendSummary} className="text-sm bg-[#E07A5F] hover:bg-[#C9624A] text-white px-3 py-1.5 rounded-lg font-medium">Enviar resumen ahora</button>
+                        <button onClick={() => { setHookEditing(true); setHookUrl(''); }} className="text-sm text-[#8A8079] hover:text-[#3A332E] px-2">Cambiar</button>
+                    </div>
+                ) : (
+                    <div className="flex flex-wrap gap-2 items-center">
+                        <input value={hookUrl} onChange={(e) => setHookUrl(e.target.value)} placeholder="https://hooks.slack.com/services/..."
+                            className="flex-1 min-w-[220px] rounded-lg border border-[#ECE3D8] px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#E07A5F]/40" />
+                        <button onClick={saveHook} className="text-sm bg-[#E07A5F] hover:bg-[#C9624A] text-white px-4 py-2 rounded-lg font-medium">Guardar</button>
+                        {hookEditing && <button onClick={() => setHookEditing(false)} className="text-sm text-[#8A8079] px-2">Cancelar</button>}
+                    </div>
+                )}
+                {hookMsg && <p className="text-xs text-[#8A8079] mt-2">{hookMsg}</p>}
+            </div>
 
             {/* Qué hacer hoy: acciones sugeridas para el admin */}
             {adminActions.length > 0 && (
