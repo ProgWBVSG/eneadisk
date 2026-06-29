@@ -5,6 +5,7 @@ import {
   getEvents, createEvent, deleteEvent, getMyDueTasks, buildAgenda, getIcsUrl, type AgendaItem,
 } from '../../utils/calendar';
 import { Link2, Copy, Check } from 'lucide-react';
+import { connectGoogleCalendar, captureGoogleToken, pushToGoogle } from '../../utils/gcal';
 
 const dayKey = (iso: string) => new Date(iso).toDateString();
 const dayLabel = (iso: string) => {
@@ -22,6 +23,8 @@ export const Calendar: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [showSub, setShowSub] = useState(false);
+  const [gcalToken, setGcalToken] = useState<string | null>(null);
+  const [gcalMsg, setGcalMsg] = useState<string | null>(null);
   const [monthDate, setMonthDate] = useState(() => { const d = new Date(); return new Date(d.getFullYear(), d.getMonth(), 1); });
   const [selectedDay, setSelectedDay] = useState<string | null>(null);
 
@@ -36,9 +39,25 @@ export const Calendar: React.FC = () => {
   }, [user]);
   useEffect(() => { load(); }, [load]);
 
+  // Al volver del OAuth de Google, capturamos el token de calendario
+  useEffect(() => { captureGoogleToken().then(setGcalToken).catch(() => {}); }, []);
+
   const removeEvent = async (rawId: string) => {
     await deleteEvent(rawId);
     load();
+  };
+
+  const syncGoogle = async () => {
+    if (!gcalToken) {
+      try { await connectGoogleCalendar(); } catch { setGcalMsg('No se pudo conectar con Google.'); }
+      return;
+    }
+    setGcalMsg('Enviando a Google Calendar...');
+    const from = new Date(); from.setHours(0, 0, 0, 0);
+    const up = items.filter((i) => new Date(i.at) >= from).map((i) => ({ rawId: i.rawId, kind: i.kind, title: i.title, at: i.at, subtitle: i.subtitle }));
+    const r = await pushToGoogle(gcalToken, up);
+    if (r.expired) { sessionStorage.removeItem('gcal_token'); setGcalToken(null); setGcalMsg('La conexión con Google expiró: tocá de nuevo para reconectar.'); }
+    else setGcalMsg(`✓ ${r.added} evento(s) enviados a tu Google Calendar.`);
   };
 
   // Items por día (para marcadores de la grilla)
@@ -74,10 +93,14 @@ export const Calendar: React.FC = () => {
         <h1 className="text-3xl font-display font-bold text-[#3A332E] flex items-center gap-3">
           <CalendarDays className="text-[#C9624A]" size={30} /> Calendario
         </h1>
-        <div className="flex gap-2">
+        <div className="flex gap-2 flex-wrap justify-end">
+          <button onClick={syncGoogle}
+            className="flex items-center gap-1.5 border border-[#ECE3D8] text-[#3A332E] hover:bg-[#FAF6F1] px-3 py-2 rounded-xl text-sm font-medium">
+            <CalendarDays size={16} /> {gcalToken ? 'Enviar a Google' : 'Conectar Google'}
+          </button>
           <button onClick={() => setShowSub(true)}
             className="flex items-center gap-1.5 border border-[#ECE3D8] text-[#3A332E] hover:bg-[#FAF6F1] px-3 py-2 rounded-xl text-sm font-medium">
-            <Link2 size={16} /> Sincronizar
+            <Link2 size={16} /> Suscribir
           </button>
           <button onClick={() => setShowForm(true)}
             className="flex items-center gap-1.5 bg-[#E07A5F] hover:bg-[#C9624A] text-white px-4 py-2 rounded-xl text-sm font-medium">
@@ -86,6 +109,7 @@ export const Calendar: React.FC = () => {
         </div>
       </div>
       {showSub && <SubscribeModal onClose={() => setShowSub(false)} />}
+      {gcalMsg && <p className="text-xs text-[#8A8079] -mt-3 mb-4 text-right">{gcalMsg}</p>}
 
       {/* Grilla del mes */}
       <div className="bg-white rounded-2xl border border-[#ECE3D8] p-4 mb-6">
