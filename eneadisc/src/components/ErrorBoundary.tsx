@@ -36,7 +36,13 @@ export class ErrorBoundary extends React.Component<Props, State> {
   };
 
   handleReload = () => {
-    window.location.reload();
+    // Recarga forzando una navegación nueva (evita quedar con una versión
+    // vieja cacheada del bundle, causa típica de "Algo salió mal" tras un deploy).
+    try {
+      if ('caches' in window) caches.keys().then((ks) => ks.forEach((k) => caches.delete(k)));
+    } catch { /* noop */ }
+    const base = window.location.origin + window.location.pathname;
+    window.location.replace(`${base}?_r=${Date.now()}`);
   };
 
   render() {
