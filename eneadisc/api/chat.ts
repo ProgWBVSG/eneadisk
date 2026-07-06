@@ -85,10 +85,11 @@ export default async function handler(req: Request): Promise<Response> {
         });
     }
 
+    const geminiKey = process.env.GEMINI_API_KEY;
     const apiKey = process.env.ANTHROPIC_API_KEY;
-    if (!apiKey) {
+    if (!geminiKey && !apiKey) {
         return new Response(JSON.stringify({
-            error: 'ANTHROPIC_API_KEY not configured',
+            error: 'No hay API de IA configurada (GEMINI_API_KEY o ANTHROPIC_API_KEY).',
             fallback: true
         }), { status: 500, headers: CORS_HEADERS });
     }
@@ -103,6 +104,48 @@ export default async function handler(req: Request): Promise<Response> {
             });
         }
 
+        const contextIntro = `Estos son los datos actuales del dashboard de la empresa (úsalos cuando te pregunten sobre métricas, equipos o análisis):\n\n${context}\n\nPero no te limites solo a los datos — también podés responder sobre eneatipos, DISC, desarrollo personal y gestión de equipos en general.`;
+
+        // ── GEMINI (gratis) — preferido si está configurado ──────────────
+        if (geminiKey) {
+            const contents = [
+                { role: 'user', parts: [{ text: contextIntro }] },
+                { role: 'model', parts: [{ text: 'Entendido. Tengo los datos del dashboard y puedo responder sobre Eneagrama, DISC y gestión de equipos. ¿En qué te ayudo?' }] },
+                ...conversationHistory.slice(-4).map((m) => ({
+                    role: m.role === 'assistant' ? 'model' : 'user',
+                    parts: [{ text: m.content }],
+                })),
+                { role: 'user', parts: [{ text: message }] },
+            ];
+            const gRes = await fetch(
+                `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${geminiKey}`,
+                {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        system_instruction: { parts: [{ text: SYSTEM_PROMPT }] },
+                        contents,
+                        generationConfig: { temperature: 0.7, maxOutputTokens: 900 },
+                    }),
+                }
+            );
+            if (!gRes.ok) {
+                const errBody = await gRes.text();
+                console.error('Gemini API error:', gRes.status, errBody);
+                let userError = `Error de Gemini (${gRes.status}).`;
+                if (gRes.status === 400 || gRes.status === 403) userError = 'API key de Gemini inválida o la API no está habilitada. Revisá la key en Vercel (GEMINI_API_KEY) y que "Generative Language API" esté activa.';
+                else if (gRes.status === 429) userError = 'Se alcanzó el límite gratuito de Gemini por ahora. Esperá un momento e intentá de nuevo.';
+                return new Response(JSON.stringify({ error: userError, fallback: true }), { status: 502, headers: CORS_HEADERS });
+            }
+            const gData = await gRes.json() as { candidates?: Array<{ content?: { parts?: Array<{ text?: string }> } }> };
+            const answer = gData.candidates?.[0]?.content?.parts?.[0]?.text || 'No se pudo generar una respuesta.';
+            return new Response(JSON.stringify({
+                answer, recommendations: [], confidence: 92,
+                sources: ['Eneagrama', 'DISC', 'Dashboard Analytics'], processingTime: 0,
+            }), { status: 200, headers: CORS_HEADERS });
+        }
+
+        // ── ANTHROPIC (respaldo, de pago) ────────────────────────────────
         // Build messages - inject real dashboard data as context
         // El mensaje de contexto se cachea para evitar reprocesarlo en cada turno
         const messages = [
