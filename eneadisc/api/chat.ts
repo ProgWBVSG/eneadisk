@@ -117,28 +117,42 @@ export default async function handler(req: Request): Promise<Response> {
                 })),
                 { role: 'user', parts: [{ text: message }] },
             ];
-            const gRes = await fetch(
-                `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${geminiKey}`,
-                {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        system_instruction: { parts: [{ text: SYSTEM_PROMPT }] },
-                        contents,
-                        generationConfig: { temperature: 0.7, maxOutputTokens: 900 },
-                    }),
+            // Probar varios modelos gratis en orden: usa el primero con cuota disponible.
+            const models = process.env.GEMINI_MODEL
+                ? [process.env.GEMINI_MODEL]
+                : ['gemini-2.0-flash', 'gemini-2.0-flash-lite', 'gemini-1.5-flash', 'gemini-flash-latest'];
+            let answer: string | null = null;
+            let lastStatus = 0;
+            for (const model of models) {
+                const gRes = await fetch(
+                    `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${geminiKey}`,
+                    {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            system_instruction: { parts: [{ text: SYSTEM_PROMPT }] },
+                            contents,
+                            generationConfig: { temperature: 0.7, maxOutputTokens: 900 },
+                        }),
+                    }
+                );
+                if (gRes.ok) {
+                    const gData = await gRes.json() as { candidates?: Array<{ content?: { parts?: Array<{ text?: string }> } }> };
+                    answer = gData.candidates?.[0]?.content?.parts?.[0]?.text || 'No se pudo generar una respuesta.';
+                    break;
                 }
-            );
-            if (!gRes.ok) {
+                lastStatus = gRes.status;
                 const errBody = await gRes.text();
-                console.error('Gemini API error:', gRes.status, errBody);
-                let userError = `Error de Gemini (${gRes.status}).`;
-                if (gRes.status === 400 || gRes.status === 403) userError = 'API key de Gemini inválida o la API no está habilitada. Revisá la key en Vercel (GEMINI_API_KEY) y que "Generative Language API" esté activa.';
-                else if (gRes.status === 429) userError = 'Se alcanzó el límite gratuito de Gemini por ahora. Esperá un momento e intentá de nuevo.';
+                console.error(`Gemini ${model} error:`, gRes.status, errBody.slice(0, 200));
+                // 429 (sin cuota) o 404 (modelo no disponible) → probar el siguiente modelo.
+                if (gRes.status !== 429 && gRes.status !== 404) break;
+            }
+            if (answer === null) {
+                let userError = `Error de Gemini (${lastStatus}).`;
+                if (lastStatus === 400 || lastStatus === 403) userError = 'API key de Gemini inválida o la API no está habilitada. Revisá la key (GEMINI_API_KEY) y que "Generative Language API" esté activa en tu proyecto de Google.';
+                else if (lastStatus === 429) userError = 'Ningún modelo gratis de Gemini tiene cuota disponible ahora. Suele deberse a que la API recién se activó (esperá unos minutos) o al límite diario gratuito.';
                 return new Response(JSON.stringify({ error: userError, fallback: true }), { status: 502, headers: CORS_HEADERS });
             }
-            const gData = await gRes.json() as { candidates?: Array<{ content?: { parts?: Array<{ text?: string }> } }> };
-            const answer = gData.candidates?.[0]?.content?.parts?.[0]?.text || 'No se pudo generar una respuesta.';
             return new Response(JSON.stringify({
                 answer, recommendations: [], confidence: 92,
                 sources: ['Eneagrama', 'DISC', 'Dashboard Analytics'], processingTime: 0,
