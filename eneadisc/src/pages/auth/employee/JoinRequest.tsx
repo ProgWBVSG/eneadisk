@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../../context/AuthContext';
 import { supabase } from '../../../lib/supabase';
+import { requestToJoin, myJoinStatus } from '../../../utils/joinRequests';
 import { Button } from '../../../components/ui/Button';
 import { Users, AlertTriangle, CheckCircle, Loader2 } from 'lucide-react';
 
@@ -70,12 +71,7 @@ export const JoinRequest: React.FC = () => {
         const checkExistingRequest = async () => {
             if (!user?.id) return;
 
-            const { data: req } = await supabase
-                .from('join_requests')
-                .select('status')
-                .eq('user_id', user.id)
-                .eq('company_id', company.id)
-                .single();
+            const req = await myJoinStatus();
 
             if (req) {
                 if (req.status === 'pending') {
@@ -103,11 +99,10 @@ export const JoinRequest: React.FC = () => {
 
         setActionStatus('loading');
 
-        const { error } = await supabase
-            .from('join_requests')
-            .insert({ company_id: company.id, user_id: user.id });
+        let failed = false;
+        try { await requestToJoin(code); } catch { failed = true; }
 
-        if (error) {
+        if (failed) {
             setActionStatus('error');
             setActionMessage('Error al enviar la solicitud. Intentá más tarde.');
         } else {

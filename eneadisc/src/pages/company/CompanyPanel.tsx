@@ -8,15 +8,14 @@ import { supabase } from '../../lib/supabase';
 import { getTeamMood, type TeamMood } from '../../utils/employeeFeatures';
 import { getEmployeesOverview, suggestAdminActions, buildWeeklySummary, type AdminAction, type WeeklySummary } from '../../utils/adminFeatures';
 import { setWebhook, isWebhookConfigured, sendToChannel } from '../../utils/notify';
+import { getPendingRequests, approveRequest, rejectRequest } from '../../utils/joinRequests';
 
 interface JoinRequest {
     id: string;
-    user_id: string;
-    created_at: string;
-    profiles: {
-        full_name: string | null;
-        email: string;
-    } | null;
+    userId: string;
+    fullName: string | null;
+    email: string | null;
+    createdAt: string;
 }
 
 export const CompanyPanel: React.FC = () => {
@@ -72,17 +71,7 @@ export const CompanyPanel: React.FC = () => {
     // ── Fetch pending join requests ────────────────────────────────────────
     const fetchJoinRequests = useCallback(async () => {
         if (!user?.companyId) return;
-
-        const { data, error } = await supabase
-            .from('join_requests')
-            .select('id, user_id, created_at, profiles(full_name, email)')
-            .eq('company_id', user.companyId)
-            .eq('status', 'pending')
-            .order('created_at', { ascending: true });
-
-        if (!error && data) {
-            setJoinRequests(data as unknown as JoinRequest[]);
-        }
+        try { setJoinRequests(await getPendingRequests()); } catch { /* noop */ }
     }, [user?.companyId]);
 
     // ── Pulso del equipo: termómetro + alertas ────────────────────────────
@@ -118,33 +107,17 @@ export const CompanyPanel: React.FC = () => {
     // ── Approve a request ─────────────────────────────────────────────────
     const handleApprove = async (req: JoinRequest) => {
         setProcessingId(req.id);
-
-        // 1. Update request status
-        await supabase
-            .from('join_requests')
-            .update({ status: 'approved' })
-            .eq('id', req.id);
-
-        // 2. Assign the user to this company
-        await supabase
-            .from('profiles')
-            .update({ company_id: user!.companyId, role: 'employee' })
-            .eq('id', req.user_id);
-
+        try { await approveRequest(req.id); } catch (e) { console.error(e); }
         setProcessingId(null);
         fetchJoinRequests();
         fetchCompanyData();
+        fetchPulse();
     };
 
     // ── Reject a request ──────────────────────────────────────────────────
     const handleReject = async (reqId: string) => {
         setProcessingId(reqId);
-
-        await supabase
-            .from('join_requests')
-            .update({ status: 'rejected' })
-            .eq('id', reqId);
-
+        try { await rejectRequest(reqId); } catch (e) { console.error(e); }
         setProcessingId(null);
         fetchJoinRequests();
     };
@@ -203,8 +176,8 @@ export const CompanyPanel: React.FC = () => {
 
                     <div className="space-y-3">
                         {joinRequests.map((req) => {
-                            const name = req.profiles?.full_name || 'Sin nombre';
-                            const email = req.profiles?.email || '';
+                            const name = req.fullName || 'Sin nombre';
+                            const email = req.email || '';
                             const isProcessing = processingId === req.id;
 
                             return (

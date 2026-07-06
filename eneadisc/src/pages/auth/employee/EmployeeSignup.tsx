@@ -8,6 +8,7 @@ import { Input } from '../../../components/ui/Input';
 import { Users, Mail, CheckCircle, ChevronLeft } from 'lucide-react';
 import { supabase } from '../../../lib/supabase';
 import { useAuth } from '../../../context/AuthContext';
+import { requestToJoin } from '../../../utils/joinRequests';
 
 const GoogleIcon = () => (
   <svg viewBox="0 0 24 24" width="18" height="18" className="mr-2 shrink-0">
@@ -81,12 +82,12 @@ export const EmployeeSignup: React.FC = () => {
         return;
       }
 
-      // Intentar crear la cuenta
+      // Intentar crear la cuenta — SIN company_id: la admisión la aprueba el admin
       const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
         email: data.email,
         password: data.password,
         options: {
-          data: { role: 'employee', full_name: data.name, company_id: company.id },
+          data: { role: 'employee', full_name: data.name },
         },
       });
 
@@ -110,15 +111,9 @@ export const EmployeeSignup: React.FC = () => {
 
       // Si Supabase tiene email confirmation DESACTIVADO, la sesión ya está disponible
       if (signUpData.session && signUpData.user) {
-        // Crear perfil directamente (el trigger lo crea, pero hacemos upsert por si acaso)
-        await supabase.from('profiles').upsert({
-          id: signUpData.user.id,
-          role: 'employee',
-          company_id: company.id,
-          full_name: data.name,
-          email: data.email,
-        });
-        navigate('/questionnaire');
+        // Registrar la solicitud de ingreso (queda PENDIENTE de aprobación)
+        await requestToJoin(data.inviteCode);
+        navigate('/pending');
         return;
       }
 
@@ -151,17 +146,9 @@ export const EmployeeSignup: React.FC = () => {
         return;
       }
 
-      const userId = verifyData.user.id;
-
-      await supabase.from('profiles').upsert({
-        id: userId,
-        role: 'employee',
-        company_id: formData.companyId,
-        full_name: formData.name,
-        email: formData.email,
-      });
-
-      navigate('/questionnaire');
+      // Cuenta confirmada → registrar solicitud de ingreso (pendiente)
+      await requestToJoin(formData.inviteCode!);
+      navigate('/pending');
     } catch (err) {
       setServerError('Error al verificar. Intentá de nuevo.');
       console.error(err);

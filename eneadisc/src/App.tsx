@@ -13,6 +13,7 @@ import { EmployeeProfile } from './pages/employee/EmployeeProfile';
 import { JoinRequest } from './pages/auth/employee/JoinRequest';
 import { ResetPassword } from './pages/auth/ResetPassword';
 import { OAuthCallback } from './pages/auth/OAuthCallback';
+import { PendingApproval } from './pages/auth/PendingApproval';
 import { CompanyPanel } from './pages/company/CompanyPanel';
 import { EnneagramLibrary } from './pages/company/EnneagramLibrary';
 import { TeamManagement } from './pages/company/TeamManagement';
@@ -59,6 +60,12 @@ const ProtectedRoute: React.FC<{ children: React.ReactNode; allow?: Role[] }> = 
     return <Navigate to={homeFor(user.role)} replace />;
   }
 
+  // Gate de admisión: un operario sin empresa aprobada no entra al dashboard;
+  // va a la pantalla de espera hasta que el admin lo apruebe.
+  if (allow?.includes('employee') && user && user.role !== 'company_admin' && !user.companyId) {
+    return <Navigate to="/pending" replace />;
+  }
+
   return <>{children}</>;
 };
 
@@ -78,6 +85,13 @@ function AppRoutes() {
         <Route path="/join" element={<JoinRequest />} />
         <Route path="/auth/callback" element={<OAuthCallback />} />
       </Route>
+
+      {/* Pantalla de espera de aprobación (operario sin empresa) */}
+      <Route path="/pending" element={
+        <ProtectedRoute>
+          <PendingApproval />
+        </ProtectedRoute>
+      } />
 
       {/* Questionnaire (fullscreen, no sidebar) */}
       <Route path="/questionnaire" element={

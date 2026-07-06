@@ -6,6 +6,7 @@ import { z } from 'zod';
 import { Building2, Users, AlertCircle } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../context/AuthContext';
+import { requestToJoin } from '../../utils/joinRequests';
 import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
 import { Combobox } from '../../components/ui/Combobox';
@@ -116,27 +117,22 @@ export const OAuthCallback: React.FC = () => {
       }
 
       if (intent.role === 'employee') {
-        // Empleado con código ya validado → crear perfil y redirigir directo
-        if (intent.inviteCode && intent.companyId) {
-          const { error: profErr } = await supabase.from('profiles').upsert(
+        // Empleado con código ya validado → crear perfil SIN empresa y pedir ingreso
+        if (intent.inviteCode) {
+          await supabase.from('profiles').upsert(
             {
               id: user.id,
               role: 'employee',
-              company_id: intent.companyId,
               full_name: googleName || user.email?.split('@')[0] || 'Usuario',
               email: user.email,
               questionnaire_completed: false,
             },
             { onConflict: 'id' }
           );
-          if (profErr) {
-            setPhase('error');
-            setErrorMsg('Error al crear tu perfil. Intentá de nuevo.');
-            return;
-          }
+          try { await requestToJoin(intent.inviteCode); } catch { /* código inválido: cae al form */ }
           localStorage.removeItem('eneateams_oauth_intent');
           await refreshUser();
-          if (mounted.current) navigate('/questionnaire', { replace: true });
+          if (mounted.current) navigate('/pending', { replace: true });
           return;
         }
 
@@ -261,7 +257,6 @@ export const OAuthCallback: React.FC = () => {
       {
         id: userId,
         role: 'employee',
-        company_id: company.id,
         full_name: data.name,
         email: userEmail,
         questionnaire_completed: false,
@@ -274,9 +269,12 @@ export const OAuthCallback: React.FC = () => {
       return;
     }
 
+    try { await requestToJoin(data.inviteCode); }
+    catch { setServerError('No se pudo registrar la solicitud. Intentá de nuevo.'); return; }
+
     localStorage.removeItem('eneateams_oauth_intent');
     await refreshUser();
-    navigate('/questionnaire', { replace: true });
+    navigate('/pending', { replace: true });
   };
 
   // ── Render ─────────────────────────────────────────────────────────────
