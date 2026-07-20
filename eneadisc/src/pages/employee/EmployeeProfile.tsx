@@ -5,7 +5,7 @@ import { ENNEAGRAM_TYPES } from '../../data/enneagramData';
 import { WORK_PROFILES, getDailyTip } from '../../data/enneagramWorkData';
 import { RESOURCES } from '../../data/enneagramResources';
 import {
-  Heart, AlertTriangle, TrendingUp, Target, Users, Lock, HelpCircle,
+  Heart, AlertTriangle, TrendingUp, Target, Lock, HelpCircle,
   MessageCircle, MessageSquareReply, Sparkles, Flame, Zap, Sun, Share2, Check, UserCircle, BookOpen, Dumbbell,
 } from 'lucide-react';
 import { EmployeeTutorial } from '../../components/tutorial/EmployeeTutorial';
@@ -53,7 +53,7 @@ export const EmployeeProfile: React.FC = () => {
     if (!wp) return '';
     return [
       `📋 MANUAL DE USUARIO — ${user?.name || 'Mi perfil'}`,
-      `Eneatipo ${typeId}: ${t.name} — ${wp.tagline}`,
+      `${wp.tagline}`,
       ``,
       `💬 CÓMO COMUNICARTE CONMIGO:`,
       ...wp.howToCommunicate.map((x) => `  • ${x}`),
@@ -95,10 +95,10 @@ export const EmployeeProfile: React.FC = () => {
       >
         <div className="flex items-center gap-5">
           <div className="w-20 h-20 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center border-4 border-white/30 shrink-0">
-            <span className="text-5xl font-bold">{typeId}</span>
+            <UserCircle size={44} />
           </div>
           <div className="flex-1">
-            <h1 className="text-2xl md:text-4xl font-bold mb-1">Tipo {typeId}: {t.name}</h1>
+            <h1 className="text-2xl md:text-4xl font-bold mb-1">Tu Perfil de Trabajo</h1>
             <p className="text-base md:text-lg opacity-90">{wp?.tagline || t.description}</p>
           </div>
         </div>
@@ -237,26 +237,6 @@ export const EmployeeProfile: React.FC = () => {
           )}
 
           {/* Compatibilidad */}
-          <div id="tour-emp-profile-compatibility" className="bg-white rounded-xl p-6 shadow-md">
-            <div className="flex items-center gap-3 mb-4">
-              <Users className="text-[#C9624A]" size={24} />
-              <h3 className="text-xl font-bold text-slate-900">Trabajás Mejor Con</h3>
-            </div>
-            <div className="flex flex-wrap gap-3">
-              {t.compatibleWith.map((cid) => {
-                const ct = ENNEAGRAM_TYPES[cid];
-                return (
-                  <div key={cid} className="flex items-center gap-3 px-4 py-3 bg-slate-50 rounded-lg border border-slate-200">
-                    <div className="w-10 h-10 rounded-full flex items-center justify-center text-white font-bold" style={{ backgroundColor: ct.color }}>{cid}</div>
-                    <div>
-                      <p className="font-medium text-slate-900">Tipo {cid}</p>
-                      <p className="text-xs text-slate-500">{ct.name}</p>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
         </div>
       )}
 
@@ -374,10 +354,6 @@ export const EmployeeProfile: React.FC = () => {
           <div className="flex justify-between py-2 border-b border-slate-100">
             <span className="text-slate-500">Email:</span>
             <span className="font-medium text-slate-900">{user?.email || '-'}</span>
-          </div>
-          <div className="flex justify-between py-2">
-            <span className="text-slate-500">Eneatipo:</span>
-            <span className="font-medium text-slate-900">Tipo {typeId} — {t.name}</span>
           </div>
         </div>
         <div className="mt-6 p-4 bg-blue-50 rounded-lg border border-blue-200">

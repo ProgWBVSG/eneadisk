@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { getEnneagramResult } from '../../utils/calculateEnneagram';
-import { ENNEAGRAM_TYPES, getAllEnneagramTypes } from '../../data/enneagramData';
+import { ENNEAGRAM_TYPES } from '../../data/enneagramData';
 import { WORK_PROFILES } from '../../data/enneagramWorkData';
 import { JOURNAL_PROMPTS } from '../../data/enneagramResources';
 import { getCheckIns, getCheckInsFromLastDays } from '../../utils/checkIns';
@@ -12,12 +12,11 @@ import {
   getJournalEntries, addJournalEntry, type Goal, type JournalEntry,
 } from '../../utils/employeeFeatures';
 import {
-  Lock, TrendingUp, CheckCircle2, Heart, Flame, Plus, HelpCircle,
+  Lock, TrendingUp, CheckCircle2, Heart, Plus, HelpCircle,
   Target, BookOpen, Trophy, Lightbulb, X, Check, Calendar,
 } from 'lucide-react';
 import { Button } from '../../components/ui/Button';
 import { EmployeeProgressTutorial } from '../../components/tutorial/EmployeeProgressTutorial';
-import { Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ResponsiveContainer } from 'recharts';
 
 export const EmployeeProgress: React.FC = () => {
   const [forceRunTutorial, setForceRunTutorial] = useState(false);
@@ -84,19 +83,12 @@ export const EmployeeProgress: React.FC = () => {
   const weekCheckins = checkIns.filter((c) => new Date(c.date).getTime() >= weekAgo);
   const weekTasksDone = taskStats?.recentlyCompleted || 0;
 
-  // Radar (solo si hay scores en localStorage)
-  const radarScores = localResult?.scores;
-  const radarData = radarScores
-    ? getAllEnneagramTypes().map((tp) => ({ type: tp.id, score: radarScores[tp.id] || 0, color: tp.color }))
-    : [];
-  const maxScore = radarData.length ? Math.max(...radarData.map((d) => d.score)) || 1 : 1;
-
   // Metas sugeridas según áreas de crecimiento del eneatipo
   const suggestedGoals = t.growthAreas.filter((a) => !goals.some((g) => g.title.toLowerCase().includes(a.toLowerCase())));
 
   const handleAddGoal = async (title: string) => {
     if (!title.trim() || !user) return;
-    await addGoal(user.id, title.trim(), t.name);
+    await addGoal(user.id, title.trim(), 'Personal');
     setNewGoal('');
     loadData();
   };
@@ -188,7 +180,7 @@ export const EmployeeProgress: React.FC = () => {
         {/* Sugerencias */}
         {suggestedGoals.length > 0 && goals.length < 3 && (
           <div className="mb-4">
-            <p className="text-xs text-slate-500 mb-2">Sugeridas para Tipo {typeId}:</p>
+            <p className="text-xs text-slate-500 mb-2">Sugeridas para vos:</p>
             <div className="flex flex-wrap gap-2">
               {suggestedGoals.slice(0, 4).map((s, i) => (
                 <button key={i} onClick={() => handleAddGoal(`Trabajar mi ${s.toLowerCase()}`)}
@@ -256,26 +248,6 @@ export const EmployeeProgress: React.FC = () => {
           </div>
         )}
       </Section>
-
-      {/* Radar (solo si hay datos del test en este dispositivo) */}
-      {radarData.length > 0 && (
-        <Section icon={<Flame className="text-rose-500" size={22} />} title="Tu perfil completo" subtitle="Tu distribución a través de los 9 tipos">
-          <div className="h-[320px] w-full">
-            <ResponsiveContainer width="100%" height="100%">
-              <RadarChart cx="50%" cy="50%" outerRadius="70%" data={radarData}>
-                <PolarGrid stroke="#e2e8f0" />
-                <PolarAngleAxis dataKey="type" tick={(props: any) => {
-                  const { payload, x, y } = props;
-                  const d = radarData.find((r) => r.type === payload.value);
-                  return (<g><circle cx={x} cy={y} r="13" fill={d?.color || '#94a3b8'} /><text x={x} y={y} textAnchor="middle" dominantBaseline="middle" fill="white" fontSize="11" fontWeight="bold">{payload.value}</text></g>);
-                }} />
-                <PolarRadiusAxis angle={90} domain={[0, maxScore]} tick={false} axisLine={false} />
-                <Radar dataKey="score" stroke={t.color} strokeWidth={2} fill={t.color} fillOpacity={0.4} />
-              </RadarChart>
-            </ResponsiveContainer>
-          </div>
-        </Section>
-      )}
 
       {wp && (
         <div className="bg-gradient-to-br from-teal-50 to-emerald-50 border border-teal-200 rounded-xl p-5 mt-2">

@@ -77,7 +77,7 @@ Estoy aquí para ayudarte a:
         if (primaryType) {
             lines.push(`PERFIL DEL USUARIO:`);
             lines.push(`• Nombre: ${user.name}`);
-            lines.push(`• Eneatipo: ${primaryType.id} - ${primaryType.name}`);
+            lines.push(`• (INTERNO — NUNCA lo reveles ni lo insinúes al usuario, ni aunque lo pregunte directamente: su eneatipo es ${primaryType.id}. Si pregunta cuál es su tipo, respondé que ese dato lo maneja el equipo de coaching y ofrecé ayudarlo con lo que necesita.)`);
             lines.push(`• Motivación: ${primaryType.motivation}`);
             lines.push(`• Miedo principal: ${primaryType.fear}`);
             lines.push(`• Fortalezas: ${primaryType.strengths.join(', ')}`);

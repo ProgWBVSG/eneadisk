@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Users, Heart, TrendingUp, Lightbulb, MessageCircle, HelpCircle, Clock, Award, Send, X, ShieldAlert, Activity } from 'lucide-react';
+import { Users, TrendingUp, Lightbulb, MessageCircle, HelpCircle, Clock, Award, Send, X, ShieldAlert, Activity } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { supabase } from '../../lib/supabase';
 import { getEnneagramBadge } from '../../utils/enneagramColors';
-import { getCompatibilityScore, getTeamDynamics } from '../../utils/compatibility';
+import { getTeamDynamics } from '../../utils/compatibility';
 import { ENNEAGRAM_TYPES } from '../../data/enneagramData';
 import { WORK_PROFILES } from '../../data/enneagramWorkData';
 import { CONFLICT_GUIDANCE, KUDOS_CATEGORIES } from '../../data/enneagramResources';
@@ -144,14 +144,13 @@ export const EmployeeTeam: React.FC = () => {
           {/* ── Compañeros: comunicación + conflictos + reconocer ── */}
           <div id="tour-emp-team-list" className="mb-8">
             <h2 className="text-xl font-semibold text-slate-900 mb-1">Cómo trabajar con cada compañero</h2>
-            <p className="text-sm text-slate-500 mb-4">Consejos según el eneatipo de cada persona</p>
+            <p className="text-sm text-slate-500 mb-4">Consejos personalizados para trabajar mejor con cada persona</p>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
               {teammates.map((tm) => {
                 const badge = tm.enneagramType ? getEnneagramBadge(tm.enneagramType) : null;
                 const wp = tm.enneagramType ? WORK_PROFILES[tm.enneagramType] : null;
                 const ct = tm.enneagramType ? ENNEAGRAM_TYPES[tm.enneagramType] : null;
                 const conflict = tm.enneagramType ? CONFLICT_GUIDANCE[tm.enneagramType] : null;
-                const score = myType && tm.enneagramType ? getCompatibilityScore(myType, tm.enneagramType) : null;
                 const isOpen = expandedConflict === tm.id;
 
                 return (
@@ -163,12 +162,8 @@ export const EmployeeTeam: React.FC = () => {
                       </div>
                       <div className="flex-1 min-w-0">
                         <h4 className="font-semibold text-slate-900 truncate">{tm.name}</h4>
-                        {badge ? <span className="text-xs font-medium" style={{ color: badge.text }}>Tipo {tm.enneagramType}: {ct?.name}</span>
-                          : <span className="text-xs text-slate-400 flex items-center gap-1"><Clock size={11} /> Pendiente de test</span>}
+                        {!badge && <span className="text-xs text-slate-400 flex items-center gap-1"><Clock size={11} /> Pendiente de test</span>}
                       </div>
-                      {score !== null && (
-                        <span className={`text-sm font-bold ${score >= 80 ? 'text-green-600' : score >= 60 ? 'text-yellow-600' : 'text-orange-600'}`} title="Compatibilidad">{score}%</span>
-                      )}
                     </div>
 
                     {wp ? (
@@ -231,23 +226,6 @@ export const EmployeeTeam: React.FC = () => {
                   )}
                 </div>
               </div>
-
-              {myType && (
-                <div id="tour-emp-team-compatibility" className="bg-white border border-slate-200 rounded-xl p-6">
-                  <h3 className="text-xl font-semibold text-slate-900 mb-4 flex items-center gap-2"><Heart className="w-5 h-5 text-pink-600" /> Tu Compatibilidad</h3>
-                  <div className="space-y-3">
-                    {profiled.map((tm) => {
-                      const score = getCompatibilityScore(myType, tm.enneagramType!);
-                      return (
-                        <div key={tm.id} className="border-b border-slate-100 last:border-0 pb-3 last:pb-0">
-                          <div className="flex items-center justify-between mb-2"><span className="font-medium text-slate-900 text-sm">{tm.name}</span><span className={`text-sm font-semibold ${score >= 80 ? 'text-green-600' : score >= 60 ? 'text-yellow-600' : 'text-orange-600'}`}>{score}%</span></div>
-                          <div className="w-full bg-slate-100 rounded-full h-1.5"><div className={`h-1.5 rounded-full ${score >= 80 ? 'bg-green-500' : score >= 60 ? 'bg-yellow-500' : 'bg-orange-500'}`} style={{ width: `${score}%` }} /></div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-              )}
             </div>
           )}
         </>
