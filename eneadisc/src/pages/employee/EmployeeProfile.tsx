@@ -5,8 +5,8 @@ import { ENNEAGRAM_TYPES } from '../../data/enneagramData';
 import { WORK_PROFILES, getDailyTip } from '../../data/enneagramWorkData';
 import { RESOURCES } from '../../data/enneagramResources';
 import {
-  Heart, AlertTriangle, TrendingUp, Target, Lock, HelpCircle,
-  MessageCircle, MessageSquareReply, Sparkles, Flame, Zap, Sun, Share2, Check, UserCircle, BookOpen, Dumbbell,
+  Heart, AlertTriangle, Target, Lock, HelpCircle,
+  MessageCircle, MessageSquareReply, Flame, Zap, Sun, Share2, Check, UserCircle, BookOpen, Dumbbell,
 } from 'lucide-react';
 import { EmployeeTutorial } from '../../components/tutorial/EmployeeTutorial';
 
@@ -53,7 +53,6 @@ export const EmployeeProfile: React.FC = () => {
     if (!wp) return '';
     return [
       `📋 MANUAL DE USUARIO — ${user?.name || 'Mi perfil'}`,
-      `${wp.tagline}`,
       ``,
       `💬 CÓMO COMUNICARTE CONMIGO:`,
       ...wp.howToCommunicate.map((x) => `  • ${x}`),
@@ -99,7 +98,7 @@ export const EmployeeProfile: React.FC = () => {
           </div>
           <div className="flex-1">
             <h1 className="text-2xl md:text-4xl font-bold mb-1">Tu Perfil de Trabajo</h1>
-            <p className="text-base md:text-lg opacity-90">{wp?.tagline || t.description}</p>
+            <p className="text-base md:text-lg opacity-90">Tu espacio de desarrollo personal</p>
           </div>
         </div>
       </div>
@@ -140,69 +139,29 @@ export const EmployeeProfile: React.FC = () => {
       {/* ═══════════════ TAB: QUIÉN SOY ═══════════════ */}
       {tab === 'identity' && (
         <div className="space-y-6">
-          {/* Motivación y Miedo */}
-          <div id="tour-emp-profile-motivation" className="grid md:grid-cols-2 gap-6">
-            <div className="bg-white rounded-xl p-6 shadow-md border-l-4 border-green-500">
-              <div className="flex items-center gap-3 mb-3">
-                <div className="p-2 bg-green-100 rounded-lg"><Heart className="text-green-600" size={24} /></div>
-                <h3 className="text-lg font-bold text-slate-900">Motivación Principal</h3>
+          {/* Tu rutina de crecimiento (acciones, no etiquetas) */}
+          <div id="tour-emp-profile-motivation" className="grid md:grid-cols-3 gap-4">
+            <a href="/dashboard/employee/checkins" className="bg-white rounded-xl p-6 shadow-md border-l-4 border-[#E07A5F] hover:shadow-lg transition-shadow block">
+              <div className="flex items-center gap-3 mb-2">
+                <div className="p-2 bg-[#FCF1EC] rounded-lg"><Heart className="text-[#C9624A]" size={22} /></div>
+                <h3 className="text-lg font-bold text-slate-900">Check-in de hoy</h3>
               </div>
-              <p className="text-slate-700">{t.motivation}</p>
-            </div>
-            <div className="bg-white rounded-xl p-6 shadow-md border-l-4 border-red-500">
-              <div className="flex items-center gap-3 mb-3">
-                <div className="p-2 bg-red-100 rounded-lg"><AlertTriangle className="text-red-600" size={24} /></div>
-                <h3 className="text-lg font-bold text-slate-900">Miedo Básico</h3>
+              <p className="text-sm text-slate-600">Registrá cómo venís de energía y ánimo. 1 minuto que suma un montón.</p>
+            </a>
+            <a href="/dashboard/employee/progreso" className="bg-white rounded-xl p-6 shadow-md border-l-4 border-[#7C9885] hover:shadow-lg transition-shadow block">
+              <div className="flex items-center gap-3 mb-2">
+                <div className="p-2 bg-[#EEF3EE] rounded-lg"><Target className="text-[#5F7A68]" size={22} /></div>
+                <h3 className="text-lg font-bold text-slate-900">Mis metas</h3>
               </div>
-              <p className="text-slate-700">{t.fear}</p>
-            </div>
-          </div>
-
-          {/* Fortalezas */}
-          <div id="tour-emp-profile-strengths" className="bg-white rounded-xl p-6 shadow-md">
-            <div className="flex items-center gap-3 mb-4">
-              <TrendingUp className="text-blue-600" size={24} />
-              <h3 className="text-xl font-bold text-slate-900">Tus Fortalezas</h3>
-            </div>
-            <div className="flex flex-wrap gap-2">
-              {t.strengths.map((s, i) => (
-                <span key={i} className="px-4 py-2 bg-blue-50 text-blue-700 rounded-lg text-sm font-medium border border-blue-200">✓ {s}</span>
-              ))}
-            </div>
-          </div>
-
-          {/* En qué brillás */}
-          {wp && (
-            <div className="bg-white rounded-xl p-6 shadow-md">
-              <div className="flex items-center gap-3 mb-4">
-                <Sparkles className="text-[#C9624A]" size={24} />
-                <h3 className="text-xl font-bold text-slate-900">Dónde Brillás</h3>
+              <p className="text-sm text-slate-600">Elegí una meta chica para esta semana y avanzá un paso hoy.</p>
+            </a>
+            <a href="/dashboard/employee/progreso" className="bg-white rounded-xl p-6 shadow-md border-l-4 border-amber-400 hover:shadow-lg transition-shadow block">
+              <div className="flex items-center gap-3 mb-2">
+                <div className="p-2 bg-amber-50 rounded-lg"><BookOpen className="text-amber-600" size={22} /></div>
+                <h3 className="text-lg font-bold text-slate-900">Mi diario</h3>
               </div>
-              <p className="text-sm text-slate-500 mb-4">Tareas y roles donde tu tipo destaca naturalmente</p>
-              <div className="grid sm:grid-cols-2 gap-2">
-                {wp.shinesAt.map((s, i) => (
-                  <div key={i} className="flex items-center gap-2 px-3 py-2 bg-[#FCF1EC] rounded-lg text-sm text-[#A84C37]">
-                    <Sparkles size={14} className="text-[#E07A5F] shrink-0" /> {s}
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Áreas de desarrollo */}
-          <div className="bg-white rounded-xl p-6 shadow-md">
-            <div className="flex items-center gap-3 mb-4">
-              <Target className="text-amber-600" size={24} />
-              <h3 className="text-xl font-bold text-slate-900">Áreas de Desarrollo</h3>
-            </div>
-            <ul className="space-y-2">
-              {t.growthAreas.map((a, i) => (
-                <li key={i} className="flex items-start gap-3">
-                  <span className="text-amber-500 mt-1">🌱</span>
-                  <span className="text-slate-700">{a}</span>
-                </li>
-              ))}
-            </ul>
+              <p className="text-sm text-slate-600">Escribí 3 líneas sobre tu día. Lo que se escribe, se entiende mejor.</p>
+            </a>
           </div>
 
           {/* Auto-cuidado */}
@@ -223,7 +182,7 @@ export const EmployeeProfile: React.FC = () => {
                 <Dumbbell className="text-[#C9624A]" size={24} />
                 <h3 className="text-xl font-bold text-slate-900">Ejercicios para crecer</h3>
               </div>
-              <p className="text-sm text-slate-500 mb-4">Prácticas concretas pensadas para tu tipo</p>
+              <p className="text-sm text-slate-500 mb-4">Prácticas concretas elegidas para vos</p>
               <div className="grid sm:grid-cols-3 gap-3">
                 {RESOURCES[typeId].map((r, i) => (
                   <div key={i} className="bg-slate-50 rounded-xl p-4 border border-slate-100">
