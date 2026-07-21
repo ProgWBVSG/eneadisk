@@ -120,11 +120,24 @@ export const getTaskStats = async (userId: string) => {
 
 // ==================== TEAM TASKS ====================
 
+// NOTA: tasks.assigned_by referencia auth.users (no public.profiles), así que
+// PostgREST no puede resolver el embed "profiles!assigned_by(...)" — no hay
+// FK directa entre ambas tablas. Se resuelve el nombre del asignador aparte.
+const attachAssignerNames = async (rows: any[]): Promise<any[]> => {
+    const ids = [...new Set(rows.map((r) => r.assigned_by).filter(Boolean))];
+    if (ids.length === 0) return rows;
+    const { data: profiles } = await supabase.from('profiles').select('id, full_name').in('id', ids);
+    const nameById = new Map((profiles || []).map((p) => [p.id, p.full_name]));
+    return rows.map((r) => ({ ...r, profiles: r.assigned_by ? { full_name: nameById.get(r.assigned_by) } : undefined }));
+};
+
 export const getTeamTasks = async (teamId: string): Promise<Task[]> => {
-    const { data } = await supabase.from('tasks')
-        .select('*, profiles!assigned_by(full_name)')
+    const { data, error } = await supabase.from('tasks')
+        .select('*')
         .eq('team_id', teamId);
-    return (data || []).map(mapRowToTask);
+    if (error || !data) return [];
+    const withNames = await attachAssignerNames(data);
+    return withNames.map(mapRowToTask);
 };
 
 export const createTeamTask = async (
@@ -143,10 +156,11 @@ export const createTeamTask = async (
         category: task.category || 'team',
         assigned_by: assignedBy,
         due_date: task.dueDate
-    }]).select('*, profiles!assigned_by(full_name)').single();
+    }]).select('*').single();
 
     if (error) throw error;
-    return mapRowToTask(data);
+    const [withName] = await attachAssignerNames([data]);
+    return mapRowToTask(withName);
 };
 
 export const getUserTeamTasks = async (userId: string, teamId?: string): Promise<Task[]> => {

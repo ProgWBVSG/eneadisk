@@ -144,22 +144,31 @@ export const deleteTeam = async (teamId: string): Promise<void> => {
 // ============================================
 
 export const getTeamMembers = async (teamId: string): Promise<TeamMember[]> => {
-    const { data, error } = await supabase.from('team_members')
-        .select(`
-            user_id,
-            profiles!inner ( id, full_name, email, enneagram_type, company_id )
-        `)
+    // NOTA: team_members.user_id referencia auth.users (no public.profiles),
+    // así que PostgREST no puede resolver un embed "profiles!inner(...)" —
+    // no hay FK directa entre ambas tablas. Se resuelve en dos consultas.
+    const { data: links, error: linksError } = await supabase
+        .from('team_members')
+        .select('user_id')
         .eq('team_id', teamId);
-        
-    if (error || !data) return [];
 
-    return data.map((m: any) => ({
-        id: m.profiles.id,
-        name: m.profiles.full_name || m.profiles.email,
-        email: m.profiles.email,
-        enneagramType: m.profiles.enneagram_type,
+    if (linksError || !links || links.length === 0) return [];
+
+    const userIds = links.map((l) => l.user_id);
+    const { data: profiles, error: profilesError } = await supabase
+        .from('profiles')
+        .select('id, full_name, email, enneagram_type, company_id')
+        .in('id', userIds);
+
+    if (profilesError || !profiles) return [];
+
+    return profiles.map((p) => ({
+        id: p.id,
+        name: p.full_name || p.email,
+        email: p.email,
+        enneagramType: p.enneagram_type,
         role: 'employee',
-        companyId: m.profiles.company_id,
+        companyId: p.company_id,
         teamId
     }));
 };
