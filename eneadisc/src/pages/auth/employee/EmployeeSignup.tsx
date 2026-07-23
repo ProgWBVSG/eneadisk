@@ -1,14 +1,13 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Button } from '../../../components/ui/Button';
 import { Input } from '../../../components/ui/Input';
-import { Users, Mail, CheckCircle, ChevronLeft } from 'lucide-react';
+import { Users, ChevronLeft } from 'lucide-react';
 import { supabase } from '../../../lib/supabase';
 import { useAuth } from '../../../context/AuthContext';
-import { requestToJoin } from '../../../utils/joinRequests';
 
 const GoogleIcon = () => (
   <svg viewBox="0 0 24 24" width="18" height="18" className="mr-2 shrink-0">
@@ -30,127 +29,66 @@ const step1Schema = z.object({
   path: ['confirmPassword'],
 });
 
-const otpSchema = z.object({
-  token: z.string().min(6, 'Ingresá el código que te enviamos'),
-});
-
 type Step1Data = z.infer<typeof step1Schema>;
-type OtpData = z.infer<typeof otpSchema>;
 
 export const EmployeeSignup: React.FC = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const defaultCode = searchParams.get('code') || '';
-  const { signInWithGoogle } = useAuth();
+  const { signInWithGoogle, login } = useAuth();
 
-  const [step, setStep] = useState(1);
   const [isLoading, setIsLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
-  const [formData, setFormData] = useState<Partial<Step1Data & { companyId: string }>>({});
   const [serverError, setServerError] = useState<string | null>(null);
   const [emailExists, setEmailExists] = useState(false);
-  const [resendTimer, setResendTimer] = useState(0);
-  const [isResending, setIsResending] = useState(false);
-
-  // Countdown para reenviar OTP
-  useEffect(() => {
-    if (step !== 2 || resendTimer === 0) return;
-    const t = setInterval(() => setResendTimer((p) => p - 1), 1000);
-    return () => clearInterval(t);
-  }, [step, resendTimer]);
-
   const form1 = useForm<Step1Data>({
     resolver: zodResolver(step1Schema),
     defaultValues: { inviteCode: defaultCode },
   });
-  const formOtp = useForm<OtpData>({ resolver: zodResolver(otpSchema) });
 
-  // ── Step 1: validar código + signUp → envía OTP ──
+  // ── Step 1: validar código + crear cuenta YA CONFIRMADA ──────────────
+  // No dependemos del email de verificación: el envío gratuito de Supabase
+  // tiene mala entrega a casillas corporativas (los filtros de spam
+  // empresariales lo bloquean), dejando afuera a quien se registra con un
+  // mail de su empresa. /api/signup-confirmed crea la cuenta ya confirmada
+  // con la service key, así que funciona igual para cualquier dominio.
   const onStep1 = async (data: Step1Data) => {
     setServerError(null);
     setEmailExists(false);
     setIsLoading(true);
 
     try {
-      // Validar código de empresa vía RPC (funciona sin sesión iniciada)
-      const { data: companyRows, error: companyError } = await supabase
-        .rpc('get_company_by_invite_code', { p_code: data.inviteCode.trim().toUpperCase() });
-      const company = Array.isArray(companyRows) ? companyRows[0] : null;
-
-      if (companyError || !company) {
-        form1.setError('inviteCode', { message: 'Código inválido. Pedíselo al administrador de tu empresa.' });
-        return;
-      }
-
-      // Intentar crear la cuenta — SIN company_id: la admisión la aprueba el admin
-      const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
-        email: data.email,
-        password: data.password,
-        options: {
-          data: { role: 'employee', full_name: data.name },
-        },
+      const res = await fetch('/api/signup-confirmed', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: data.email, password: data.password, fullName: data.name,
+          role: 'employee', inviteCode: data.inviteCode,
+        }),
       });
+      const result = await res.json();
 
-      if (signUpError) {
-        if (
-          signUpError.message.toLowerCase().includes('already registered') ||
-          signUpError.message.toLowerCase().includes('user already exists')
-        ) {
+      if (!res.ok) {
+        if (result.code === 'email_exists') {
           setEmailExists(true);
+        } else if (/código de invitación/i.test(result.error || '')) {
+          form1.setError('inviteCode', { message: 'Código inválido. Pedíselo al administrador de tu empresa.' });
         } else {
-          setServerError(signUpError.message);
+          setServerError(result.error || 'No se pudo crear la cuenta. Intentá de nuevo.');
         }
         return;
       }
 
-      // Detectar email duplicado silencioso (identities vacías = email ya existe)
-      if (signUpData.user?.identities && signUpData.user.identities.length === 0) {
-        setEmailExists(true);
+      // Cuenta creada y confirmada: iniciamos sesión directo, sin esperar mail.
+      const { error: loginError } = await login(data.email, data.password);
+      if (loginError) {
+        setServerError('Cuenta creada. Iniciá sesión con tu email y contraseña.');
+        navigate('/auth/employee/login');
         return;
       }
-
-      // Si Supabase tiene email confirmation DESACTIVADO, la sesión ya está disponible
-      if (signUpData.session && signUpData.user) {
-        // Registrar la solicitud de ingreso (queda PENDIENTE de aprobación)
-        await requestToJoin(data.inviteCode);
-        navigate('/pending');
-        return;
-      }
-
-      // Si requiere confirmación por email → ir al OTP
-      setFormData({ ...data, companyId: company.id });
-      setResendTimer(30);
-      setStep(2);
-    } catch (err) {
-      setServerError('Ocurrió un error inesperado. Intentá de nuevo.');
-      console.error(err);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  // ── Step 2: verificar OTP → crear perfil ──
-  const onOtp = async (data: OtpData) => {
-    setServerError(null);
-    setIsLoading(true);
-
-    try {
-      const { data: verifyData, error: verifyError } = await supabase.auth.verifyOtp({
-        email: formData.email!,
-        token: data.token,
-        type: 'signup',
-      });
-
-      if (verifyError || !verifyData.user) {
-        setServerError('Código incorrecto o expirado. Revisá tu email e intentá de nuevo.');
-        return;
-      }
-
-      // Cuenta confirmada → registrar solicitud de ingreso (pendiente)
-      await requestToJoin(formData.inviteCode!);
       navigate('/pending');
     } catch (err) {
-      setServerError('Error al verificar. Intentá de nuevo.');
+      setServerError('Ocurrió un error inesperado. Intentá de nuevo.');
       console.error(err);
     } finally {
       setIsLoading(false);
@@ -189,17 +127,6 @@ export const EmployeeSignup: React.FC = () => {
     }
   };
 
-  // ── Reenviar OTP ─────────────────────────────────
-  const handleResend = async () => {
-    if (resendTimer > 0 || isResending) return;
-    setIsResending(true);
-    setServerError(null);
-    const { error } = await supabase.auth.resend({ type: 'signup', email: formData.email! });
-    setIsResending(false);
-    if (error) setServerError('Error al reenviar. Intentá de nuevo.');
-    else setResendTimer(30);
-  };
-
   return (
     <div className="flex min-h-full p-4 sm:p-8">
       <div className="m-auto w-full max-w-md bg-white p-8 rounded-xl shadow-lg border border-slate-100 text-center relative">
@@ -215,25 +142,9 @@ export const EmployeeSignup: React.FC = () => {
           <Users size={32} />
         </div>
         <h1 className="text-2xl font-bold text-slate-900 mb-1">Crear Cuenta</h1>
-        <p className="text-slate-500 mb-6 text-sm">
-          {step === 1 ? 'Ingresá el código de tu empresa para unirte al equipo' : 'Verificá tu email para activar la cuenta'}
-        </p>
+        <p className="text-slate-500 mb-6 text-sm">Ingresá el código de tu empresa para unirte al equipo</p>
 
-        {/* Barra de progreso */}
-        <div className="flex justify-center gap-2 mb-8">
-          {[1, 2].map((s) => (
-            <div
-              key={s}
-              className={`h-2 w-12 rounded-full transition-colors ${
-                s < step ? 'bg-amber-500' : s === step ? 'bg-amber-400' : 'bg-slate-200'
-              }`}
-            />
-          ))}
-        </div>
-
-        {/* STEP 1 ── Datos + código empresa */}
-        {step === 1 && (
-          <div className="space-y-4 text-left">
+        <div className="space-y-4 text-left">
             {/* Invite code field — needed before Google too */}
             <Input
               label="Código de Empresa"
@@ -294,58 +205,7 @@ export const EmployeeSignup: React.FC = () => {
                 {isLoading ? 'Creando cuenta...' : 'Crear Cuenta'}
               </Button>
             </form>
-          </div>
-        )}
-
-        {/* STEP 2 ── Verificación OTP */}
-        {step === 2 && (
-          <div className="space-y-6">
-            <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 flex gap-3 text-left">
-              <Mail size={20} className="text-amber-600 shrink-0 mt-0.5" />
-              <div>
-                <p className="text-sm font-medium text-amber-900">Revisá tu email</p>
-                <p className="text-xs text-amber-700 mt-0.5">
-                  Enviamos un código de verificación a <strong>{formData.email}</strong>
-                </p>
-              </div>
-            </div>
-            <form onSubmit={formOtp.handleSubmit(onOtp)} className="space-y-4 text-left">
-              <Input
-                label="Código de verificación"
-                {...formOtp.register('token')}
-                placeholder="Ingresá el código del email"
-                className="text-center text-xl tracking-widest font-mono"
-                error={formOtp.formState.errors.token?.message}
-              />
-              {serverError && <p className="text-sm text-red-500 text-center">{serverError}</p>}
-              <Button
-                type="submit"
-                size="lg"
-                className="w-full bg-amber-500 hover:bg-amber-600 border-none text-white"
-                isLoading={isLoading}
-                disabled={isLoading}
-              >
-                <CheckCircle className="mr-2 h-4 w-4" /> {isLoading ? 'Verificando...' : 'Verificar y Entrar'}
-              </Button>
-            </form>
-            <div className="text-center text-sm">
-              <button
-                type="button"
-                onClick={handleResend}
-                disabled={resendTimer > 0 || isResending}
-                className={resendTimer > 0 ? 'text-slate-400 cursor-not-allowed' : 'text-amber-600 hover:text-amber-800 font-medium underline'}
-              >
-                {isResending ? 'Enviando...' : resendTimer > 0 ? `Reenviar código en ${resendTimer}s` : 'Reenviar código'}
-              </button>
-            </div>
-            <button
-              onClick={() => setStep(1)}
-              className="text-sm text-slate-400 hover:text-slate-600 underline flex items-center justify-center gap-1 mx-auto"
-            >
-              <ChevronLeft size={14} /> Volver al formulario
-            </button>
-          </div>
-        )}
+        </div>
 
         <button
           onClick={() => navigate('/auth/employee/login')}

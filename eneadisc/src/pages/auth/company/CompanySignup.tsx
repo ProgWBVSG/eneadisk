@@ -55,7 +55,7 @@ function generateInviteCode(): string {
 // ── Component ────────────────────────────────────────
 export const CompanySignup: React.FC = () => {
   const navigate = useNavigate();
-  const { refreshUser, signInWithGoogle } = useAuth();
+  const { refreshUser, signInWithGoogle, login } = useAuth();
   const [googleLoading, setGoogleLoading] = useState(false);
 
   // step 1 = datos personales, step 2 = datos empresa, step 3 = OTP, step 4 = éxito
@@ -138,49 +138,44 @@ export const CompanySignup: React.FC = () => {
     setStep(4);
   };
 
-  // ── Step 2: datos empresa → signUp ──
+  // ── Step 2: datos empresa → crear cuenta YA CONFIRMADA ───────────────
+  // No dependemos del email de verificación: el envío gratuito de Supabase
+  // tiene mala entrega a casillas corporativas. /api/signup-confirmed crea
+  // la cuenta ya confirmada con la service key, sin depender de ningún mail.
   const onStep2 = async (dataForm2: Step2Data) => {
     setServerError(null);
     setEmailExists(false);
     const all = { ...formData, ...dataForm2 };
     setFormData(all);
 
-    const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
-      email: all.email!,
-      password: all.password!,
-      options: {
-        data: { role: 'company_admin', full_name: all.companyName },
-      },
-    });
+    try {
+      const res = await fetch('/api/signup-confirmed', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: all.email, password: all.password, fullName: all.companyName,
+          role: 'company_admin',
+        }),
+      });
+      const result = await res.json();
 
-    if (signUpError) {
-      if (
-        signUpError.message.toLowerCase().includes('already registered') ||
-        signUpError.message.toLowerCase().includes('user already exists')
-      ) {
-        setEmailExists(true);
-      } else {
-        setServerError(signUpError.message);
+      if (!res.ok) {
+        if (result.code === 'email_exists') setEmailExists(true);
+        else setServerError(result.error || 'No se pudo crear la cuenta. Intentá de nuevo.');
+        return;
       }
-      return;
-    }
 
-    // identities vacío = el email YA existe
-    if (signUpData.user && signUpData.user.identities && signUpData.user.identities.length === 0) {
-      setEmailExists(true);
-      return;
+      const { error: loginError } = await login(all.email!, all.password!);
+      if (loginError) {
+        setServerError('Cuenta creada. Iniciá sesión con tu email y contraseña.');
+        navigate('/auth/company/login');
+        return;
+      }
+      await createCompanyAndProfile(result.userId, all);
+    } catch (err) {
+      setServerError('Ocurrió un error inesperado. Intentá de nuevo.');
+      console.error(err);
     }
-
-    // Si la confirmación de email está DESACTIVADA, hay sesión inmediata
-    // → creamos la empresa directo, sin pedir código.
-    if (signUpData.session && signUpData.user) {
-      await createCompanyAndProfile(signUpData.user.id, all);
-      return;
-    }
-
-    // Si requiere confirmación por email → ir al paso del código OTP
-    setResendTimer(30);
-    setStep(3);
   };
 
   // ── Step 3: verificar OTP (solo si la confirmación está activada) ──
